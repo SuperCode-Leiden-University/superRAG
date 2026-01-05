@@ -1,18 +1,35 @@
 # libraries
 import torch
 from transformers import pipeline # pipeline is for inference
+from langchain_community.document_loaders import DirectoryLoader, TextLoader
+# note: langchain-community is a separate module, not included in langchain
 
+# ---------------------------------------------------------------------------------------------- #
 # check if I have an Nvidia GPU on the machine
 print("Is cuda available?", torch.cuda.is_available())
 #print(torch.cuda.device_count(), torch.cuda.get_device_name(0), sep="\n")
 
-# this will import the LLM
-#model = pipeline(model="codefuse-ai/CodeFuse-CGM-72B")
-
+# ---------------------------------------------------------------------------------------------- #
 # importing the model
 model = pipeline("text-generation", model="Qwen/Qwen2.5-Coder-1.5B-Instruct")
 
-user_prompt = "how can I plot sin(x) in python?"
+#"""
+# ---------------------------------------------------------------------------------------------- #
+# creating the database (without PDFs because they generate errors!)
+loader = DirectoryLoader(
+    "./test-code/",
+    loader_cls=TextLoader,
+    glob="**/*.*",
+    show_progress=True,
+    use_multithreading=True
+)
+docs = loader.load()
+print("n docs =", len(docs)) # just to check that all docs have been loaded correctly
+# there should be 7 files (without the pdf)
+#"""
+
+# ---------------------------------------------------------------------------------------------- #
+user_prompt = "Can you copy-paste the code I used for the velocity-Verlet method?"
 messages = [
     {"role": "user", "content": user_prompt},
 ]

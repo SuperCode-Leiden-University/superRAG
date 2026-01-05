@@ -3,3 +3,4 @@ transformers
 langchain
 langchain-huggingface
 huggingface_hub
+chromadb

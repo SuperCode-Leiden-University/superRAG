@@ -15,3 +15,8 @@ Thumbs.db
 .env
 .venv/
 .idea/
+
+# ignore testing material
+test-code/
+test-vdb/
+test*.txt
