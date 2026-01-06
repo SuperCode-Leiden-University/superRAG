@@ -18,5 +18,5 @@ Thumbs.db
 
 # ignore testing material
 test-code/
-test-vdb/
+test-db/
 test*.txt
