@@ -1,3 +1,4 @@
+import torch
 from transformers import pipeline, AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 # pipeline is for direct inference, with AutoModelForCausalLM, AutoTokenizer you load the raw model
 # BitsAndBytesConfig is for quantization
@@ -5,10 +6,10 @@ from transformers import pipeline, AutoModelForCausalLM, AutoTokenizer, BitsAndB
 
 
 class Model():
-    def __init__(self, model_id, raw_model=True, load_quant="full"):
-        self.model_id = model_id
-        self.raw_model = raw_model
-        self.load_quant = load_quant
+    def __init__(self, model_id, raw_model=True, quant_type="full"):
+        self.model_id = model_id # name of the model from Hugging Face
+        self.raw_model = raw_model # True if the model is loaded directly, False if loaded through pipeline
+        self.quant_type = quant_type # valid values: ("full", "bits", "GPTQ") --> check file formats!!!
         """
         NOTE: the model can be loaded as quantized only if someone published the quantized version (see files):
             --> full precision:   model.safetensors                 (direct load)
@@ -23,13 +24,13 @@ class Model():
         if self.raw_model:
             self.tokenizer = AutoTokenizer.from_pretrained(self.model_id)
 
-            if self.load_quant == "full":  # full precision
+            if self.quant_type == "full":  # full precision
                 self.model = AutoModelForCausalLM.from_pretrained(
                     self.model_id,
                     device_map="auto"  # automatically places layers on GPU(s) if possible
                 )
 
-            if self.load_quant == "bits":  # for 4-8 bits quantization
+            if self.quant_type == "bits":  # for 4-8 bits quantization
                 quant_config = BitsAndBytesConfig(
                     load_in_4bit=True,  # or load_in_8bit=True
                     bnb_4bit_compute_dtype="float16",
@@ -39,10 +40,10 @@ class Model():
                 self.model = AutoModelForCausalLM.from_pretrained(
                     self.model_id,
                     device_map="auto",  # automatically places layers on GPU(s) if possible
-                    quantization_config=self.quant_config
+                    quantization_config=quant_config
                 )
 
-            if self.load_quant == "GPTQ":  # GPTQ quantization
+            if self.quant_type == "GPTQ":  # GPTQ quantization
                 self.tokenizer = AutoTokenizer.from_pretrained(self.model_id, trust_remote_code=True)
                 self.model = AutoModelForCausalLM.from_pretrained(
                     self.model_id,
@@ -56,19 +57,19 @@ class Model():
 
     def call(self, user_prompt, retriv_docs=None):
         # include the retrieved docs as context and feed it to the model
-        if retriv_docs==None:
+        if retriv_docs is None: # this might be unnecessary, but if feels weird to pass an empty context
             messages = [{
                 "role": "user",
                 "content": f"Use the following context to answer the question.\n\n"
                            f"### Question\n{user_prompt}"
             }]
-
         else:
             messages = [{
                 "role": "user",
                 "content": f"Use the following context to answer the question.\n\n"
                            f"### Context\n{retriv_docs}\n\n"
                            f"### Question\n{user_prompt}"
+                # it would be nice to automatically retrieve the machine and language of the code as extra info
             }]
 
         if self.raw_model:

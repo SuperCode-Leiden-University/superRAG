@@ -23,7 +23,7 @@ model_id = \
 emb_model_id = "sentence-transformers/msmarco-bert-base-dot-v5"
 
 raw_model = True # True if the model is loaded directly, False if loaded through pipeline
-load_quant = "full" # valid values: ("full", "bits", "GPTQ") --> check file formats below
+quant_type = "full" # valid values: ("full", "bits", "GPTQ") --> check file formats!!!
 """
 NOTE: the model can be loaded as quantized only if someone published the quantized version (see files):
     --> full precision:   model.safetensors                 (direct load)
@@ -45,7 +45,7 @@ user_prompt = "Do the following tasks: tell me where the velocity-Verlet functio
 ##### IMPORTING THE MODELS
 
 # "model" is for processing text and generating an answer
-model = Model(model_id, raw_model, load_quant)
+model = Model(model_id, raw_model, quant_type)
 
 # "emb_model" is for creating the embeddings for the vector database (for RAG)
 emb_model = HuggingFaceEmbeddings(model_name=emb_model_id )
