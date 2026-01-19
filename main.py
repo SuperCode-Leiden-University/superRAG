@@ -16,11 +16,14 @@ print("Is cuda available?", torch.cuda.is_available())
 # ---------------------------------------------------------------------------------------------- #
 # ---------------------------------------------------------------------------------------------- #
 ##### VARIABLES
-model_id = "Qwen/Qwen2.5-Coder-1.5B-Instruct"
+model_id = \
+    "Qwen/Qwen2.5-Coder-1.5B-Instruct" # file size = 3.1 GB
+    #"Qwen/Qwen2.5-Coder-7B-Instruct-GPTQ-Int4" # file size = 5.59 GB
+    #"Qwen/Qwen2.5-Coder-32B-Instruct-GPTQ-Int4" # file size = 19.4 GB
 emb_model_id = "sentence-transformers/msmarco-bert-base-dot-v5"
 
 raw_model = True # True if the model is loaded directly, False if loaded through pipeline
-load_quant = "full" # valid values: ("full", "bits", "GPTQ")
+load_quant = "full" # valid values: ("full", "bits", "GPTQ") --> check file formats below
 """
 NOTE: the model can be loaded as quantized only if someone published the quantized version (see files):
     --> full precision:   model.safetensors                 (direct load)
