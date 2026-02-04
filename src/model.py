@@ -3,7 +3,7 @@ from transformers import pipeline, AutoModelForCausalLM, AutoTokenizer, BitsAndB
 # pipeline is for direct inference, with AutoModelForCausalLM, AutoTokenizer you load the raw model
 # BitsAndBytesConfig is for quantization
 
-
+from src.tools import * # import all the tools
 
 class Model():
     def __init__(self, model_id, raw_model=True, quant_type="full"):
@@ -18,6 +18,8 @@ class Model():
             --> GPTQ quantized:   gptq_model-4bit-128g.safetensors  (direct load)
             --> GGUF quantized:   model.gguf                        (direct load, NOT with Transformers!)
         """
+
+        self.tools = get_tools() # tools for the agent
 
         ##### IMPORTING THE MODELS
         # "model" is for processing text and generating an answer
@@ -83,14 +85,17 @@ class Model():
 
             outputs = self.model.generate(**inputs, max_new_tokens=1200)
             response = self.tokenizer.decode(outputs[0][inputs["input_ids"].shape[-1]:])
+
         else:
-            outputs = self.model(messages)
             """ Note: chat structure is the following
             chat_history = [ {'generated_text': [
-                                {'role': 'user',       'content': '...'}, 
+                                {'role': 'user',       'content': '...'},
                                 {'role': 'assistant',  'content': "..."}
                             ] } ]
             """
+
+            outputs = self.model(messages)
             response = outputs[0]['generated_text'][-1]['content']
+
 
         return response

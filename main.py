@@ -37,8 +37,6 @@ docs_dir = "test-code" # where I save the files for RAG
 db_dir   = "test-db"   # where I save the vector database (db)
 update_db = False      # if I want to update the db (for example because I changed some files)
 
-user_prompt = "Do the following tasks: tell me where the velocity-Verlet function is defined and copy-paste the function"
-
 # ---------------------------------------------------------------------------------------------- #
 # ---------------------------------------------------------------------------------------------- #
 # ---------------------------------------------------------------------------------------------- #
@@ -61,31 +59,47 @@ db = Database(emb_model, docs_dir, db_dir, update_db).load()
 end = datetime.now()
 print(">> Time to Database =", end-start)
 
-# ---------------------------------------------------------------------------------------------- #
-# ---------------------------------------------------------------------------------------------- #
-# ---------------------------------------------------------------------------------------------- #
-# RETRIEVAL & PROCESSING THE DOCS
 
-start = datetime.now()
-# find the relevant docs
-retriv_docs = db.similarity_search(user_prompt, k=5) # find the k most relevant documents to the query
-print("n_retriv_docs =", len(retriv_docs))
-#print("most relevant doc\n", retriv_docs[0])
+while True:
+    # Query to send to Claude
+    user_prompt = input("--------------------------------------\nEnter your query (type 'q' or 'quit' to exit) \nUt:")
+    print("--------------------------------------")
+    # user_prompt = "Do the following tasks: tell me where the velocity-Verlet function is defined and copy-paste the function"
 
-end = datetime.now()
-print(">> Time to Retrieval =", end-start)
+    # Check if user wants to quit
+    if user_prompt.lower() == "quit" or user_prompt.lower() == "q":
+        print("Goodbye!")
+        break
 
-# ---------------------------------------------------------------------------------------------- #
-# ---------------------------------------------------------------------------------------------- #
-# ---------------------------------------------------------------------------------------------- #
-##### MODEL INFERENCE
+    # Make the API call using Converse API
+    try:
+        # ---------------------------------------------------------------------------------------------- #
+        # ---------------------------------------------------------------------------------------------- #
+        # ---------------------------------------------------------------------------------------------- #
+        # RETRIEVAL & PROCESSING THE DOCS
 
-start = datetime.now()
-print("processing the query...")
-# include the retrieved docs as context and feed it to the model
-response = model.call(user_prompt, retriv_docs)
+        start = datetime.now()
+        # find the relevant docs
+        retriv_docs = db.similarity_search(user_prompt, k=5) # find the k most relevant documents to the query
+        print("n_retriv_docs =", len(retriv_docs))
+        #print("most relevant doc\n", retriv_docs[0])
 
-end = datetime.now()
-print(">> Time to First Token =", end-start)
-print("--------------------------------------", response, "--------------------------------------", sep="\n")
+        end = datetime.now()
+        print(">> Time to Retrieval =", end-start)
 
+        # ---------------------------------------------------------------------------------------------- #
+        # ---------------------------------------------------------------------------------------------- #
+        # ---------------------------------------------------------------------------------------------- #
+        ##### MODEL INFERENCE
+
+        start = datetime.now()
+        print("processing the query...")
+        # include the retrieved docs as context and feed it to the model
+        response = model.call(user_prompt, retriv_docs)
+
+        end = datetime.now()
+        print(">> Time to First Token =", end-start)
+        print("-------------------------------------- \nAI: ", response, "\n--------------------------------------", sep="")
+
+    except Exception as e:
+        print(f"\nAn error occurred:\n{e}\n")

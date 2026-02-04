@@ -8,6 +8,12 @@ huggingface_hub
 faiss-cpu
 faiss-gpu
 sentence-transformers
-accelerate
+#accelerate
 bitsandbytes
 optimum
+
+
+#networkx # general purpose
+#PyCG # static call graph
+#graphviz # general?
+#pycallgraph2 # for exact runtime call
