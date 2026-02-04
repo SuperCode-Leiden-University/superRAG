@@ -33,6 +33,7 @@ NOTE: the model can be loaded as quantized only if someone published the quantiz
     --> GGUF quantized:   model.gguf                        (direct load, NOT with Transformers!)
 """
 
+n_retriv = 0 # number of retrieved docs
 docs_dir = "test-code" # where I save the files for RAG
 db_dir   = "test-db"   # where I save the vector database (db)
 update_db = False      # if I want to update the db (for example because I changed some files)
@@ -62,7 +63,7 @@ print(">> Time to Database =", end-start)
 
 while True:
     # Query to send to Claude
-    user_prompt = input("--------------------------------------\nEnter your query (type 'q' or 'quit' to exit) \nUt:")
+    user_prompt = input("Enter your query (type 'q' or 'quit' to exit) \n--------------------------------------\nUt: ")
     print("--------------------------------------")
     # user_prompt = "Do the following tasks: tell me where the velocity-Verlet function is defined and copy-paste the function"
 
@@ -80,9 +81,12 @@ while True:
 
         start = datetime.now()
         # find the relevant docs
-        retriv_docs = db.similarity_search(user_prompt, k=5) # find the k most relevant documents to the query
-        print("n_retriv_docs =", len(retriv_docs))
-        #print("most relevant doc\n", retriv_docs[0])
+        if n_retriv>0:
+            retriv_docs = db.similarity_search(user_prompt, k=n_retriv) # find the k most relevant documents to the query
+            print("n_retriv_docs =", len(retriv_docs), "=", n_retriv)
+            #print("most relevant doc\n", retriv_docs[0])
+        else:
+            retriv_docs = None
 
         end = datetime.now()
         print(">> Time to Retrieval =", end-start)

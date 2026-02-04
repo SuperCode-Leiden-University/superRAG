@@ -20,6 +20,7 @@ class Model():
         """
 
         self.tools = get_tools() # tools for the agent
+        self.messages = []
 
         ##### IMPORTING THE MODELS
         # "model" is for processing text and generating an answer
@@ -60,23 +61,23 @@ class Model():
     def call(self, user_prompt, retriv_docs=None):
         # include the retrieved docs as context and feed it to the model
         if retriv_docs is None: # this might be unnecessary, but if feels weird to pass an empty context
-            messages = [{
+            self.messages.append({
                 "role": "user",
                 "content": f"Use the following context to answer the question.\n\n"
                            f"### Question\n{user_prompt}"
-            }]
+            })
         else:
-            messages = [{
+            self.messages.append({
                 "role": "user",
                 "content": f"Use the following context to answer the question.\n\n"
                            f"### Context\n{retriv_docs}\n\n"
                            f"### Question\n{user_prompt}"
                 # it would be nice to automatically retrieve the machine and language of the code as extra info
-            }]
+            })
 
         if self.raw_model:
             inputs = self.tokenizer.apply_chat_template(
-                messages,
+                self.messages,
                 add_generation_prompt=True,
                 tokenize=True,
                 return_dict=True,
@@ -94,7 +95,7 @@ class Model():
                             ] } ]
             """
 
-            outputs = self.model(messages)
+            outputs = self.model(self.messages)
             response = outputs[0]['generated_text'][-1]['content']
 
 
