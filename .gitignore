@@ -17,6 +17,5 @@ Thumbs.db
 .idea/
 
 # ignore testing material
-test-code/
-test-db/
+#test*/
 test*.txt

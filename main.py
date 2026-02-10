@@ -4,13 +4,18 @@ from datetime import datetime
 from langchain_huggingface import HuggingFaceEmbeddings
 
 # my packages
+from src.tools import search_database
 from src.model import Model
 from src.database import Database
+from src.verbose import verbose
+# verbose is a control function to print info about what the model is doing
+# values --> 0 = no info, 1 = a little info, 2 = all info
 
 # ---------------------------------------------------------------------------------------------- #
 # check if I have an Nvidia GPU on the machine
-print("Is cuda available?", torch.cuda.is_available())
-#print(torch.cuda.device_count(), torch.cuda.get_device_name(0), sep="\n")
+if verbose()>1 :
+    print("Is cuda available?", torch.cuda.is_available())
+    #print(torch.cuda.device_count(), torch.cuda.get_device_name(0), sep="\n")
 
 # ---------------------------------------------------------------------------------------------- #
 # ---------------------------------------------------------------------------------------------- #
@@ -38,6 +43,7 @@ docs_dir = "test-code" # where I save the files for RAG
 db_dir   = "test-db"   # where I save the vector database (db)
 update_db = False      # if I want to update the db (for example because I changed some files)
 
+
 # ---------------------------------------------------------------------------------------------- #
 # ---------------------------------------------------------------------------------------------- #
 # ---------------------------------------------------------------------------------------------- #
@@ -53,17 +59,18 @@ emb_model = HuggingFaceEmbeddings(model_name=emb_model_id )
 # ---------------------------------------------------------------------------------------------- #
 # ---------------------------------------------------------------------------------------------- #
 # CREATING THE DATABASE
-
-start = datetime.now()
-# first check if the db exists and if it needs to be updated
-db = Database(emb_model, docs_dir, db_dir, update_db).load()
-end = datetime.now()
-print(">> Time to Database =", end-start)
+if n_retriv >0:
+    start = datetime.now()
+    # this will first check if the database exists and if it needs to be updated
+    # then either load or create the database
+    db = Database(emb_model, docs_dir, db_dir, update_db).load()
+    end = datetime.now()
+    if verbose()>0 : print(">> Time to Database =", end-start)
 
 
 while True:
     # Query to send to Claude
-    user_prompt = input("Enter your query (type 'q' or 'quit' to exit) \n--------------------------------------\nUt: ")
+    user_prompt = input("\nEnter your query (type 'q' or 'quit' to exit) \n--------------------------------------\n## Ut: ")
     print("--------------------------------------")
     # user_prompt = "Do the following tasks: tell me where the velocity-Verlet function is defined and copy-paste the function"
 
@@ -79,17 +86,8 @@ while True:
         # ---------------------------------------------------------------------------------------------- #
         # RETRIEVAL & PROCESSING THE DOCS
 
-        start = datetime.now()
-        # find the relevant docs
-        if n_retriv>0:
-            retriv_docs = db.similarity_search(user_prompt, k=n_retriv) # find the k most relevant documents to the query
-            print("n_retriv_docs =", len(retriv_docs), "=", n_retriv)
-            #print("most relevant doc\n", retriv_docs[0])
-        else:
-            retriv_docs = None
-
-        end = datetime.now()
-        print(">> Time to Retrieval =", end-start)
+        if n_retriv > 0: retriv_docs = search_database(db, user_prompt, n_retriv)
+        else: retriv_docs=None
 
         # ---------------------------------------------------------------------------------------------- #
         # ---------------------------------------------------------------------------------------------- #
@@ -97,13 +95,13 @@ while True:
         ##### MODEL INFERENCE
 
         start = datetime.now()
-        print("processing the query...")
+        if verbose()>0 : print(">> processing the query")
         # include the retrieved docs as context and feed it to the model
         response = model.call(user_prompt, retriv_docs)
 
         end = datetime.now()
-        print(">> Time to First Token =", end-start)
-        print("-------------------------------------- \nAI: ", response, "\n--------------------------------------", sep="")
+        if verbose()>0 : print(">> Time to First Token =", end-start)
+        print("-------------------------------------- \n## AI: ", response, "\n--------------------------------------", sep="")
 
     except Exception as e:
         print(f"\nAn error occurred:\n{e}\n")

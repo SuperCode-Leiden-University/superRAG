@@ -1,4 +1,5 @@
 torch
+matplotlib
 transformers
 langchain
 langchain-community
