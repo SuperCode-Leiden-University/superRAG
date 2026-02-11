@@ -7,7 +7,7 @@ langchain-community
 langchain-text-splitters
 huggingface_hub
 faiss-cpu
-faiss-gpu
+#faiss-gpu
 sentence-transformers
 #accelerate
 bitsandbytes # for the quantized files
