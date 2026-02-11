@@ -2,8 +2,10 @@ import re
 import matplotlib.pyplot as plt
 import numpy as np
 from datetime import datetime
+from langchain_huggingface import HuggingFaceEmbeddings
 
-from src.config import verbose
+from src.config import verbose, emb_model_id, docs_dir, db_dir, update_db
+from src.database import Database
 from .manage_tools import tool
 
 
@@ -63,17 +65,28 @@ def draw_graph(expr: str, x_range: list[float]):
 
 
 # ----------------------------------------------------------------------------------------------
-#@tool
-def search_database(db, query, n_retriv):
+@tool
+def search_database(query: str, n_retriv: int):
+    if n_retriv < 1: return "No document has been retrieved"
+
+    # "emb_model" is for creating the embeddings for the vector database (for RAG)
+    emb_model = HuggingFaceEmbeddings(model_name=emb_model_id)
+
+    start = datetime.now()
+    # this will first check if the database exists and if it needs to be updated
+    # then either load or create the database
+    db = Database(emb_model, docs_dir, db_dir, update_db).load()
+    end = datetime.now()
+    if verbose>0: print(">> Time to Database =", end - start)
+
     if verbose>0 : print(">> searching the database")
     start = datetime.now()
     # find the relevant docs
-    if n_retriv>0:
-        retriv_docs = db.similarity_search(query, k=n_retriv) # find the k most relevant documents to the query
-        if verbose>1 : print(">> n_retriv_docs =", len(retriv_docs), "=", n_retriv)
-        #if verbose>2 : print("most relevant doc\n", retriv_docs[0])
-    else:
-        retriv_docs = None
+
+    retriv_docs = db.similarity_search(query, k=n_retriv) # find the k most relevant documents to the query
+    if verbose>1 : print(">> n_retriv_docs =", len(retriv_docs), "=", n_retriv)
+    #if verbose>2 : print("most relevant doc\n", retriv_docs[0])
+
 
     end = datetime.now()
     if verbose>0 : print(">> Time to Retrieval =", end-start)

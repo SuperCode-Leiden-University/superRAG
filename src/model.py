@@ -86,7 +86,9 @@ class Model():
                 "role": "system",
                 "content": f"You are a classier for tool selection."
                            f"There are some tools described in:\n{self.schemas}\n"
-                           "You only need to decide if there is a suitable tool among the ones available."
+                           "Your main job is to decide if there is a suitable tool among the ones available."
+                           "If you need to search the database you should request a number of retrieved documents "
+                           "proportional to the difficulty of the query: generic or multistep queries are more difficult."
                            "You must always respond with a JSON object and nothing else."
             })
 
@@ -178,7 +180,7 @@ class Model():
             # or it may add some unrequired explanation
             begin = response.find("{")  # find the first {, which is where the json begins
             end = response.rfind("}")+1 # find the last }, which is where the json ends
-            if verbose>1 : print(">> json obj:\n", response[begin:end])
+            if verbose>2 : print(">> json obj:\n", response[begin:end])
             tool_request = json.loads(response[begin:end])
 
             for tool_name in self.tools.keys():
@@ -191,7 +193,7 @@ class Model():
         else:
             tool_results = "no tool was used"
 
-        if verbose>1 : print(">> tool_results:", tool_results)
+        #if verbose>2 : print(">> tool_results:", tool_results)
 
         self.tool_messages.pop() # remove the last item
 

@@ -24,7 +24,6 @@ emb_model_id = vars["emb_model"] # model ID from HuggingFace
 
 # ----------------------------------------------------------------------------------------------
 # database (RAG)
-n_retriv  = vars["n_retriv"]  # number of retrieved docs
 docs_dir  = vars["docs_dir"]  # where I save the files for RAG
 db_dir    = vars["db_dir"]    # where I save the vector database (db)
 update_db = vars["update_db"] # if I want to update the db (for example because I changed some files)
