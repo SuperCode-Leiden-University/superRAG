@@ -86,9 +86,11 @@ class Model():
                 "role": "system",
                 "content": f"You are a classier for tool selection."
                            f"There are some tools described in:\n{self.schemas}\n"
-                           "Your main job is to decide if there is a suitable tool among the ones available."
+                           "Your main job is to decide if there is a suitable tool among the ones available.\n"
                            "If you need to search the database you should request a number of retrieved documents "
                            "proportional to the difficulty of the query: generic or multistep queries are more difficult."
+                           "Moreover, if you search the database you should use the user prompt as it is "
+                           "to query the database: do not simply the query.\n"
                            "You must always respond with a JSON object and nothing else."
             })
 

@@ -1,6 +1,6 @@
 ---
 # general
-verbose: 2 # how much info is printed: 0=none, 1=little, 2=all
+verbose: 1 # how much info is printed: 0=none, 1=little, 2=all
 
 # chat model
 model:
