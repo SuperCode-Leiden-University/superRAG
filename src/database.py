@@ -3,7 +3,7 @@ from langchain_community.document_loaders import DirectoryLoader, TextLoader
 from langchain_community.vectorstores import FAISS
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-from src.verbose import verbose
+from src.config import verbose
 
 
 class Database():
@@ -15,7 +15,7 @@ class Database():
 
     def load(self):
         if self.update_db or not (os.path.isdir(self.db_dir)):
-            if verbose()>0 : print(">> creating the vector database")
+            if verbose>0 : print(">> creating the vector database")
             # ---------------------------------------------------------------------------------------------- #
             # load the docs
             loader = DirectoryLoader(
@@ -27,13 +27,13 @@ class Database():
             )
             # IMPORTANT: PDFs need a specific loader or they generate errors!
             docs = loader.load()
-            if verbose()>1 : print(">> n_docs =", len(docs))  # just to check that all docs have been loaded correctly
+            if verbose>1 : print(">> n_docs =", len(docs))  # just to check that all docs have been loaded correctly
 
             # ---------------------------------------------------------------------------------------------- #
             # split the docs into chunks
             splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
             chunks = splitter.split_documents(docs)
-            if verbose()>1 : print(">> n_chunks =", len(chunks))
+            if verbose>1 : print(">> n_chunks =", len(chunks))
             # Note: chunk[0] = page_content='text' metadata={'source': 'test-code/filename'}
 
             # ---------------------------------------------------------------------------------------------- #
@@ -41,8 +41,6 @@ class Database():
             texts = [doc.page_content for doc in chunks]  # extract text
             metadatas = [doc.metadata for doc in chunks]  # extract the metadata
 
-            #ids = [str(i) for i in range(0, len(chunks))]
-            #emb_query = emb_model.embed_query(user_prompt)
             emb_chunks = self.emb_model.embed_documents(texts)
             text_embeddings = list(zip(texts, emb_chunks))
 
@@ -54,7 +52,7 @@ class Database():
             db.save_local(self.db_dir)  # create a dir with 2 files: index.faiss, index.pkl
 
         else:
-            if verbose()>0 : print("loading the vector database from '" + str(self.db_dir) + "'")
+            if verbose>0 : print("loading the vector database from '" + str(self.db_dir) + "'")
             # load saved db
             db = FAISS.load_local(self.db_dir, embeddings=self.emb_model, allow_dangerous_deserialization=True)
 

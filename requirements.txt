@@ -12,6 +12,7 @@ sentence-transformers
 #accelerate
 bitsandbytes
 optimum
+pyyaml
 
 
 #networkx # general purpose

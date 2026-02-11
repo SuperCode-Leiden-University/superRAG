@@ -6,7 +6,7 @@ from transformers import pipeline, AutoModelForCausalLM, AutoTokenizer, BitsAndB
 # BitsAndBytesConfig is for quantization
 
 from src.manage_tools import * # import all the tools
-from src.verbose import verbose
+from src.config import verbose
 
 class Model():
     # define variables and import the model
@@ -73,7 +73,7 @@ class Model():
     def message_format(self, user_prompt, tool_results=None, retriv_docs=None):
         # include the system prompts at the beginning of the chat
         if not self.messages:
-            if verbose()>1 : print(">> defining system prompt")
+            if verbose>1 : print(">> defining system prompt")
             # this is the chat history
             self.messages.append({
                 "role": "system",
@@ -92,14 +92,14 @@ class Model():
 
         # decide if the model needs a tool or to retrieve info from the DB
         if self.tool_classifier:
-            if verbose()>0 : print(">> check if there are useful tools")
+            if verbose>0 : print(">> check if there are useful tools")
             self.tool_messages.append({
                 "role": "user",
                 "content": f"Based on the following question decide if there is a tool you can use.\n\n"
                            f"### Question\n{user_prompt}\n"
             })
         else:
-            if verbose()>0 : print(">> elaborating the results from tools")
+            if verbose>0 : print(">> elaborating the results from tools")
 
             self.messages.append({
                 "role": "user",
@@ -170,27 +170,28 @@ class Model():
 
         # apply chat templates and return an answer
         response = self.chat_template(self.tool_messages)
-        if verbose()>1 : print("-------------------------------------- \n## tool: ", response, "\n--------------------------------------", sep="")
+        if verbose>1 : print("-------------------------------------- \n## tool: ", response, "\n--------------------------------------", sep="")
 
         if "{" in response:
-            if verbose()>0 : print(">> parsing response for tools")
-            # sometimes the model adds ```json at the beginning and ``` at the end, or it may add some unrequired text
+            if verbose>0 : print(">> parsing response for tools")
+            # sometimes the model adds ```json at the beginning and ``` at the end
+            # or it may add some unrequired explanation
             begin = response.find("{")  # find the first {, which is where the json begins
             end = response.rfind("}")+1 # find the last }, which is where the json ends
-            if verbose()>1 : print(">> json obj:\n", response[begin:end])
+            if verbose>1 : print(">> json obj:\n", response[begin:end])
             tool_request = json.loads(response[begin:end])
 
             for tool_name in self.tools.keys():
-                if verbose()>1 : print(">> checking tool:", tool_name)
+                if verbose>1 : print(">> checking tool:", tool_name)
                 if tool_name == tool_request["name"]:
-                    if verbose()>0 : print(">> found tool:", tool_name)
+                    if verbose>0 : print(">> found tool:", tool_name)
                     tool_results = dispatch_tool(self.tools, tool_request["name"], tool_request["arguments"])
                     break
 
         else:
             tool_results = "no tool was used"
 
-        if verbose()>1 : print(">> tool_results:", tool_results)
+        if verbose>1 : print(">> tool_results:", tool_results)
 
         self.tool_messages.pop() # remove the last item
 

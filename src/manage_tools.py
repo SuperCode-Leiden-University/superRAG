@@ -5,7 +5,7 @@ import importlib
 from pathlib import Path
 from typing import get_type_hints
 
-from src.verbose import verbose
+from src.config import verbose
 
 
 ##################################################################################################################
@@ -21,7 +21,7 @@ def tool(func):
 # ----------------------------------------------------------------------------------------------
 # return all the tools as a list of functions
 def get_tools():
-    if verbose()>0 : print(">> fetching available tools")
+    if verbose>0 : print(">> fetching available tools")
     #module = sys.modules[__name__] # only check this file
     module = importlib.import_module("src.tools") # only check another file
     """ # for checking all files inside a directory named "tools"
@@ -35,13 +35,13 @@ def get_tools():
         for name, obj in inspect.getmembers(module, inspect.isfunction) # check all objects defined in this module
         if getattr(obj, "__is_tool__", False)
     }
-    if verbose()>0 : print(">> tools available: ", tools.keys())
+    if verbose>0 : print(">> tools available: ", tools.keys())
     return tools
 
 # ----------------------------------------------------------------------------------------------
 # build the json file to call the tool
 def build_tool_schema(func):
-    if verbose()>0 : print(">> building tool schema for:", func.__name__)
+    if verbose>0 : print(">> building tool schema for:", func.__name__)
     hints = get_type_hints(func)
     props = {name: {"type": python_to_json_type(tp)} for name, tp in hints.items()}
 
@@ -57,7 +57,7 @@ def build_tool_schema(func):
             }
         }
     }
-    if verbose()>2 : print(scheme)
+    if verbose>2 : print(scheme)
     return scheme
 
 # ----------------------------------------------------------------------------------------------
@@ -72,7 +72,7 @@ def python_to_json_type(tp):
 # ----------------------------------------------------------------------------------------------
 # actually call the tool
 def dispatch_tool(tools, name, args):
-    if verbose()>0 : print(">> dispatching tool: ", name)
+    if verbose>0 : print(">> dispatching tool: ", name)
     tool = tools[name]
     return tool(**args)
 

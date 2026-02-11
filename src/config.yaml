@@ -1,0 +1,29 @@
+---
+# general
+verbose: 1 # how much info is printed: 0=none, 1=little, 2=all
+
+# chat model
+model:
+    ID: # model ID from HuggingFace
+        Qwen/Qwen2.5-Coder-1.5B-Instruct          # file size = 3.1 GB
+        #Qwen/Qwen2.5-Coder-7B-Instruct-GPTQ-Int4  # file size = 5.59 GB
+        #Qwen/Qwen2.5-Coder-32B-Instruct-GPTQ-Int4 # file size = 19.4 GB
+    raw_model: true
+    quant_type: full # True if the model is loaded directly, False if loaded through pipeline
+    # valid values: ("full", "bits", "GPTQ") --> check file formats!!!
+
+    # NOTE: the model can be loaded as quantized only if someone published the quantized version (see file's extensions):
+    #       --> full precision: model.safetensors                 (direct load)
+    #       --> full precision: pytorch_model.bin.index.json      (direct load, NOT with Transformers!)
+    #       --> 4bit quantized: model-4bit.safetensors            (needs bitsandbytes)
+    #       --> GPTQ quantized: gptq_model-4bit-128g.safetensors  (direct load)
+    #       --> GGUF quantized: model.gguf                        (direct load, NOT with Transformers!)
+
+# embedding model for building the database (for RAG)
+emb_model: sentence-transformers/msmarco-bert-base-dot-v5  # model ID from HuggingFace
+
+# database (RAG)
+n_retriv: 0 # number of retrieved docs for RAG
+docs_dir: test-code # where I save the files for RAG
+db_dir:   test-db   # where I save the vector database (db)
+update_db: false # if I want to update the db (for example because I changed some files)
