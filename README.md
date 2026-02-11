@@ -1,5 +1,58 @@
 # PhD Leiden -- SuperCode
 
+## Installation
+besides cloning the repository you'll need to to these 3 things:
+
+
+#### STEP 1) Creating a Virtual Environment:
+
+Just open the terminal and run:
+`python3 -m venv .venv`
+where ".venv" is the name of the virtual environment we used (you can change it if you don't like it).
+
+(NOTE: remember to use `ls -a` instead of just `ls` if you want to see hidden files and directories!)
+
+
+#### STEP 2) Installing all the modules
+
+Activate your virtual environment (with `source .venv/bin/activate`) and then run:
+`pip install -r requirements.txt`
+
+
+#### STEP 3) Downloading the model from Hugging Face
+
+You'll need a Hugging Face account, then you need to generate a token 
+(see https://youtu.be/1h6lfzJ0wZw?t=362&si=Q2_sgqa1pT0Jtpg8).
+
+From terminal run:
+`huggingface-cli login`
+then paste the token when prompted, you can say yes to the git credentials.
+
+You'll get a message saying where your token was saved, should be something like: 
+`/home/your_user_name/.cache/huggingface/token`
+
+The model will be downloaded the first time you will run this program and it will be saved at:
+`/home/your_user_name/.cache/huggingface/hub/`
+
+## Configuration file
+
+If you want to change the model, the name of the folder for the database, update the database or change verbosity, 
+you should go to `config.yaml`.
+
+
+## Expanding this work
+
+Please keep a clean package structure whenever possible.
+
+
+
+
+
+
+
+
+------
+
 # Editing this README
 
 When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
