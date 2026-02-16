@@ -40,7 +40,8 @@ class Model():
             if self.quant_type == "full":  # full precision
                 self.model = AutoModelForCausalLM.from_pretrained(
                     self.model_id,
-                    device_map="auto"  # automatically places layers on GPU(s) if possible
+                    device_map="auto",  # automatically places layers on GPU(s) if possible
+                    dtype="auto"
                 )
 
             if self.quant_type == "bits":  # for 4-8 bits quantization
@@ -61,8 +62,8 @@ class Model():
                 self.model = AutoModelForCausalLM.from_pretrained(
                     self.model_id,
                     device_map="auto",  # automatically places layers on GPU(s) if possible
-                    dtype="auto" #torch.float16,  # recommended for GPTQ
-                    #trust_remote_code=True
+                    dtype=torch.float16,  # recommended for GPTQ
+                    trust_remote_code=True
                 )
 
         else:
