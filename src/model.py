@@ -63,7 +63,10 @@ class Model():
                     self.model_id,
                     device_map="auto",  # automatically places layers on GPU(s) if possible
                     dtype="auto", #torch.float16,  # recommended for GPTQ
-                    trust_remote_code=True
+                    trust_remote_code=True,
+                    quantization_config=None # fix incompatibility between Transformers and Optimum GPTQ
+                    # consequences: no CUDA kernels optimization, lose correct dequantization behavior,
+                    # lose numerical stability guarantees, may have unexpected runtime errors
                 )
 
         else:
