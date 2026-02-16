@@ -5,8 +5,8 @@ verbose: 1 # how much info is printed: 0=none, 1=little, 2=all
 # chat model
 model:
     ID: # model ID from HuggingFace
-        #Qwen/Qwen2.5-Coder-1.5B-Instruct          # file size = 3.1 GB
-        Qwen/Qwen2.5-Coder-7B-Instruct #-GPTQ-Int4  # file size = 5.59 GB
+        Qwen/Qwen2.5-Coder-1.5B-Instruct          # file size = 3.1 GB
+        #Qwen/Qwen2.5-Coder-7B-Instruct #-GPTQ-Int4  # file size = 5.59 GB
         #Qwen/Qwen2.5-Coder-32B-Instruct #-GPTQ-Int4 # file size = 19.4 GB
     raw_model: true
     quant_type: full # True if the model is loaded directly, False if loaded through pipeline
