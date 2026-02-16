@@ -41,7 +41,7 @@ class Model():
                 self.model = AutoModelForCausalLM.from_pretrained(
                     self.model_id,
                     device_map="auto",  # automatically places layers on GPU(s) if possible
-                    dtype="auto"
+                    #dtype="auto"
                 )
 
             if self.quant_type == "bits":  # for 4-8 bits quantization
