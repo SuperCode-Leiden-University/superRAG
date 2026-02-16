@@ -61,8 +61,8 @@ class Model():
                 self.model = AutoModelForCausalLM.from_pretrained(
                     self.model_id,
                     device_map="auto",  # automatically places layers on GPU(s) if possible
-                    dtype=torch.float16,  # recommended for GPTQ
-                    trust_remote_code=True
+                    dtype="auto" #torch.float16,  # recommended for GPTQ
+                    #trust_remote_code=True
                 )
 
         else:
