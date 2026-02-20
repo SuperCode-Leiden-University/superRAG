@@ -11,7 +11,8 @@ faiss-cpu
 sentence-transformers
 accelerate
 bitsandbytes # for the quantized files
-#optimum
+#optimum # for the GPTQ models --> broken, internal incompatibilities with the new version of transformers
+#autoawq-kernels # for the AWQ models --> broken, internal incompatibilities with the new version of transformers
 
 pyyaml # for the config file
 

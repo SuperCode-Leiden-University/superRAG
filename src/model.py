@@ -4,6 +4,7 @@ import json
 from transformers import pipeline, AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 # pipeline is for direct inference, with AutoModelForCausalLM, AutoTokenizer you load the raw model
 # BitsAndBytesConfig is for quantization
+from awq import AutoAWQForCausalLM
 
 from src.manage_tools import * # import all the tools
 from src.config import verbose
@@ -44,17 +45,11 @@ class Model():
                     #dtype="auto"
                 )
 
-            if self.quant_type == "bits":  # for 4-8 bits quantization
-                quant_config = BitsAndBytesConfig(
-                    load_in_4bit=True,  # or load_in_8bit=True
-                    bnb_4bit_compute_dtype="float16",
-                    bnb_4bit_use_double_quant=True,
-                    bnb_4bit_quant_type="nf4"
-                )
-                self.model = AutoModelForCausalLM.from_pretrained(
+            if self.quant_type == "AWQ":  # AWQ quantization
+                self.model = AutoAWQForCausalLM.from_quantized(
                     self.model_id,
                     device_map="auto",  # automatically places layers on GPU(s) if possible
-                    quantization_config=quant_config
+                    #dtype="auto"
                 )
 
             if self.quant_type == "GPTQ":  # GPTQ quantization
@@ -67,6 +62,19 @@ class Model():
                     quantization_config=None # fix incompatibility between Transformers and Optimum GPTQ
                     # consequences: no CUDA kernels optimization, lose correct dequantization behavior,
                     # lose numerical stability guarantees, may have unexpected runtime errors
+                )
+
+            if self.quant_type == "bits":  # for 4-8 bits quantization
+                quant_config = BitsAndBytesConfig(
+                    load_in_4bit=True,  # or load_in_8bit=True
+                    bnb_4bit_compute_dtype="float16",
+                    bnb_4bit_use_double_quant=True,
+                    bnb_4bit_quant_type="nf4"
+                )
+                self.model = AutoModelForCausalLM.from_pretrained(
+                    self.model_id,
+                    device_map="auto",  # automatically places layers on GPU(s) if possible
+                    quantization_config=quant_config
                 )
 
         else:
