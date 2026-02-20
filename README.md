@@ -34,6 +34,17 @@ You'll get a message saying where your token was saved, should be something like
 The model will be downloaded the first time you will run this program and it will be saved at:
 `/home/your_user_name/.cache/huggingface/hub/`
 
+
+#### STEP 3) Installing Mega-Linter
+
+Follow the instructions in https://megalinter.io/latest/install-assisted/ 
+and keep in mind that you need node.js installed.
+
+To do so you only need to run two commands:
+1) `sudo apt install nodejs npm` to install node.js
+2) `npx mega-linter-runner --install` to install Mega-Linter
+
+
 ## Configuration file
 
 If you want to change the model, the name of the folder for the database, update the database or change verbosity, 
