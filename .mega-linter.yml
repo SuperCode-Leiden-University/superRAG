@@ -32,14 +32,15 @@ CLEAR_REPORT_FOLDER: true
 CPP_CPPLINT_ARGUMENTS: "--filter=-whitespace"
 C_CPPLINT_ARGUMENTS: "--filter=-whitespace"
 
-# only look in the code/ directory (but this assumes you downloaded mega-linter in the repository
-FILTER_REGEX_INCLUDE: (code/)
+# only look in the directory (but this assumes you downloaded mega-linter in the repository!)
+FILTER_REGEX_INCLUDE: (RAG-codebase/)
 
 # How much output the script will generate to the console: INFO (default), DEBUG, WARNING or ERROR. 
-LOG_LEVEL: INFO #ERROR 
+LOG_LEVEL: INFO
 
-# in theory to move the mega-linter folder
-#REPORT_OUTPUT_FOLDER: ../${GITHUB_WORKSPACE}/megalinter-reports
+# in theory to move the mega-linter folder, but it doesn't work :(
+#REPORT_OUTPUT_FOLDER: ../${GITHUB_WORKSPACE}/megalinter-reports/
+#REPORT_OUTPUT_FOLDER: "../../megalinter-reports/"
 
 # ---------------------------------------------------------------------------------------------------------------
 

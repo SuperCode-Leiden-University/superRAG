@@ -57,13 +57,20 @@ Now you can run Mega-Linter with: `npx mega-linter-runner --flavor <flavor_name>
 
 Flavors can be found at https://megalinter.io/latest/flavors/.
 
-Mega-Linter can be reconfigureted using the `.mega-linter.yml` file, present in this directory.
+Mega-Linter can be reconfigured using the `.mega-linter.yml` file, present in this directory.
 
 ## Configuration file
     
 If you want to change the model, the name of the folder for the database, update the database or change verbosity, 
 you should go to `config.yaml`.
 
+## Giving access to the code repository
+
+We used a "RAG-codebase/" folder to act as the code repository, which will be used to build the database, 
+the model can access the files but no changes will be applied directly to the contents of this repository.
+
+You can choose to use a different name or change the config files to point to a different folder. 
+In the second case keep in mind that you must change both `config.yaml` and `.mega-linter.yml`.
 
 ## Expanding this work
 

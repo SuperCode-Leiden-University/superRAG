@@ -1,11 +1,8 @@
 import inspect
-import sys
-import pkgutil
 import importlib
-from pathlib import Path
 from typing import get_type_hints
 
-from src.parse_config import verbose
+from src.configs.parse_config import verbose
 
 
 ##################################################################################################################
@@ -23,7 +20,7 @@ def tool(func):
 def get_tools():
     if verbose>0 : print(">> fetching available tools")
     #module = sys.modules[__name__] # only check this file
-    module = importlib.import_module("src.tools") # only check another file
+    module = importlib.import_module("src.tools.tools") # only check another file
     """ # for checking all files inside a directory named "tools"
     package = "tools"
     package_path = Path(__file__).parent

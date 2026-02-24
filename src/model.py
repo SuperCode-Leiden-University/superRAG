@@ -1,4 +1,3 @@
-import torch
 import json
 
 from transformers import pipeline, AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
@@ -6,8 +5,8 @@ from transformers import pipeline, AutoModelForCausalLM, AutoTokenizer, BitsAndB
 # BitsAndBytesConfig is for quantization
 from awq import AutoAWQForCausalLM
 
-from src.manage_tools import * # import all the tools
-from src.parse_config import verbose
+from src.tools.manage_tools import * # import all the tools
+from src.configs.parse_config import verbose
 
 class Model():
     # define variables and import the model

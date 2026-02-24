@@ -5,9 +5,9 @@ import numpy as np
 from datetime import datetime
 from langchain_huggingface import HuggingFaceEmbeddings
 
-from src.parse_config import verbose, emb_model_id, tools_dir, docs_dir, db_dir, update_db
+from src.configs.parse_config import verbose, emb_model_id, tools_dir, docs_dir, db_dir, update_db
 from src.database import Database
-from .manage_tools import tool
+from src.tools.manage_tools import tool
 
 
 
@@ -98,5 +98,5 @@ def search_database(query: str, n_retriv: int):
 @tool
 def run_megalinter(flavor: str):
     command = "npx mega-linter-runner --flavor "+flavor
-    # subprocess.run([command, "arg1", "arg2"], cwd="path/to/folder1") # run shell command
-    subprocess.run([command], shell=True) # run shell command
+    # subprocess.run([command, "arg1", "arg2"], cwd="path/to/folder/") # run shell command
+    subprocess.run([command], cwd="src/configs/", shell=True) # run shell command

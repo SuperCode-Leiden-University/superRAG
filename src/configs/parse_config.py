@@ -6,7 +6,7 @@ except ImportError:
 
 # ----------------------------------------------------------------------------------------------
 # loading variables from the configuration file (.yaml)
-vars = load(open("src/config.yaml", 'r'), Loader=Loader)
+vars = load(open("src/configs/config.yaml", 'r'), Loader=Loader)
 
 # ----------------------------------------------------------------------------------------------
 # general
