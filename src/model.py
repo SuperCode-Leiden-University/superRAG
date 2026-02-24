@@ -7,7 +7,7 @@ from transformers import pipeline, AutoModelForCausalLM, AutoTokenizer, BitsAndB
 from awq import AutoAWQForCausalLM
 
 from src.manage_tools import * # import all the tools
-from src.config import verbose
+from src.parse_config import verbose
 
 class Model():
     # define variables and import the model
@@ -103,7 +103,8 @@ class Model():
                            "proportional to the difficulty of the query: generic or multistep queries are more difficult."
                            "Moreover, if you search the database you should use the user prompt as it is "
                            "to query the database: do not simply the query.\n"
-                           "You must always respond with a JSON object and nothing else."
+                           "You must always respond with a JSON object and nothing else "
+                           "(comments are NOT allowed in the JSON object)."
             })
 
         # decide if the model needs a tool or to retrieve info from the DB

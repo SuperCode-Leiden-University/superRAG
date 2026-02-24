@@ -23,9 +23,10 @@ quant_type = vars["model"]["quant_type"] # valid values: ("full", "bits", "GPTQ"
 emb_model_id = vars["emb_model"] # model ID from HuggingFace
 
 # ----------------------------------------------------------------------------------------------
-# database (RAG)
+# tools & database (RAG)
+tools_dir = vars["docs_dir"]  # where I save the results from the agent's tools
 docs_dir  = vars["docs_dir"]  # where I save the files for RAG
-db_dir    = vars["db_dir"]    # where I save the vector database (db)
+db_dir    = vars["db_dir"]    # where I save the vector database (db) for RAG
 update_db = vars["update_db"] # if I want to update the db (for example because I changed some files)
 
 

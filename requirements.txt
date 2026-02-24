@@ -12,7 +12,8 @@ sentence-transformers
 accelerate
 bitsandbytes # for the quantized files
 #optimum # for the GPTQ models --> broken, internal incompatibilities with the new version of transformers
-#autoawq-kernels # for the AWQ models --> broken, internal incompatibilities with the new version of transformers
+#autoawq # for the AWQ models --> broken, internal incompatibilities with the new version of transformers
+#intel_extension_for_pytorch # for the AWQ models
 
 pyyaml # for the config file
 

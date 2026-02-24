@@ -1,6 +1,6 @@
 ---
 # general
-verbose: 1 # how much info is printed: 0=none, 1=little, 2=all
+verbose: 2 # how much info is printed: 0=none, 1=little, 2=all
 
 # chat model
 model:
@@ -23,7 +23,8 @@ model:
 # embedding model for building the database (for RAG)
 emb_model: sentence-transformers/msmarco-bert-base-dot-v5  # model ID from HuggingFace
 
-# database (RAG)
-docs_dir: test-code # where I save the files for RAG
-db_dir:   test-db   # where I save the vector database (db)
+# tools and database (RAG)
+tools_dir: tools-output # where I save the results from the agent's tools
+docs_dir:  RAG-codebase # where I save the files for RAG
+db_dir:    RAG-code-db  # where I save the vector database (db) for RAG
 update_db: false # if I want to update the db (for example because I changed some files)

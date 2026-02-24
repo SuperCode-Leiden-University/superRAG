@@ -1,14 +1,16 @@
 # PhD Leiden -- SuperCode
 
 ## Installation
-besides cloning the repository you'll need to to these 3 things:
+(Premise: this instructions assume you're using Linux.)
+
+Besides cloning the repository you'll need to to these 3 things:
 
 
 #### STEP 1) Creating a Virtual Environment:
 
 Just open the terminal and run:
 `python3 -m venv .venv`
-where ".venv" is the name of the virtual environment we used (you can change it if you don't like it).
+where "`.venv`" is the name of the virtual environment we used (you can change it if you don't like it).
 
 (NOTE: remember to use `ls -a` instead of just `ls` if you want to see hidden files and directories!)
 
@@ -38,15 +40,26 @@ The model will be downloaded the first time you will run this program and it wil
 #### STEP 3) Installing Mega-Linter
 
 Follow the instructions in https://megalinter.io/latest/install-assisted/ 
-and keep in mind that you need node.js installed.
+and keep in mind that you need both `node.js` and `Docker Engine` installed.
 
-To do so you only need to run two commands:
-1) `sudo apt install nodejs npm` to install node.js
-2) `npx mega-linter-runner --install` to install Mega-Linter
+To do so you only need to run the following commands:
+* `sudo apt install nodejs npm` to install node.js
+* `sudo apt install docker.io` to install Docker Engine
+* `npx mega-linter-runner --install` to install Mega-Linter
+The order doesn't matter.
+
+Note that if this is the first time you're running docker, you'll need to run 2 addictional commands:
+1) `sudo groupadd docker`, this may say "group already exists" and that's fine
+2) `sudo usermod -aG docker $USER`, this add the user to the docker group so you'll have permission to run it
+Finally you need to logout & login again (or reboot) to update group membership.
+
+Now you can run Mega-Linter with: `npx mega-linter-runner --flavor <flavor_name>`.
+
+Flavors can be found at https://megalinter.io/latest/flavors/.
 
 
 ## Configuration file
-
+    
 If you want to change the model, the name of the folder for the database, update the database or change verbosity, 
 you should go to `config.yaml`.
 

@@ -1,10 +1,11 @@
 import re
+import subprocess
 import matplotlib.pyplot as plt
 import numpy as np
 from datetime import datetime
 from langchain_huggingface import HuggingFaceEmbeddings
 
-from src.config import verbose, emb_model_id, docs_dir, db_dir, update_db
+from src.parse_config import verbose, emb_model_id, tools_dir, docs_dir, db_dir, update_db
 from src.database import Database
 from .manage_tools import tool
 
@@ -56,7 +57,7 @@ def draw_graph(expr: str, x_range: list[float]):
         x_points = np.linspace(x_range[0], x_range[1], 100)
         y_points = np.array([func(x) for x in x_points])
         plt.plot(x_points, y_points)
-        plt.savefig("test-tools-results/graph.png")
+        plt.savefig(tools_dir+"/graph.png")
         plt.close()
         return "the graph was saved as graph.png in the directory 'test-tools-results/'"
     except Exception as e:
@@ -91,3 +92,11 @@ def search_database(query: str, n_retriv: int):
     end = datetime.now()
     if verbose>0 : print(">> Time to Retrieval =", end-start)
     return retriv_docs
+
+
+# ----------------------------------------------------------------------------------------------
+@tool
+def run_megalinter(flavor: str):
+    command = "npx mega-linter-runner --flavor "+flavor
+    # subprocess.run([command, "arg1", "arg2"], cwd="path/to/folder1") # run shell command
+    subprocess.run([command], shell=True) # run shell command

@@ -15,7 +15,8 @@ Thumbs.db
 .env
 .venv/
 .idea/
+megalinter-reports/
 
 # ignore testing material
-#test*/
-test*.txt
+test*/
+test*.*

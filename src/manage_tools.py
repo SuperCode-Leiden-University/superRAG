@@ -5,7 +5,7 @@ import importlib
 from pathlib import Path
 from typing import get_type_hints
 
-from src.config import verbose
+from src.parse_config import verbose
 
 
 ##################################################################################################################

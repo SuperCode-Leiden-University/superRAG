@@ -3,7 +3,7 @@ from langchain_community.document_loaders import DirectoryLoader, TextLoader
 from langchain_community.vectorstores import FAISS
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-from src.config import verbose
+from src.parse_config import verbose
 
 
 class Database():
@@ -21,7 +21,7 @@ class Database():
             loader = DirectoryLoader(
                 "./" + self.docs_dir, +"/",
                 loader_cls=TextLoader,
-                glob="**/*.*",
+                glob="**/*.*", # PROBLEM: the Mega-Linter directory is also here
                 show_progress=True,
                 use_multithreading=True
             )
