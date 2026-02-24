@@ -53,10 +53,11 @@ Note that if this is the first time you're running docker, you'll need to run 2 
 2) `sudo usermod -aG docker $USER`, this add the user to the docker group so you'll have permission to run it
 Finally you need to logout & login again (or reboot) to update group membership.
 
-Now you can run Mega-Linter with: `npx mega-linter-runner --flavor <flavor_name>`.
+Now you can run Mega-Linter with: `npx mega-linter-runner --flavor <flavor_name>` (you won't need to do this manually).
 
 Flavors can be found at https://megalinter.io/latest/flavors/.
 
+Mega-Linter can be reconfigureted using the `.mega-linter.yml` file, present in this directory.
 
 ## Configuration file
     
