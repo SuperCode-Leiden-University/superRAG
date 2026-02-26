@@ -18,7 +18,6 @@ from src.tools.manage_tools import tool
 @tool
 def calculator(expr: str): # arguments should have a defined type
     if verbose>0 : print(">> using the calculator")
-    calculator.__doc__ = "Calculate the result of a mathematical expression."
 
     # remove everything that isn't a math symbol (to avoid evaluating malicious code)
     safe_expr = re.sub(r'[^0-9+\-*/().[] ]', '', expr)
@@ -38,11 +37,14 @@ def calculator(expr: str): # arguments should have a defined type
         print(f"\nAn error occurred:\n{e}\n")
         return "Couldn't compute the result."
 
+# describe the use of the tool
+calculator.__doc__ = "Calculate the result of a mathematical expression."
+
+
 # ----------------------------------------------------------------------------------------------
 @tool
 def draw_graph(expr: str, x_range: list[float]):
     if verbose>0 : print(">> using the draw_graph")
-    draw_graph.__doc__ = "Draw the graph of a function given the expression and x range."
     try:
         if verbose>1 : print(">> converting the function")
         # remove everything that isn't a math symbol (to avoid evaluating malicious code)
@@ -63,6 +65,9 @@ def draw_graph(expr: str, x_range: list[float]):
     except Exception as e:
         print(f"\nAn error occurred:\n{e}\n")
         return "I couldn't draw the graph."
+
+# describe the use of the tool
+draw_graph.__doc__ = "Plot a function given its expression and x range."
 
 
 # ----------------------------------------------------------------------------------------------
@@ -93,10 +98,45 @@ def search_database(query: str, n_retriv: int):
     if verbose>0 : print(">> Time to Retrieval =", end-start)
     return retriv_docs
 
+# describe the use of the tool
+search_database.__doc__ = "Look at the codebase for the project and retrieve relevant information."
+
 
 # ----------------------------------------------------------------------------------------------
 @tool
 def run_megalinter(flavor: str):
     command = "npx mega-linter-runner --flavor "+flavor
-    # subprocess.run([command, "arg1", "arg2"], cwd="path/to/folder/") # run shell command
-    subprocess.run([command], cwd="src/configs/", shell=True) # run shell command
+    # subprocess.run([command, "arg1", "arg2"], cwd="path/to/folder/", shell=True) # run shell command
+    subprocess.run([command], shell=True) # run shell command
+    f = open("megalinter-reports/megalinter.log")
+    logs = f.read()
+    f.close()
+    return logs
+
+# describe the use of the tool
+run_megalinter.__doc__ = """
+    Use a static analysis tool to find errors and warnings in the codebase. 
+    Available flavors are:
+      - 'all': to include all possible linters;
+      - 'c_cpp': for pure C/C++ projects;
+      - 'ci_light': for CI items (Dockerfile, Jenkinsfile, JSON/YAML schemas,XML);
+      - 'cupcake': for the most commonly used languages;
+      - 'documentation': for documentation projects;
+      - 'dotnet': for C, C++, C# or VB based projects;
+      - 'dotnetweb': for C, C++, C# or VB based projects with JS/TS;
+      - 'formatters': contains only formatters;
+      - 'go': for GO based projects;
+      - 'java': for JAVA based projects;
+      - 'javascript': for JAVASCRIPT or TYPESCRIPT based projects;
+      - 'php': for PHP based projects;
+      - 'python': for PYTHON based projects;
+      - 'ruby': for RUBY based projects;
+      - 'rust': for RUST based projects;
+      - 'salesforce': for Salesforce based projects;
+      - 'security': for security;
+      - 'swift': for SWIFT based projects;
+      - 'terraform': for TERRAFORM based projects;
+"""
+
+
+

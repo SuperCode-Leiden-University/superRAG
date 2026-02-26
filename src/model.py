@@ -3,7 +3,7 @@ import json
 from transformers import pipeline, AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 # pipeline is for direct inference, with AutoModelForCausalLM, AutoTokenizer you load the raw model
 # BitsAndBytesConfig is for quantization
-from awq import AutoAWQForCausalLM
+#from awq import AutoAWQForCausalLM
 
 from src.tools.manage_tools import * # import all the tools
 from src.configs.parse_config import verbose
@@ -43,14 +43,14 @@ class Model():
                     device_map="auto",  # automatically places layers on GPU(s) if possible
                     #dtype="auto"
                 )
-
+            """
             if self.quant_type == "AWQ":  # AWQ quantization
                 self.model = AutoAWQForCausalLM.from_quantized(
                     self.model_id,
                     device_map="auto",  # automatically places layers on GPU(s) if possible
                     #dtype="auto"
                 )
-
+            """
             if self.quant_type == "GPTQ":  # GPTQ quantization
                 self.tokenizer = AutoTokenizer.from_pretrained(self.model_id, trust_remote_code=True)
                 self.model = AutoModelForCausalLM.from_pretrained(
