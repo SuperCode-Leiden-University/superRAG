@@ -61,7 +61,7 @@ def draw_graph(expr: str, x_range: list[float]):
         plt.plot(x_points, y_points)
         plt.savefig(tools_dir+"/graph.png")
         plt.close()
-        return "the graph was saved as graph.png in the directory 'test-tools-results/'"
+        return "the graph was saved as graph.png in the directory '"+tools_dir+"'"
     except Exception as e:
         print(f"\nAn error occurred:\n{e}\n")
         return "I couldn't draw the graph."
@@ -103,13 +103,14 @@ search_database.__doc__ = "Look at the codebase for the project and retrieve rel
 
 
 # ----------------------------------------------------------------------------------------------
-@tool
+#@tool
 def run_megalinter(flavor: str):
+    path = "megalinter-reports/megalinter.log"
     command = "npx mega-linter-runner --flavor "+flavor
     # subprocess.run([command, "arg1", "arg2"], cwd="path/to/folder/", shell=True) # run shell command
     subprocess.run([command], shell=True) # run shell command
-    f = open("megalinter-reports/megalinter.log")
-    logs = f.read()
+    f = open(path)
+    logs = "Logs saved in "+path+"\n\nContents of the logs:\n\n"+f.read()
     f.close()
     return logs
 

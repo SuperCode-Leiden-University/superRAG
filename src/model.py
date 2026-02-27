@@ -88,8 +88,21 @@ class Model():
             # this is the chat history
             self.messages.append({
                 "role": "system",
-                "content": "You are a helpful AI assistant with access to a database and external tools."
-                           "You must always respond normally in natural language. "
+                "content": "You are a helpful AI assistant with access to a database and external tools. "
+                           "When tool results are provided, treat them as authoritative facts. "
+                           "Your job is to:"
+                           "\n"
+                           "- Use the tool outputs as the primary source of truth."
+                           "\n"
+                           "- Incorporate the tool results directly into your final answer."
+                           "\n"
+                           "- Keep all names, numbers, and factual details exactly as returned."
+                           "\n"
+                           "- Never describe the tool‑use process, reasoning steps, or how results were obtained."
+                           "\n"
+                           "- Never invent alternative answers when tool results are available. "
+                           "You may summarize the results if the result is very long, "
+                           "but you must not add unsupported details."
             })
 
             # this is for deciding if a tool is needed (and which one)
@@ -97,13 +110,21 @@ class Model():
                 "role": "system",
                 "content": f"You are a classier for tool selection."
                            f"There are some tools described in:\n{self.schemas}\n"
-                           "Your main job is to decide if there is a suitable tool among the ones available.\n"
+                           "Your main job is to decide if there are suitable tools among the ones available "
+                           "and in which order they should be used."
+                           "Use the doc and name arguments to decide if a tool is relevant or not."
+                           "\n"
                            "If you need to search the database you should request a number of retrieved documents "
                            "proportional to the difficulty of the query: generic or multistep queries are more difficult."
                            "Moreover, if you search the database you should use the user prompt as it is "
-                           "to query the database: do not simply the query.\n"
-                           "You must always respond with a JSON object and nothing else "
-                           "(comments are NOT allowed in the JSON object)."
+                           "to query the database: do not simply the query."
+                           "\n"
+                           "If you need to run the static analysis tool, you should first check the database "
+                           "and find out the language was used in order to use the most appropriate flavor."
+                           "\n"
+                           "You must always respond with a list of JSON objects and nothing else, "
+                           "you can include multiple tools if needed, or an empty list if none of the tools fits "
+                           "(comments are NOT allowed inside the JSON object)."
             })
 
         # decide if the model needs a tool or to retrieve info from the DB
@@ -120,16 +141,24 @@ class Model():
             self.messages.append({
                 "role": "user",
                 "content": f"Use the following information to answer the question in natural language.\n\n"
-                           f"### Context\n{retriv_docs}\n\n"
+                           #f"### Context\n{retriv_docs}\n\n"
                            f"### Question\n{user_prompt}"
                 # it would be nice to automatically retrieve the machine and language of the code as extra info
             })
 
-            self.messages.append({
-                "role": "tool",
-                #"name": "<tool_name>",
-                "content": tool_results
-            })
+            for tool in tool_results:
+                # """
+                self.messages.append({
+                    "role": "system",
+                    "content": "The following data comes from tools. Treat it as correct and final. "
+                               "Incorporate the tool results directly into your final answer. "
+                               "Do not mention tools or describe how the data was obtained."
+                })  # """
+                self.messages.append({
+                    "role": "tool",
+                    "name": tool["name"],
+                    "content": tool["result"]
+                })
 
     # ----------------------------------------------------------------------------------------------
     # apply chat templates, generate and return an answer
@@ -187,29 +216,44 @@ class Model():
         # apply chat templates and return an answer
         response = self.chat_template(self.tool_messages)
         if verbose>1 : print("-------------------------------------- \n## tool: ", response, "\n--------------------------------------", sep="")
+        tool_results = []
 
         if "{" in response:
             if verbose>0 : print(">> parsing response for tools")
             # sometimes the model adds ```json at the beginning and ``` at the end
             # or it may add some unrequired explanation
-            begin = response.find("{")  # find the first {, which is where the json begins
-            end = response.rfind("}")+1 # find the last }, which is where the json ends
-            if verbose>2 : print(">> json obj:\n", response[begin:end])
-            tool_request = json.loads(response[begin:end])
+            # json = [ { "name": "tool_name", "arguments": { "arg_name": "value"} }, ... ]
 
-            for tool_name in self.tools.keys():
-                if verbose>1 : print(">> checking tool:", tool_name)
-                if tool_name == tool_request["name"]:
-                    if verbose>0 : print(">> found tool:", tool_name)
-                    tool_results = dispatch_tool(self.tools, tool_request["name"], tool_request["arguments"])
-                    break
+            # find the actual start and end of the json
+            if verbose>2 :
+                begin = response.find("[")
+                end = response.rfind("]") + 1
+                print(">> json obj:\n", response[begin:end], sep='')
 
-        else:
-            tool_results = "no tool was used"
+            tool_end = 0 ; tool_temp = 1 # initializing
+            while tool_temp>0 :
+                # find the actual start and end of each tool
+                tool_begin = tool_end + response[tool_end:].find("{")
+                tool_temp = response[tool_end:].find("},")+1 # this will be 0 for the last tool
+                if tool_temp!=0:
+                    tool_end = tool_end + tool_temp # find the second "}" for each tool
+                else:
+                    tool_end = response.rfind("}")+1
 
-        #if verbose>2 : print(">> tool_results:", tool_results)
+                #print(">> parsing tool:", response[tool_begin:tool_end])
+                tool_request = json.loads(response[tool_begin:tool_end])
+                tool_name = tool_request["name"]
+                if tool_name in self.tools.keys():
+                    if verbose > 0: print(">> found tool:", tool_name)
+                    tool_result = dispatch_tool(self.tools, tool_name, tool_request["arguments"])
+                    # save the results to pass them to the model
+                    tool_results.append({
+                        "name" : tool_name,
+                        "result" : tool_result
+                    })
+                    if verbose > 1: print(">> tool result:", tool_result)
 
-        self.tool_messages.pop() # remove the last item
+        #self.tool_messages.pop() # remove the last item
 
         # include the retrieved docs as context and feed it to the model
         self.tool_classifier = False

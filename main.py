@@ -32,8 +32,12 @@ model = Model(model_id, raw_model, quant_type)
 ##### CHAT WITH THE MODEL
 while True:
     # ask the user to write a query
-    user_prompt = input("\nEnter your query (type 'q' or 'quit' to exit) \n--------------------------------------\n## Ut: ")
-    print("--------------------------------------")
+    user_prompt = input(
+            "\nEnter your query (type 'q' or 'quit' to exit) \n"
+            "----------------------------------------------------------------------------\n"
+            "## Ut: "
+    )
+    print(  "----------------------------------------------------------------------------\n")
 
     # check if user wants to quit
     if user_prompt.lower() == "quit" or user_prompt.lower() == "q":
@@ -47,7 +51,13 @@ while True:
 
         end = datetime.now()
         if verbose>0 : print(">> Time to First Token =", end-start)
-        print("-------------------------------------- \n## AI: ", response, "\n--------------------------------------", sep="")
+        print(
+            "\n----------------------------------------------------------------------------\n"
+            "## AI: ",
+            response,
+            "\n----------------------------------------------------------------------------\n",
+            sep=""
+        )
 
     except Exception as e:
         print(f"\nAn error occurred:\n{e}\n")

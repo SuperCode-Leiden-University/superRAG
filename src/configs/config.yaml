@@ -1,6 +1,6 @@
 ---
 # general
-verbose: 10 # how much info is printed: 0=none, 1=little, 2=all
+verbose: 2 # how much info is printed: 0=none, 1=little, 2=lots, 3=all
 
 # chat model
 model:
@@ -24,7 +24,7 @@ model:
 emb_model: sentence-transformers/msmarco-bert-base-dot-v5  # model ID from HuggingFace
 
 # tools (AGENT)
-tools_dir: src/tools/tools-output # where I save the results from the agent's tools
+tools_dir: src/tools/tools-outputs # where I save the results from the agent's tools
 
 # database (RAG)
 docs_dir:  RAG-codebase # where I save the files for RAG
