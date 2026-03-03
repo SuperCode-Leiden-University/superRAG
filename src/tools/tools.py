@@ -67,7 +67,7 @@ def draw_graph(expr: str, x_range: list[float]):
         return "I couldn't draw the graph."
 
 # describe the use of the tool
-draw_graph.__doc__ = "Plot a function given its expression and x range."
+draw_graph.__doc__ = "Plot a function given its mathematical expression and x range."
 
 
 # ----------------------------------------------------------------------------------------------
@@ -99,16 +99,21 @@ def search_database(query: str, n_retriv: int):
     return retriv_docs
 
 # describe the use of the tool
-search_database.__doc__ = "Look at the codebase for the project and retrieve relevant information."
+search_database.__doc__ = """
+    Retrieve relevant information from the codebase of the project, for example:
+    - the programming languages used;
+    - functions writen in the code;
+    - what the code does and how.
+"""
 
 
 # ----------------------------------------------------------------------------------------------
-#@tool
+@tool
 def run_megalinter(flavor: str):
     path = "megalinter-reports/megalinter.log"
     command = "npx mega-linter-runner --flavor "+flavor
     # subprocess.run([command, "arg1", "arg2"], cwd="path/to/folder/", shell=True) # run shell command
-    subprocess.run([command], shell=True) # run shell command
+    #subprocess.run([command], shell=True) # run shell command
     f = open(path)
     logs = "Logs saved in "+path+"\n\nContents of the logs:\n\n"+f.read()
     f.close()
