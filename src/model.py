@@ -212,7 +212,7 @@ class Model():
 
         if "{" in response:
             if verbose > 0: print(">> parsing response for tools")
-            # json = ```json [ { "name": "tool_name", "arguments": { "arg_name": "value"} }, ... ] ```
+            # json is written as: ```json [ { "name": "tool_name", "arguments": { "arg_name": "value"} }, ... ] ```
 
             # find the actual start and end of the json
             if verbose > 2:
@@ -242,7 +242,7 @@ class Model():
                         "name": tool_name,
                         "result": tool_result
                     })
-                    # if verbose > 2: print(">> tool result:", tool_result)
+                    if verbose > 2: print(">> tool result:", tool_result)
 
         # self.tool_messages.pop() # remove the last item
 
