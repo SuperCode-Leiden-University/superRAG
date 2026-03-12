@@ -264,13 +264,13 @@ class Model():
         # apply chat templates and return an answer
         response = self.chat_template(self.tool_messages)
         if verbose>1 : print("-------------------------------------- \n## tool manager: ", response, "\n--------------------------------------", sep="")
-        self.parse_tools(response)
+        tool_results = self.parse_tools(response)
 
-        # revise the answer to implement the correct dependences
-        self.message_format("revise your previous answer to make it compliant with the tools requirements.")
+        # revise the answer to implement the correct dependencies
+        self.message_format("revise your previous answer to make it compliant with the tools requirements. Tools results are:", tool_results)
         response = self.chat_template(self.tool_messages)
         if verbose>1 : print("-------------------------------------- \n## revised tool manager: ", response, "\n--------------------------------------", sep="")
-        self.parse_tools(response)
+        tool_results = self.parse_tools(response)
 
         # include the retrieved docs as context and feed it to the model
         self.tool_classifier = False
