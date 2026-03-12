@@ -39,6 +39,12 @@ def calculator(expr: str): # arguments should have a defined type
 
 # describe the use of the tool
 calculator.__doc__ = "Calculate the result of a mathematical expression."
+calculator._tool_metadata = {
+            "provides": "numerical solution of a math equation",
+            "requires": "math expression provided by the user",
+            "tags": ["math", "calculator", "equation", "solve", "result"],
+            "examples": ["what is the result of (8261+8257)/16290*545-46303?"],
+        }
 
 
 # ----------------------------------------------------------------------------------------------
@@ -68,7 +74,13 @@ def draw_graph(expr: str, x_range: list[float]):
 
 # describe the use of the tool
 draw_graph.__doc__ = "Plot a function given its mathematical expression and x range."
-
+draw_graph._tool_metadata = {
+            "provides": "path where the graph was saved",
+            "requires": "math function provided by the user and range of the function provided by the user, "
+                        "use [-10, +10] if no range is given",
+            "tags": ["math", "graph", "plot", "figure"],
+            "examples": ["plot y=3*x+2 for x in [0,5]"],
+        }
 
 # ----------------------------------------------------------------------------------------------
 @tool
@@ -105,14 +117,26 @@ search_database.__doc__ = """
     - functions writen in the code;
     - what the code does and how.
 """
-
+search_database._tool_metadata = {
+            "provides": "chunks of documents with relevant information and metadata of the documents "
+                        "(like source file and programming language)",
+            "requires": """
+            query for searching the database and the number of retrieved docs.
+            n_retriev should be: 
+            - around 1-5 for easy queries, with straightforward answer; 
+            - around 5-10 for medium difficulty queries, where the answer requires few pieces of information; 
+            - around 10-15 for generic or complex queries, where the answer may requires many pieces of information. 
+            """,
+            "tags": ["search", "database", "codebase", "project"],
+            "examples": ["find the file where I defined this function"],
+        }
 
 # ----------------------------------------------------------------------------------------------
 @tool
 def run_megalinter(flavor: str):
     path = "megalinter-reports/megalinter.log"
     command = "npx mega-linter-runner --flavor "+flavor
-    # subprocess.run([command, "arg1", "arg2"], cwd="path/to/folder/", shell=True) # run shell command
+    # run shell command with: subprocess.run([command, "arg1", "arg2"], cwd="path/to/folder/", shell=True)
     #subprocess.run([command], shell=True) # run shell command
     f = open(path)
     logs = "Logs saved in "+path+"\n\nContents of the logs:\n\n"+f.read()
@@ -120,29 +144,33 @@ def run_megalinter(flavor: str):
     return logs
 
 # describe the use of the tool
-run_megalinter.__doc__ = """
-    Use a static analysis tool to find errors and warnings in the codebase. 
-    Available flavors are:
-      - 'all': to include all possible linters;
-      - 'c_cpp': for pure C/C++ projects;
-      - 'ci_light': for CI items (Dockerfile, Jenkinsfile, JSON/YAML schemas,XML);
-      - 'cupcake': for the most commonly used languages;
-      - 'documentation': for documentation projects;
-      - 'dotnet': for C, C++, C# or VB based projects;
-      - 'dotnetweb': for C, C++, C# or VB based projects with JS/TS;
-      - 'formatters': contains only formatters;
-      - 'go': for GO based projects;
-      - 'java': for JAVA based projects;
-      - 'javascript': for JAVASCRIPT or TYPESCRIPT based projects;
-      - 'php': for PHP based projects;
-      - 'python': for PYTHON based projects;
-      - 'ruby': for RUBY based projects;
-      - 'rust': for RUST based projects;
-      - 'salesforce': for Salesforce based projects;
-      - 'security': for security;
-      - 'swift': for SWIFT based projects;
-      - 'terraform': for TERRAFORM based projects;
-"""
-
+run_megalinter.__doc__ = "Use a static analysis tool to find errors and warnings in the codebase."
+run_megalinter._tool_metadata = {
+            "provides": "report with errors, warnings and best practices suggestions for the codebase",
+            "requires": "flavor from the user or programming language, which can be found by searching the database",
+            "tags": ["static analysis", "errors", "warnings"],
+            "examples": """
+            Available flavors are:
+            - 'all': to include all possible linters;
+            - 'c_cpp': for pure C/C++ projects;
+            - 'ci_light': for CI items (Dockerfile, Jenkinsfile, JSON/YAML schemas,XML);
+            - 'cupcake': for the most commonly used languages;
+            - 'documentation': for documentation projects;
+            - 'dotnet': for C, C++, C# or VB based projects;
+            - 'dotnetweb': for C, C++, C# or VB based projects with JS/TS;
+            - 'formatters': contains only formatters;
+            - 'go': for GO based projects;
+            - 'java': for JAVA based projects;
+            - 'javascript': for JAVASCRIPT or TYPESCRIPT based projects;
+            - 'php': for PHP based projects;
+            - 'python': for PYTHON based projects;
+            - 'ruby': for RUBY based projects;
+            - 'rust': for RUST based projects;
+            - 'salesforce': for Salesforce based projects;
+            - 'security': for security;
+            - 'swift': for SWIFT based projects;
+            - 'terraform': for TERRAFORM based projects;
+            """,
+        }
 
 

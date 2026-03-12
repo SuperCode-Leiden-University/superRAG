@@ -1,7 +1,8 @@
 import json
-
-from transformers import pipeline, AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+import threading
+from transformers import pipeline, AutoModelForCausalLM, AutoTokenizer, TextIteratorStreamer, BitsAndBytesConfig
 # pipeline is for direct inference, with AutoModelForCausalLM, AutoTokenizer you load the raw model
+# TextIteratorStreamer is for printing the answer as it is being generated
 # BitsAndBytesConfig is for quantization
 #from awq import AutoAWQForCausalLM
 
@@ -36,6 +37,7 @@ class Model():
         ##### IMPORTING THE MODEL
         if self.raw_model:
             self.tokenizer = AutoTokenizer.from_pretrained(self.model_id)
+            self.streamer = TextIteratorStreamer(self.tokenizer, skip_prompt=True, skip_special_tokens=True)
 
             if self.quant_type == "full":  # full precision
                 self.model = AutoModelForCausalLM.from_pretrained(
@@ -53,6 +55,7 @@ class Model():
             """
             if self.quant_type == "GPTQ":  # GPTQ quantization
                 self.tokenizer = AutoTokenizer.from_pretrained(self.model_id, trust_remote_code=True)
+                self.streamer = TextIteratorStreamer(self.tokenizer, skip_prompt=True, skip_special_tokens=True)
                 self.model = AutoModelForCausalLM.from_pretrained(
                     self.model_id,
                     device_map="auto",  # automatically places layers on GPU(s) if possible
@@ -88,43 +91,42 @@ class Model():
             # this is the chat history
             self.messages.append({
                 "role": "system",
-                "content": "You are a helpful AI assistant with access to a database and external tools. "
-                           "When tool results are provided, treat them as authoritative facts. "
-                           "Your job is to:"
-                           "\n"
-                           "- Use the tool outputs as the primary source of truth."
-                           "\n"
-                           "- Incorporate the tool results directly into your final answer."
-                           "\n"
-                           "- Keep all names, numbers, and factual details exactly as returned."
-                           "\n"
-                           "- Never describe the tool‑use process, reasoning steps, or how results were obtained."
-                           "\n"
-                           "- Never invent alternative answers when tool results are available. "
-                           "You may summarize the results if the result is very long, "
-                           "but you must not add unsupported details."
+                "content": """
+                You are a helpful AI assistant with access to a database and external tools. 
+                When tool results are provided, treat them as authoritative facts. 
+                Your job is to:
+                - Use the tool outputs as the primary source of truth.
+                - Incorporate the tool results directly into your final answer.
+                - Keep all names, numbers, and factual details exactly as returned.
+                - Never describe the tool‑use process, reasoning steps, or how results were obtained.
+                - Never invent alternative answers when tool results are available. 
+                You may summarize the results if the result is very long, 
+                but you must not add unsupported details.
+                """
             })
 
             # this is for deciding if a tool is needed (and which one)
             self.tool_messages.append({
                 "role": "system",
-                "content": f"You are a classier for tool selection."
-                           f"There are some tools described in:\n{self.schemas}\n"
-                           "Your main job is to decide if there are suitable tools among the ones available "
-                           "and in which order they should be used."
-                           "Use the doc and name arguments to decide if a tool is relevant or not."
-                           "\n"
-                           "If you need to search the database you should request a number of retrieved documents "
-                           "proportional to the difficulty of the query: generic or multistep queries are more difficult."
-                           "Moreover, if you search the database you should use the user prompt as it is "
-                           "to query the database: do not simply the query."
-                           "\n"
-                           "If you need to run the static analysis tool, you should first check the database "
-                           "and find out the language was used in order to use the most appropriate flavor."
-                           "\n"
-                           "You must always respond with a list of JSON objects and nothing else, "
-                           "you can include multiple tools if needed, or an empty list if none of the tools fits "
-                           "(comments are NOT allowed inside the JSON object)."
+                "content": f""" You are a classier for tool selection. There are some tools described in:\n{self.schemas}
+                Your job is to return a list of JSON objects with tools are relevant to the user's request in the order they must be called.
+                You must follow all the following guidelines step-by-step:
+                
+                1. Determine the final goal of the user request. If multiple goals are required or the final goal is complex, then break down the user request into simpler sub-tasks.
+                2. For each task, use the schemas as reference to determine relevant tools that can provide useful information that match the user's query.
+                3. For each relevant tool, use the schemas as reference to determine if the tool has requirements that can be provided by other tools.
+                4. Built a list of JSON objects (formatted as: ```json [...] ```) with the tools and their arguments (reference the schemas to check the required argument for each tool), you can include multiple tools if needed, or return an empty list if none of the tools fits.
+                5. Reorder the list so that tools that provide requirements are listed BEFORE relevant tools.
+                
+                Additional instructions:
+                - When calling 'run_megalinter' the flavor should align with the programming language unless the user specify a specific flavor. You must NEVER try to guess the flavor and must NEVER assume the programming language.
+                - When calling 'search_database' you must first determine the level of complexity of the query (multi-step, broad or generic questions are considered complex, single-step or straightforward queries are considered easy) and determine the number of retrieved documents 'n_retriev' based on that (refer to the schema).
+                - Comments are NOT allowed inside JSON objects, you may add comments before or after the json markers (```json [...] ```).
+                - If you see the following pattern: 'var_name'=(math expression) you need to call the calculator to obtain 'var_name'=(result of the math expression) before using 'var_name'.
+                
+                Example: if the static analysis tool is relevant, check if the user provided a programming language or a flavor, if not than you need to first search the database to find out the programming language, than choose the flavor that matches the programming language.
+                In this case the json object will include the 'search_database' tool before the 'run_megalinter' tool.
+                """
             })
 
         # decide if the model needs a tool or to retrieve info from the DB
@@ -143,17 +145,15 @@ class Model():
                 "content": f"Use the following information to answer the question in natural language.\n\n"
                            #f"### Context\n{retriv_docs}\n\n"
                            f"### Question\n{user_prompt}"
-                # it would be nice to automatically retrieve the machine and language of the code as extra info
             })
 
             for tool in tool_results:
-                # """
                 self.messages.append({
                     "role": "system",
                     "content": "The following data comes from tools. Treat it as correct and final. "
                                "Incorporate the tool results directly into your final answer. "
                                "Do not mention tools or describe how the data was obtained."
-                })  # """
+                })
                 self.messages.append({
                     "role": "tool",
                     "name": tool["name"],
@@ -182,8 +182,18 @@ class Model():
                     return_tensors="pt",
                 ).to(self.model.device)
 
-            outputs = self.model.generate(**inputs, max_new_tokens=1200)
-            response = self.tokenizer.decode(outputs[0][inputs["input_ids"].shape[-1]:], skip_special_tokens=True)
+            def generate():
+                self.model.generate(**inputs, max_new_tokens=1200, streamer=self.streamer)
+            #response = self.tokenizer.decode(outputs[0][inputs["input_ids"].shape[-1]:], skip_special_tokens=True) # wait for the whole answer before printing
+
+            # this is for printing the tokens as they are generated
+            thread = threading.Thread(target=generate)
+            thread.start()
+            response = ""
+            for token in self.streamer:
+                print(token, end="", flush=True)
+                response += token
+            print()
 
         else:
             """ Note: chat structure is the following
@@ -215,19 +225,17 @@ class Model():
 
         # apply chat templates and return an answer
         response = self.chat_template(self.tool_messages)
-        if verbose>1 : print("-------------------------------------- \n## tool: ", response, "\n--------------------------------------", sep="")
+        if verbose>1 : print("-------------------------------------- \n## tool manager: ", response, "\n--------------------------------------", sep="")
         tool_results = []
 
         if "{" in response:
             if verbose>0 : print(">> parsing response for tools")
-            # sometimes the model adds ```json at the beginning and ``` at the end
-            # or it may add some unrequired explanation
-            # json = [ { "name": "tool_name", "arguments": { "arg_name": "value"} }, ... ]
+            # json = ```json [ { "name": "tool_name", "arguments": { "arg_name": "value"} }, ... ] ```
 
             # find the actual start and end of the json
             if verbose>2 :
-                begin = response.find("[")
-                end = response.rfind("]") + 1
+                begin = response.rfind("```json")+7
+                end = response.rfind("```")
                 print(">> json obj:\n", response[begin:end], sep='')
 
             tool_end = 0 ; tool_temp = 1 # initializing
@@ -251,7 +259,7 @@ class Model():
                         "name" : tool_name,
                         "result" : tool_result
                     })
-                    if verbose > 1: print(">> tool result:", tool_result)
+                    #if verbose > 2: print(">> tool result:", tool_result)
 
         #self.tool_messages.pop() # remove the last item
 

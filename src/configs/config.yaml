@@ -1,14 +1,15 @@
 ---
 # general
-verbose: 2 # how much info is printed: 0=none, 1=little, 2=lots, 3=all
+verbose: 10 # how much info is printed: 0=none, 1=little, 2=lots, 3=all
 
 # chat model
 model:
-    ID: # model ID from HuggingFace
-        #Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF       # file size = 9.76 GB
-        Qwen/Qwen2.5-Coder-1.5B-Instruct            # file size = 3.1 GB
-        #Qwen/Qwen2.5-Coder-1.5B-Instruct-AWQ        # file size = 1.63 GB
-        #Qwen/Qwen2.5-Coder-1.5B-Instruct-GPTQ-Int4  # file size = 1.16 GB
+    ID: # model ID from HuggingFace, size for Qwen: 32B, 14B, 7B, 3B, 1.5B, 0.5B,
+        # file size (for 1.5B) is: GPTQ-Int4 (1.16 GB) ~ AWQ (1.63 GB) < full (3.1 GB) < GGUF (9.76 GB)
+        #Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF
+        Qwen/Qwen2.5-Coder-3B-Instruct
+        #Qwen/Qwen2.5-Coder-1.5B-Instruct-AWQ
+        #Qwen/Qwen2.5-Coder-1.5B-Instruct-GPTQ-Int4
     raw_model: true
     quant_type: full # True if the model is loaded directly, False if loaded through pipeline
     # valid values: ("full", "AWQ", "GPTQ", "bits") --> check file formats!!!

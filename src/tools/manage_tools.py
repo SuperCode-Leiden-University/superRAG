@@ -9,6 +9,13 @@ from src.configs.parse_config import verbose
 # tool decorator
 def tool(func):
     func.__is_tool__ = True
+
+    func._tool_metadata = {
+            "provides": None,
+            "requires": None,
+            "tags": None,
+            "examples": None,
+        }
     return func
 
 
@@ -51,10 +58,11 @@ def build_tool_schema(func):
                 "type": "object",
                 "properties": props,
                 "required": list(props.keys())
-            }
+            },
+            "x_metadata" : func._tool_metadata,
         }
     }
-    if verbose>2 : print(scheme)
+    if verbose>2 : print(scheme,"\n")
     return scheme
 
 # ----------------------------------------------------------------------------------------------
