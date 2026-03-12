@@ -20,3 +20,5 @@ megalinter-reports/
 # ignore testing material
 test*/
 test*.*
+
+src/tools/tools-outputs/
