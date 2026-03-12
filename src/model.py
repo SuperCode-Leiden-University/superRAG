@@ -263,6 +263,10 @@ class Model():
 
         #self.tool_messages.pop() # remove the last item
 
+
+        self.message_format("revise your previous answer to make it compliant with the tools requirements.")
+        response = self.chat_template(self.tool_messages)
+
         # include the retrieved docs as context and feed it to the model
         self.tool_classifier = False
         self.message_format(user_prompt, tool_results, retriv_docs)
