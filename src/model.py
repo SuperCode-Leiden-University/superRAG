@@ -207,6 +207,44 @@ class Model():
 
         return response
 
+    def parse_tools(self, response):
+        tool_results = []
+
+        if "{" in response:
+            if verbose > 0: print(">> parsing response for tools")
+            # json = ```json [ { "name": "tool_name", "arguments": { "arg_name": "value"} }, ... ] ```
+
+            # find the actual start and end of the json
+            if verbose > 2:
+                begin = response.rfind("```json") + 7
+                end = response.rfind("```")
+                print(">> json obj:\n", response[begin:end], sep='')
+
+            tool_end = 0;
+            tool_temp = 1  # initializing
+            while tool_temp > 0:
+                # find the actual start and end of each tool
+                tool_begin = tool_end + response[tool_end:].find("{")
+                tool_temp = response[tool_end:].find("},") + 1  # this will be 0 for the last tool
+                if tool_temp != 0:
+                    tool_end = tool_end + tool_temp  # find the second "}" for each tool
+                else:
+                    tool_end = response.rfind("}") + 1
+
+                # print(">> parsing tool:", response[tool_begin:tool_end])
+                tool_request = json.loads(response[tool_begin:tool_end])
+                tool_name = tool_request["name"]
+                if tool_name in self.tools.keys():
+                    if verbose > 0: print(">> found tool:", tool_name)
+                    tool_result = dispatch_tool(self.tools, tool_name, tool_request["arguments"])
+                    # save the results to pass them to the model
+                    tool_results.append({
+                        "name": tool_name,
+                        "result": tool_result
+                    })
+                    # if verbose > 2: print(">> tool result:", tool_result)
+
+        # self.tool_messages.pop() # remove the last item
 
     # ----------------------------------------------------------------------------------------------
     # ----------------------------------------------------------------------------------------------
@@ -226,46 +264,13 @@ class Model():
         # apply chat templates and return an answer
         response = self.chat_template(self.tool_messages)
         if verbose>1 : print("-------------------------------------- \n## tool manager: ", response, "\n--------------------------------------", sep="")
-        tool_results = []
+        self.parse_tools(response)
 
-        if "{" in response:
-            if verbose>0 : print(">> parsing response for tools")
-            # json = ```json [ { "name": "tool_name", "arguments": { "arg_name": "value"} }, ... ] ```
-
-            # find the actual start and end of the json
-            if verbose>2 :
-                begin = response.rfind("```json")+7
-                end = response.rfind("```")
-                print(">> json obj:\n", response[begin:end], sep='')
-
-            tool_end = 0 ; tool_temp = 1 # initializing
-            while tool_temp>0 :
-                # find the actual start and end of each tool
-                tool_begin = tool_end + response[tool_end:].find("{")
-                tool_temp = response[tool_end:].find("},")+1 # this will be 0 for the last tool
-                if tool_temp!=0:
-                    tool_end = tool_end + tool_temp # find the second "}" for each tool
-                else:
-                    tool_end = response.rfind("}")+1
-
-                #print(">> parsing tool:", response[tool_begin:tool_end])
-                tool_request = json.loads(response[tool_begin:tool_end])
-                tool_name = tool_request["name"]
-                if tool_name in self.tools.keys():
-                    if verbose > 0: print(">> found tool:", tool_name)
-                    tool_result = dispatch_tool(self.tools, tool_name, tool_request["arguments"])
-                    # save the results to pass them to the model
-                    tool_results.append({
-                        "name" : tool_name,
-                        "result" : tool_result
-                    })
-                    #if verbose > 2: print(">> tool result:", tool_result)
-
-        #self.tool_messages.pop() # remove the last item
-
-
+        # revise the answer to implement the correct dependences
         self.message_format("revise your previous answer to make it compliant with the tools requirements.")
         response = self.chat_template(self.tool_messages)
+        if verbose>1 : print("-------------------------------------- \n## revised tool manager: ", response, "\n--------------------------------------", sep="")
+        self.parse_tools(response)
 
         # include the retrieved docs as context and feed it to the model
         self.tool_classifier = False
