@@ -122,7 +122,7 @@ class Model():
                 - When calling 'run_megalinter' the flavor should align with the programming language unless the user specify a specific flavor. You must NEVER try to guess the flavor and must NEVER assume the programming language.
                 - When calling 'search_database' you must first determine the level of complexity of the query (multi-step, broad or generic questions are considered complex, single-step or straightforward queries are considered easy) and determine the number of retrieved documents 'n_retriev' based on that (refer to the schema).
                 - Comments are NOT allowed inside JSON objects, you may add comments before or after the json markers (```json [...] ```).
-                - If you see the following pattern: 'var_name'=(math expression) you need to call the calculator to obtain 'var_name'=(result of the math expression) before using 'var_name'.
+                - If you see the following pattern: 'var_name'=(math expression), than you need to call the calculator to solve (math expression) than replace 'var_name' with (result of the math expression) before continuing.
                 
                 Example: if the static analysis tool is relevant, check if the user provided a programming language or a flavor, if not than you need to first search the database to find out the programming language, than choose the flavor that matches the programming language.
                 In this case the json object will include the 'search_database' tool before the 'run_megalinter' tool.
