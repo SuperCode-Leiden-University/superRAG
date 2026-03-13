@@ -54,7 +54,6 @@ def build_tool_schema(func):
         "function": {
             "name": func.__name__,
             "description": func.__doc__ or "",
-            "requirement_flag": False,
             "parameters": {
                 "type": "object",
                 "properties": props,

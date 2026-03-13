@@ -114,7 +114,7 @@ class Model():
                 
                 1. Determine the final goal of the user request. If multiple goals are required or the final goal is complex, then break down the user request into simpler sub-tasks.
                 2. For each task, use the schemas as reference to determine relevant tools that can provide useful information that match the user's query.
-                3. For each relevant tool, use the schemas as reference to determine if the tool has requirements that can be provided by other tools. If a tool needs requirement from another tool, than set 'requirement_flag'=True. 
+                3. For each relevant tool, use the schemas as reference to determine if the tool has requirements that can be provided by other tools. 
                 4. Built a list of JSON objects (this must be formatted as: ```json [...] ```) with the tools and their arguments (reference the schemas to check the required argument for each tool), you can include multiple tools if needed, or return an empty list if none of the tools fits.
                 5. Reorder the list so that tools that provide requirements are listed BEFORE relevant tools.
                 
@@ -268,13 +268,13 @@ class Model():
         response = self.chat_template(self.tool_messages)
         if verbose>1 : print("-------------------------------------- \n## tool manager: ", response, "\n--------------------------------------", sep="")
         tool_results = self.parse_tools(response)
-
+        """
         # revise the answer to implement the correct dependencies
-        self.message_format("Use the tools results to revise your previous answer and make it compliant with the tools requirements, you only need to revise the tools with 'requirement_flag'=True. Tools results are:", tool_results)
+        self.message_format("Use the tools results to revise your previous answer and make it compliant with the tools requirements. Tools results are:", tool_results)
         response = self.chat_template(self.tool_messages)
         if verbose>1 : print("-------------------------------------- \n## revised tool manager: ", response, "\n--------------------------------------", sep="")
         tool_results = self.parse_tools(response)
-
+        #"""
         # include the retrieved docs as context and feed it to the model
         self.tool_classifier = False
         self.message_format(user_prompt, tool_results, retriv_docs)
@@ -282,8 +282,8 @@ class Model():
         # apply chat templates and return an answer
         response = self.chat_template(self.messages)
 
-        if verbose>1 : print("-------------------------------------- \n## tool message history: \n", self.tool_messages, "\n--------------------------------------", sep="")
-        if verbose>1 : print("-------------------------------------- \n## message history: \n", self.messages, "\n--------------------------------------", sep="")
+        if verbose>1 : print("\n\n-------------------------------------- \n## tool message history: \n", self.tool_messages, "\n--------------------------------------\n", sep="")
+        if verbose>1 : print("-------------------------------------- \n## message history: \n", self.messages, "\n--------------------------------------\n\n", sep="")
 
 
         return response
