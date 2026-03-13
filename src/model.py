@@ -27,6 +27,7 @@ class Model():
             --> GGUF quantized:   model.gguf                        (direct load, NOT with Transformers!)
         """
 
+        self.tool_results = None
         self.tool_classifier = False # use the same model either to choose which tool to use or to generate an answer
         self.tools = get_tools() # tools for the agent
         self.schemas = [build_tool_schema(f) for f in self.tools.values()] # no errors, good
@@ -84,7 +85,7 @@ class Model():
 
     # ----------------------------------------------------------------------------------------------
     # format the messages to be able to include tools and RAG
-    def message_format(self, user_prompt, tool_results=None, retriv_docs=None):
+    def message_format(self, user_prompt):
         # include the system prompts at the beginning of the chat
         if not self.messages:
             if verbose>1 : print(">> defining system prompt")
@@ -143,11 +144,11 @@ class Model():
             self.messages.append({
                 "role": "user",
                 "content": f"Use the following information to answer the question in natural language.\n\n"
-                           #f"### Context\n{retriv_docs}\n\n"
                            f"### Question\n{user_prompt}"
             })
 
-            for tool in tool_results:
+            """
+            for tool in self.tool_results:
                 tool_message = [{
                     "role": "system",
                     "content": "The following data comes from tools. Treat it as correct and final. "
@@ -160,6 +161,7 @@ class Model():
                     }]
                 self.messages.extend(tool_message)
                 self.tool_messages.extend(tool_message)
+            #"""
 
     # ----------------------------------------------------------------------------------------------
     # apply chat templates, generate and return an answer
@@ -209,7 +211,7 @@ class Model():
         return response
 
     def parse_tools(self, response):
-        tool_results = []
+        self.tool_results = []
 
         if "{" in response:
             if verbose > 0: print(">> parsing response for tools")
@@ -239,17 +241,16 @@ class Model():
                     if verbose > 0: print(">> found tool:", tool_name)
                     tool_result = dispatch_tool(self.tools, tool_name, tool_request["arguments"])
                     # save the results to pass them to the model
-                    tool_results.append({
+                    self.tool_results.append({
                         "name": tool_name,
                         "result": tool_result
                     })
                     if verbose > 2: print(">> tool result:", tool_result)
         else:
             if verbose > 0: print(">> no tool was found")
-            tool_results = None
+            self.tool_results = None
 
         # self.tool_messages.pop() # remove the last item
-        return tool_results
 
     # ----------------------------------------------------------------------------------------------
     # ----------------------------------------------------------------------------------------------
@@ -274,23 +275,37 @@ class Model():
             "role": "tool manager",
             "content": response
         })
-        tool_results = self.parse_tools(response)
-        print(">> TOOL RESULTS: \n", tool_results, "\n", sep="")
+        self.parse_tools(response)
+        print(">> TOOL RESULTS: \n", self.tool_results, "\n", sep="")
+
+        for tool in self.tool_results:
+            tool_message = [{
+                "role": "system",
+                "content": "The following data comes from tools. Treat it as correct and final. "
+                           "Incorporate the tool results directly into your final answer. "
+                           "Do not mention tools or describe how the data was obtained."
+            }, {
+                "role": "tool",
+                "name": tool["name"],
+                "content": tool["result"]
+            }]
+            self.messages.extend(tool_message)
+            self.tool_messages.extend(tool_message)
 
         # revise the answer to implement the correct dependencies
         self.tool_messages.append({
-            "role": "tool manager",
+            "role": "user",
             "content": "Use the tools results to revise your previous answer and make it compliant with the tools requirements."
         })
 
         if verbose>1 : print("-------------------------------------- \n## revised tool manager: ")
         response = self.chat_template(self.tool_messages)
         if verbose>1 : print("--------------------------------------")
-        tool_results = self.parse_tools(response)
+        self.parse_tools(response)
 
         # include the retrieved docs as context and feed it to the model
         self.tool_classifier = False
-        self.message_format(user_prompt, tool_results, retriv_docs)
+        self.message_format(user_prompt)
 
         # apply chat templates and return an answer
         if verbose > 1: print("-------------------------------------- \n## AI: ")
