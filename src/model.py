@@ -176,6 +176,7 @@ class Model():
                     return_dict=True,
                     return_tensors="pt",
                 ).to(self.model.device)
+                role="tool_manager"
             else:
                 inputs = self.tokenizer.apply_chat_template(
                     messages,
@@ -184,6 +185,7 @@ class Model():
                     return_dict=True,
                     return_tensors="pt",
                 ).to(self.model.device)
+                role="assistant"
 
             def generate():
                 self.model.generate(**inputs, max_new_tokens=1200, streamer=self.streamer)
@@ -207,6 +209,13 @@ class Model():
             """
             outputs = self.model(messages)
             response = outputs[0]['generated_text'][-1]["content"]
+
+            # TO FIX: tool manager is not implemented in this format
+
+        self.messages.append({
+            "role": role,
+            "content": response
+        })
 
         return response
 
@@ -271,10 +280,7 @@ class Model():
         if verbose > 1: print("-------------------------------------- \n## tool manager: ")
         response = self.chat_template(self.tool_messages)
         if verbose>1 : print("--------------------------------------")
-        self.tool_messages.append({
-            "role": "tool manager",
-            "content": response
-        })
+
         self.parse_tools(response)
         print(">> TOOL RESULTS: \n", self.tool_results, "\n", sep="")
 
@@ -301,7 +307,24 @@ class Model():
         if verbose>1 : print("-------------------------------------- \n## revised tool manager: ")
         response = self.chat_template(self.tool_messages)
         if verbose>1 : print("--------------------------------------")
+
         self.parse_tools(response)
+        print(">> TOOL RESULTS: \n", self.tool_results, "\n", sep="")
+
+        for tool in self.tool_results:
+            tool_message = [{
+                "role": "system",
+                "content": "The following data comes from tools. Treat it as correct and final. "
+                           "Incorporate the tool results directly into your final answer. "
+                           "Do not mention tools or describe how the data was obtained."
+            }, {
+                "role": "tool",
+                "name": tool["name"],
+                "content": tool["result"]
+            }]
+            self.messages.extend(tool_message)
+            self.tool_messages.extend(tool_message)
+
 
         # include the retrieved docs as context and feed it to the model
         self.tool_classifier = False
@@ -311,10 +334,6 @@ class Model():
         if verbose > 1: print("-------------------------------------- \n## AI: ")
         response = self.chat_template(self.messages)
         if verbose>1 : print("--------------------------------------")
-        self.messages.append({
-            "role": "assistant",
-            "content": response
-        })
 
         if verbose>3 : print("\n\n-------------------------------------- \n## tool_messages history: \n", self.tool_messages, "\n--------------------------------------\n", sep="")
         if verbose>3 : print("-------------------------------------- \n## messages history: \n", self.messages, "\n--------------------------------------\n\n", sep="")
