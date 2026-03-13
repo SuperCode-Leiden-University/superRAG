@@ -274,7 +274,7 @@ class Model():
         # revise the answer to implement the correct dependencies
         self.message_format("Use the tools results to revise your previous answer and make it compliant with the tools requirements.")
         #"""
-        response = self.chat_template(self.tool_messages)
+        #response = self.chat_template(self.tool_messages)
         if verbose>1 : print("-------------------------------------- \n## revised tool manager: ", response, "\n--------------------------------------", sep="")
         tool_results = self.parse_tools(response)
         #"""
