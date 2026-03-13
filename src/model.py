@@ -275,7 +275,7 @@ class Model():
             "content": response
         })
         tool_results = self.parse_tools(response)
-        print(">> TOOL RESULTS: \n", tool_results, "\n, sep="")
+        print(">> TOOL RESULTS: \n", tool_results, "\n", sep="")
 
         # revise the answer to implement the correct dependencies
         self.tool_messages.append({
