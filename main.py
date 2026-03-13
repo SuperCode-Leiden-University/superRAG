@@ -47,17 +47,10 @@ while True:
     try:
         start = datetime.now()
         if verbose>0 : print(">> processing the query")
-        response = model.call(user_prompt)
+        model.call(user_prompt)
 
         end = datetime.now()
-        if verbose>0 : print(">> Time to First Token =", end-start)
-        print(
-            "\n----------------------------------------------------------------------------\n"
-            "## AI: ",
-            response,
-            "\n----------------------------------------------------------------------------\n",
-            sep=""
-        )
+        if verbose>0 : print(">> Time to Answer =", end-start)
 
     except Exception as e:
         print(f"\nAn error occurred:\n{e}\n")

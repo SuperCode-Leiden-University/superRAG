@@ -267,24 +267,39 @@ class Model():
         self.message_format(user_prompt)
 
         # apply chat templates and return an answer
+        if verbose > 1: print("-------------------------------------- \n## tool manager: ")
         response = self.chat_template(self.tool_messages)
-        if verbose>1 : print("-------------------------------------- \n## tool manager: ", response, "\n--------------------------------------", sep="")
+        if verbose>1 : print("--------------------------------------")
+        self.tool_messages.append({
+            "role": "tool manager",
+            "content": response
+        })
         tool_results = self.parse_tools(response)
+        print(">> TOOL RESULTS: \n", tool_results, "\n, sep="")
 
         # revise the answer to implement the correct dependencies
-        self.message_format("Use the tools results to revise your previous answer and make it compliant with the tools requirements.")
-        #"""
-        #response = self.chat_template(self.tool_messages)
-        if verbose>1 : print("-------------------------------------- \n## revised tool manager: ", response, "\n--------------------------------------", sep="")
+        self.tool_messages.append({
+            "role": "tool manager",
+            "content": "Use the tools results to revise your previous answer and make it compliant with the tools requirements."
+        })
+
+        if verbose>1 : print("-------------------------------------- \n## revised tool manager: ")
+        response = self.chat_template(self.tool_messages)
+        if verbose>1 : print("--------------------------------------")
         tool_results = self.parse_tools(response)
-        #"""
 
         # include the retrieved docs as context and feed it to the model
         self.tool_classifier = False
         self.message_format(user_prompt, tool_results, retriv_docs)
 
         # apply chat templates and return an answer
+        if verbose > 1: print("-------------------------------------- \n## AI: ")
         response = self.chat_template(self.messages)
+        if verbose>1 : print("--------------------------------------")
+        self.messages.append({
+            "role": "assistant",
+            "content": response
+        })
 
         if verbose>3 : print("\n\n-------------------------------------- \n## tool_messages history: \n", self.tool_messages, "\n--------------------------------------\n", sep="")
         if verbose>3 : print("-------------------------------------- \n## messages history: \n", self.messages, "\n--------------------------------------\n\n", sep="")
