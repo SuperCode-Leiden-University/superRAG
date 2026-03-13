@@ -131,7 +131,7 @@ class Model():
 
         # decide if the model needs a tool or to retrieve info from the DB
         if self.tool_classifier:
-            if verbose>0 : print(">> check if there are useful tools")
+            if verbose>0 : print(">> calling the tool manager")
             self.tool_messages.append({
                 "role": "user",
                 "content": f"Based on the following question decide if there is a tool you can use.\n\n"
@@ -278,5 +278,9 @@ class Model():
 
         # apply chat templates and return an answer
         response = self.chat_template(self.messages)
+
+        if verbose>1 : print("-------------------------------------- \n## tool message history: \n", self.tool_messages, "\n--------------------------------------", sep="")
+        if verbose>1 : print("-------------------------------------- \n## message history: \n", self.messages, "\n--------------------------------------", sep="")
+
 
         return response
