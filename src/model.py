@@ -148,17 +148,18 @@ class Model():
             })
 
             for tool in tool_results:
-                self.messages.append({
+                tool_message = [{
                     "role": "system",
                     "content": "The following data comes from tools. Treat it as correct and final. "
                                "Incorporate the tool results directly into your final answer. "
                                "Do not mention tools or describe how the data was obtained."
-                })
-                self.messages.append({
+                    },{
                     "role": "tool",
                     "name": tool["name"],
                     "content": tool["result"]
-                })
+                    }]
+                self.messages.extend(tool_message)
+                self.tool_messages.extend(tool_message)
 
     # ----------------------------------------------------------------------------------------------
     # apply chat templates, generate and return an answer
@@ -244,6 +245,7 @@ class Model():
                     })
                     if verbose > 2: print(">> tool result:", tool_result)
         else:
+            if verbose > 0: print(">> no tool was found")
             tool_results = None
 
         # self.tool_messages.pop() # remove the last item
@@ -270,13 +272,13 @@ class Model():
         tool_results = self.parse_tools(response)
 
         # revise the answer to implement the correct dependencies
-        self.message_format("Use the tools results to revise your previous answer and make it compliant with the tools requirements. Tools results are:", tool_results)
-        """
+        self.message_format("Use the tools results to revise your previous answer and make it compliant with the tools requirements.")
+        #"""
         response = self.chat_template(self.tool_messages)
         if verbose>1 : print("-------------------------------------- \n## revised tool manager: ", response, "\n--------------------------------------", sep="")
         tool_results = self.parse_tools(response)
         #"""
-        
+
         # include the retrieved docs as context and feed it to the model
         self.tool_classifier = False
         self.message_format(user_prompt, tool_results, retriv_docs)
@@ -284,8 +286,8 @@ class Model():
         # apply chat templates and return an answer
         response = self.chat_template(self.messages)
 
-        if verbose>1 : print("\n\n-------------------------------------- \n## tool message history: \n", self.tool_messages, "\n--------------------------------------\n", sep="")
-        if verbose>1 : print("-------------------------------------- \n## message history: \n", self.messages, "\n--------------------------------------\n\n", sep="")
+        if verbose>3 : print("\n\n-------------------------------------- \n## tool_messages history: \n", self.tool_messages, "\n--------------------------------------\n", sep="")
+        if verbose>3 : print("-------------------------------------- \n## messages history: \n", self.messages, "\n--------------------------------------\n\n", sep="")
 
 
         return response
