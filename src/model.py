@@ -119,7 +119,7 @@ class Model():
                 You must think step-by-step and comply to all the following guidelines:
                 1. Determine the final goal of the user request. If multiple goals are required or the final goal is complex, then break down the user request into simpler sub-tasks.
                 2. For each task, use the schemas as reference to determine relevant tools that can provide useful information that match the user's query.
-                3. For each relevant tool, use the schemas as reference to determine if the tool has requirements that can be provided by other tools. 
+                3. For each relevant tool, use the schemas as reference to determine if the tool has requirements that can be provided by other tools: in this case you must include `"auto_req_flag": True` after the arguments. 
                 4. Built a list of JSON objects (this must be formatted as: ```json [...] ```) with the tools and their arguments (reference the schemas to check the required argument for each tool), you can include multiple tools if needed, or return an empty list if none of the tools fits.
                 5. Reorder the list so that tools that provide requirements are listed BEFORE relevant tools.
                 
