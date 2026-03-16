@@ -46,12 +46,13 @@ To do so you only need to run the following commands:
 * `sudo apt install nodejs npm` to install node.js
 * `sudo apt install docker.io` to install Docker Engine
 * `npx mega-linter-runner --install` to install Mega-Linter
-The order doesn't matter.
 
-Note that if this is the first time you're running docker, you'll need to run 2 addictional commands:
+NOTE: The order doesn't matter.
+
+If this is the first time you're running docker, you'll need to run 2 additional commands:
 1) `sudo groupadd docker`, this may say "group already exists" and that's fine
 2) `sudo usermod -aG docker $USER`, this add the user to the docker group so you'll have permission to run it
-Finally you need to logout & login again (or reboot) to update group membership.
+3) Finally you need to logout & login again (or reboot) to update group membership.
 
 Now you can run Mega-Linter with: `npx mega-linter-runner --flavor <flavor_name>` (you won't need to do this manually).
 
