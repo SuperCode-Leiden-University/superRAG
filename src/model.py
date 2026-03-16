@@ -282,8 +282,9 @@ class Model():
         self.tool_classifier = True
         self.message_format(user_prompt)
 
-        for r in range(3): # refinement loop, by the 3rd iteration it should have the correct tools selected
-            if r<3 : revise = False # most often the model calls the tools for the requirements by the second try
+        n_revise = 3
+        for r in range(n_revise): # refinement loop, by the 3rd iteration it should have the correct tools selected
+            if r<n_revise : revise = False # most often the model calls the tools for the requirements by the second try
             else: revise = True # then it can call the tools that need the requirements
 
             # apply chat templates and return an answer
@@ -297,22 +298,17 @@ class Model():
             if self.tool_results is not None and self.tool_results is not []:
                 for tool in self.tool_results:
                     tool_message = [{
-                        "role": "system",
-                        "content": "The following data comes from tools. Treat it as correct and final. "
-                                   "Incorporate the tool results directly into your final answer. "
-                                   "Do not mention tools or describe how the data was obtained."
-                    }, {
                         "role": "tool",
                         "name": tool["name"],
                         "content": tool["result"]
                     }]
-                    self.messages.extend(tool_message)
+                    if revise: self.messages.extend(tool_message)
                     self.tool_messages.extend(tool_message)
 
-            if r<3: # revise the answer to implement the correct dependencies
+            if r<n_revise: # revise the answer to implement the correct dependencies
                 self.tool_messages.append({
                     "role": "user",
-                    "content": "Use the tools results to revise your previous answer and make it compliant with the tools requirements."
+                    "content": "Use the tools results to improve your previous answer and check the schema to make your answer compliant with the tools requirements."
                 })
 
         # include the retrieved docs as context and feed it to the model
