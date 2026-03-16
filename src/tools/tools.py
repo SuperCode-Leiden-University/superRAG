@@ -143,6 +143,13 @@ search_database._tool_metadata = {
 @tool
 def run_megalinter(flavor: str):
     path = "megalinter-reports/megalinter.log"
+
+    flavors = ['all', 'c_cpp', 'ci_light', 'cupcake', 'documentation', 'dotnet', 'dotnetweb', 'formatters', 'go', 'java', 'javascript', 'php', 'python', 'ruby', 'rust', 'salesforce', 'security', 'swift', 'terraform']
+    if flavor not in flavors : # some are more likely to be misnamed by the LLM, this is a quick and dirty fix
+        if flavor=="cpp" or flavor=="c" : flavor="c_cpp"
+        if flavor in ["ci", "docker", "jenkins", "json", "yaml", "xml"] : flavor="ci_light"
+
+
     command = "npx mega-linter-runner --flavor "+flavor
     # run shell command with: subprocess.run([command, "arg1", "arg2"], cwd="path/to/folder/", shell=True)
     #subprocess.run([command], shell=True) # run shell command
@@ -159,25 +166,25 @@ run_megalinter._tool_metadata = {
             "tags": ["static analysis", "errors", "warnings"],
             "examples": """
             Available flavors are:
-            - 'all': to include all possible linters;
-            - 'c_cpp': for pure C/C++ projects;
-            - 'ci_light': for CI items (Dockerfile, Jenkinsfile, JSON/YAML schemas,XML);
-            - 'cupcake': for the most commonly used languages;
-            - 'documentation': for documentation projects;
-            - 'dotnet': for C, C++, C# or VB based projects;
-            - 'dotnetweb': for C, C++, C# or VB based projects with JS/TS;
-            - 'formatters': contains only formatters;
-            - 'go': for GO based projects;
-            - 'java': for JAVA based projects;
-            - 'javascript': for JAVASCRIPT or TYPESCRIPT based projects;
-            - 'php': for PHP based projects;
-            - 'python': for PYTHON based projects;
-            - 'ruby': for RUBY based projects;
-            - 'rust': for RUST based projects;
-            - 'salesforce': for Salesforce based projects;
-            - 'security': for security;
-            - 'swift': for SWIFT based projects;
-            - 'terraform': for TERRAFORM based projects;
+            - `all`: to include all possible linters;
+            - `c_cpp`: for pure C/C++ projects;
+            - `ci_light`: for CI items (Dockerfile, Jenkinsfile, JSON or YAML schemas, XML);
+            - `cupcake`: for the most commonly used languages;
+            - `documentation`: for documentation projects;
+            - `dotnet`: for C, C++, C# or VB based projects;
+            - `dotnetweb`: for C, C++, C# or VB based projects with JAVASCRIPT or TYPESCRIPT;
+            - `formatters`: contains only formatters;
+            - `go`: for GO based projects;
+            - `java`: for JAVA based projects;
+            - `javascript`: for JAVASCRIPT or TYPESCRIPT based projects;
+            - `php`: for PHP based projects;
+            - `python`: for PYTHON based projects;
+            - `ruby`: for RUBY based projects;
+            - `rust`: for RUST based projects;
+            - `salesforce`: for Salesforce based projects;
+            - `security`: for security;
+            - `swift`: for SWIFT based projects;
+            - `terraform`: for TERRAFORM based projects;
             """,
             "req_flag": True,
         }

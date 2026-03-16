@@ -283,7 +283,7 @@ class Model():
             else: revise = True # then it can call the tools that need the requirements
 
             # apply chat templates and return an answer
-            if verbose > 1: print(f"-------------------------------------- \n## tool manager {r}: ")
+            if verbose > 1: print(f"-------------------------------------- \n## tool manager {r+1}: ")
             response = self.chat_template()
             if verbose>1 : print("--------------------------------------")
 
@@ -309,28 +309,6 @@ class Model():
                     "role": "user",
                     "content": "Use the tools results to revise your previous answer and make it compliant with the tools requirements."
                 })
-
-        if verbose>1 : print("-------------------------------------- \n## revised tool manager: ")
-        response = self.chat_template()
-        if verbose>1 : print("--------------------------------------")
-
-        self.parse_tools(response)
-        print(">> TOOL RESULTS: \n", self.tool_results, "\n", sep="")
-
-        for tool in self.tool_results:
-            tool_message = [{
-                "role": "system",
-                "content": "The following data comes from tools. Treat it as correct and final. "
-                           "Incorporate the tool results directly into your final answer. "
-                           "Do not mention tools or describe how the data was obtained."
-            }, {
-                "role": "tool",
-                "name": tool["name"],
-                "content": tool["result"]
-            }]
-            self.messages.extend(tool_message)
-            self.tool_messages.extend(tool_message)
-
 
         # include the retrieved docs as context and feed it to the model
         self.tool_classifier = False
