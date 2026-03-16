@@ -29,14 +29,14 @@ def calculator(expr: str): # arguments should have a defined type
     if verbose>1 : print(">> safe_expr =", safe_expr)
     if safe_expr.strip() == "":
         print("\nAn error occurred: empty expression.")
-        return "Couldn't compute the result."
+        return "Couldn't compute the result. The expression was empty."
 
     try:
         result = eval(safe_expr)
         if verbose>1 : print(">> calc result =", result)
         return f"The result is: {result}"
     except Exception as e:
-        print(f"\nAn error occurred:\n{e}\n")
+        print(f"\nAn error occurred in the calculator:\n{e}\n")
         return f"Couldn't compute the result. An error occurred:\n{e}"
 
 # describe the use of the tool
@@ -73,9 +73,9 @@ def draw_graph(expr: str, x_range: list[float]):
         plt.plot(x_points, y_points)
         plt.savefig(tools_dir+"/graph.png")
         plt.close()
-        return "the graph was saved as graph.png in the directory '"+tools_dir+"'"
+        return "the graph was saved as graph.png in the directory `"+tools_dir+"`"
     except Exception as e:
-        print(f"\nAn error occurred:\n{e}\n")
+        print(f"\nAn error occurred in the draw_graph tool:\n{e}\n")
         return f"I couldn't draw the graph. An error occurred:\n{e}"
 
 # describe the use of the tool
@@ -93,28 +93,32 @@ draw_graph._tool_metadata = {
 @tool
 def search_database(query: str, n_retriv: int):
     if n_retriv < 1: return "No document has been retrieved"
+    try:
+        # "emb_model" is for creating the embeddings for the vector database (for RAG)
+        emb_model = HuggingFaceEmbeddings(model_name=emb_model_id)
 
-    # "emb_model" is for creating the embeddings for the vector database (for RAG)
-    emb_model = HuggingFaceEmbeddings(model_name=emb_model_id)
+        start = datetime.now()
+        # this will first check if the database exists and if it needs to be updated
+        # then either load or create the database
+        db = Database(emb_model, docs_dir, db_dir, update_db).load()
+        end = datetime.now()
+        if verbose>0: print(">> Time to Database =", end - start)
 
-    start = datetime.now()
-    # this will first check if the database exists and if it needs to be updated
-    # then either load or create the database
-    db = Database(emb_model, docs_dir, db_dir, update_db).load()
-    end = datetime.now()
-    if verbose>0: print(">> Time to Database =", end - start)
+        if verbose>0 : print(">> searching the database")
+        start = datetime.now()
+        # find the relevant docs
 
-    if verbose>0 : print(">> searching the database")
-    start = datetime.now()
-    # find the relevant docs
+        retriv_docs = db.similarity_search(query, k=n_retriv) # find the k most relevant documents to the query
+        if verbose>1 : print(">> n_retriv_docs =", len(retriv_docs), "=", n_retriv)
+        #if verbose>2 : print("most relevant doc\n", retriv_docs[0])
 
-    retriv_docs = db.similarity_search(query, k=n_retriv) # find the k most relevant documents to the query
-    if verbose>1 : print(">> n_retriv_docs =", len(retriv_docs), "=", n_retriv)
-    #if verbose>2 : print("most relevant doc\n", retriv_docs[0])
+        end = datetime.now()
+        if verbose>0 : print(">> Time to Retrieval =", end-start)
 
+    except Exception as e:
+        print(f"\nAn error occurred in the search_database tool:\n{e}\n")
+        return f"I couldn't search the database. An error occurred:\n{e}"
 
-    end = datetime.now()
-    if verbose>0 : print(">> Time to Retrieval =", end-start)
     return retriv_docs
 
 # describe the use of the tool
@@ -143,19 +147,24 @@ search_database._tool_metadata = {
 @tool
 def run_megalinter(flavor: str):
     path = "megalinter-reports/megalinter.log"
+    try:
+        flavors = ['all', 'c_cpp', 'ci_light', 'cupcake', 'documentation', 'dotnet', 'dotnetweb', 'formatters', 'go', 'java', 'javascript', 'php', 'python', 'ruby', 'rust', 'salesforce', 'security', 'swift', 'terraform']
+        if flavor not in flavors : # some are more likely to be misnamed by the LLM, this is a quick and dirty fix
+            if flavor=="cpp" or flavor=="c" : flavor="c_cpp"
+            if flavor in ["ci", "docker", "jenkins", "json", "yaml", "xml"] : flavor="ci_light"
 
-    flavors = ['all', 'c_cpp', 'ci_light', 'cupcake', 'documentation', 'dotnet', 'dotnetweb', 'formatters', 'go', 'java', 'javascript', 'php', 'python', 'ruby', 'rust', 'salesforce', 'security', 'swift', 'terraform']
-    if flavor not in flavors : # some are more likely to be misnamed by the LLM, this is a quick and dirty fix
-        if flavor=="cpp" or flavor=="c" : flavor="c_cpp"
-        if flavor in ["ci", "docker", "jenkins", "json", "yaml", "xml"] : flavor="ci_light"
 
+        command = "npx mega-linter-runner --flavor "+flavor
+        # run shell command with: subprocess.run([command, "arg1", "arg2"], cwd="path/to/folder/", shell=True)
+        #subprocess.run([command], shell=True) # run shell command
+        f = open(path)
+        logs = "Logs saved in "+path+"\n\nContents of the logs:\n\n"+f.read()
+        f.close()
 
-    command = "npx mega-linter-runner --flavor "+flavor
-    # run shell command with: subprocess.run([command, "arg1", "arg2"], cwd="path/to/folder/", shell=True)
-    #subprocess.run([command], shell=True) # run shell command
-    f = open(path)
-    logs = "Logs saved in "+path+"\n\nContents of the logs:\n\n"+f.read()
-    f.close()
+    except Exception as e:
+        print(f"\nAn error occurred in the run_megalinter tool:\n{e}\n")
+        return f"I couldn't run megalinter. An error occurred:\n{e}"
+
     return logs
 
 # describe the use of the tool
