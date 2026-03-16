@@ -119,7 +119,7 @@ class Model():
                 You must think step-by-step and comply to all the following guidelines:
                 1. Determine the final goal of the user request. If multiple goals are required or the final goal is complex, then break down the user request into simpler sub-tasks.
                 2. For each task, use the schemas as reference to determine relevant tools that can provide useful information that match the user's query.
-                3. For each relevant tool, use the schemas as reference to determine if the tool has requirements that can be provided by other tools: in this case you must include `"auto_req_flag": True` after the arguments. 
+                3. For each relevant tool, use the schemas as reference to determine if the tool has requirements that can be provided by other tools. 
                 4. Built a list of JSON objects (this must be formatted as: ```json [...] ```) with the tools and their arguments (reference the schemas to check the required argument for each tool), you can include multiple tools if needed, or return an empty list if none of the tools fits.
                 5. Reorder the list so that tools that provide requirements are listed BEFORE relevant tools.
                 
@@ -278,33 +278,37 @@ class Model():
         self.tool_classifier = True
         self.message_format(user_prompt)
 
-        # apply chat templates and return an answer
-        if verbose > 1: print("-------------------------------------- \n## tool manager: ")
-        response = self.chat_template()
-        if verbose>1 : print("--------------------------------------")
+        for r in range(3): # refinement loop, by the 3rd iteration it should have the correct tools selected
+            if r<3 : revise = False # most often the model calls the tools for the requirements by the second try
+            else: revise = True # then it can call the tools that need the requirements
 
-        self.parse_tools(response)
-        print(">> TOOL RESULTS: \n", self.tool_results, "\n", sep="")
+            # apply chat templates and return an answer
+            if verbose > 1: print(f"-------------------------------------- \n## tool manager {r}: ")
+            response = self.chat_template()
+            if verbose>1 : print("--------------------------------------")
 
-        for tool in self.tool_results:
-            tool_message = [{
-                "role": "system",
-                "content": "The following data comes from tools. Treat it as correct and final. "
-                           "Incorporate the tool results directly into your final answer. "
-                           "Do not mention tools or describe how the data was obtained."
-            }, {
-                "role": "tool",
-                "name": tool["name"],
-                "content": tool["result"]
-            }]
-            self.messages.extend(tool_message)
-            self.tool_messages.extend(tool_message)
+            self.parse_tools(response, revise)
+            print(">> TOOL RESULTS: \n", self.tool_results, "\n", sep="")
 
-        # revise the answer to implement the correct dependencies
-        self.tool_messages.append({
-            "role": "user",
-            "content": "Use the tools results to revise your previous answer and make it compliant with the tools requirements."
-        })
+            for tool in self.tool_results:
+                tool_message = [{
+                    "role": "system",
+                    "content": "The following data comes from tools. Treat it as correct and final. "
+                               "Incorporate the tool results directly into your final answer. "
+                               "Do not mention tools or describe how the data was obtained."
+                }, {
+                    "role": "tool",
+                    "name": tool["name"],
+                    "content": tool["result"]
+                }]
+                self.messages.extend(tool_message)
+                self.tool_messages.extend(tool_message)
+
+            if r<3: # revise the answer to implement the correct dependencies
+                self.tool_messages.append({
+                    "role": "user",
+                    "content": "Use the tools results to revise your previous answer and make it compliant with the tools requirements."
+                })
 
         if verbose>1 : print("-------------------------------------- \n## revised tool manager: ")
         response = self.chat_template()
