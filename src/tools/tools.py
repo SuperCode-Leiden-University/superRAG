@@ -46,6 +46,7 @@ calculator._tool_metadata = {
             "requires": "math expression provided by the user",
             "tags": ["math", "calculator", "equation", "solve", "result"],
             "examples": ["what is the result of (8261+8257)/16290*545-46303?"],
+            "req_flag": False,
         }
 
 
@@ -85,6 +86,7 @@ draw_graph._tool_metadata = {
                         "use [-10, +10] if no range is given",
             "tags": ["math", "graph", "plot", "figure"],
             "examples": ["plot y=3*x+2 for x in [0,5]"],
+            "req_flag": False,
         }
 
 # ----------------------------------------------------------------------------------------------
@@ -134,6 +136,7 @@ search_database._tool_metadata = {
             """,
             "tags": ["search", "database", "codebase", "project"],
             "examples": ["find the file where I defined this function"],
+            "req_flag": False,
         }
 
 # ----------------------------------------------------------------------------------------------
@@ -176,6 +179,7 @@ run_megalinter._tool_metadata = {
             - 'swift': for SWIFT based projects;
             - 'terraform': for TERRAFORM based projects;
             """,
+            "req_flag": True,
         }
 
 

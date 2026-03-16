@@ -207,7 +207,7 @@ class Model():
 
         return response
 
-    def parse_tools(self, response):
+    def parse_tools(self, response, revise=False):
         self.tool_results = []
 
         if "{" in response:
@@ -236,6 +236,17 @@ class Model():
                 tool_name = tool_request["name"]
                 if tool_name in self.tools.keys():
                     if verbose > 0: print(">> found tool:", tool_name)
+
+                    # skip tools that require dependencies (req_flag=True) the first time (revise=False) and
+                    # skip the tools that don't have dependencies (req_flag=False) the second time (revise=True)
+                    # this way the first time it will compute only results for tools with no dependencies
+                    # and the second time it will compute only tools with dependencies
+                    req_flag = tool_name._tool_metadata["req_flag"]
+                    skip = (req_flag and not revise) or (not req_flag and revise)
+                    if skip :
+                        print("Skipping tool:", tool_name)
+                        continue
+
                     tool_result = dispatch_tool(self.tools, tool_name, tool_request["arguments"])
                     # save the results to pass them to the model
                     self.tool_results.append({

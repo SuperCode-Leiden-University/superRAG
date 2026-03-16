@@ -15,6 +15,7 @@ def tool(func):
             "requires": None,
             "tags": None,
             "examples": None,
+            "req_flag": False,
         }
     return func
 
