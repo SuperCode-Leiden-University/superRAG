@@ -245,7 +245,7 @@ class Model():
                         fn = s.get('function', {}) # the second value is returned if the first cannot be found
                         if fn.get('name') == tool_name:
                             req_flag = fn.get('x_metadata', {}).get('req_flag', False)
-                    skip = (req_flag and not revise) or (not req_flag and revise)
+                    skip = (not req_flag and not revise) or (req_flag and revise)
                     if skip :
                         print("Skipping tool:", tool_name)
                         self.tool_results.append({
