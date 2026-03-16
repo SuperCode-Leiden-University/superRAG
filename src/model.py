@@ -248,6 +248,10 @@ class Model():
                     skip = (req_flag and not revise) or (not req_flag and revise)
                     if skip :
                         print("Skipping tool:", tool_name)
+                        self.tool_results.append({
+                            "name": tool_name,
+                            "result": "This tool has requirements."
+                        })
                         continue
 
                     tool_result = dispatch_tool(self.tools, tool_name, tool_request["arguments"])
@@ -319,8 +323,8 @@ class Model():
         response = self.chat_template()
         if verbose>1 : print("--------------------------------------")
 
-        if verbose>3 : print("\n\n-------------------------------------- \n## tool_messages history: \n", self.tool_messages, "\n--------------------------------------\n", sep="")
-        if verbose>3 : print("-------------------------------------- \n## messages history: \n", self.messages, "\n--------------------------------------\n\n", sep="")
+        if verbose>3 : print("\n\n**************************************************************************** \n## tool_messages history: \n", self.tool_messages, "\n****************************************************************************\n", sep="")
+        if verbose>3 : print("**************************************************************************** \n## messages history: \n", self.messages, "\n****************************************************************************\n\n", sep="")
 
 
         return response
