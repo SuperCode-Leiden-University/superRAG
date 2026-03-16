@@ -294,19 +294,20 @@ class Model():
             self.parse_tools(response, revise)
             print(">> TOOL RESULTS: \n", self.tool_results, "\n", sep="")
 
-            for tool in self.tool_results:
-                tool_message = [{
-                    "role": "system",
-                    "content": "The following data comes from tools. Treat it as correct and final. "
-                               "Incorporate the tool results directly into your final answer. "
-                               "Do not mention tools or describe how the data was obtained."
-                }, {
-                    "role": "tool",
-                    "name": tool["name"],
-                    "content": tool["result"]
-                }]
-                self.messages.extend(tool_message)
-                self.tool_messages.extend(tool_message)
+            if self.tool_results is not None and self.tool_results is not []:
+                for tool in self.tool_results:
+                    tool_message = [{
+                        "role": "system",
+                        "content": "The following data comes from tools. Treat it as correct and final. "
+                                   "Incorporate the tool results directly into your final answer. "
+                                   "Do not mention tools or describe how the data was obtained."
+                    }, {
+                        "role": "tool",
+                        "name": tool["name"],
+                        "content": tool["result"]
+                    }]
+                    self.messages.extend(tool_message)
+                    self.tool_messages.extend(tool_message)
 
             if r<3: # revise the answer to implement the correct dependencies
                 self.tool_messages.append({
