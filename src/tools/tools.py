@@ -18,8 +18,8 @@ from src.tools.manage_tools import tool
 @tool
 def calculator(expr: str): # arguments should have a defined type
     if verbose>0 : print(">> using the calculator")
-    # replace '−' (U+2212) with '-' (U+002d), they look similar but the first one causes an error
-    expr.decode("utf-8").replace(u"\u2212", "-").encode("utf-8") 
+    # replace '−' (U+2212) with '-' (U+002d), they look similar with this font, but the first one causes an error
+    expr.replace(u"\u2212", "-")
 
     # remove everything that isn't a math symbol (to avoid evaluating malicious code)
     safe_expr = re.sub(r'[^0-9+\-*/().[] ]', '', expr)
