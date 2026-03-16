@@ -18,6 +18,8 @@ from src.tools.manage_tools import tool
 @tool
 def calculator(expr: str): # arguments should have a defined type
     if verbose>0 : print(">> using the calculator")
+    # replace '−' (U+2212) with '-' (U+002d), they look similar but the first one causes an error
+    expr.decode("utf-8").replace(u"\u2212", "-").encode("utf-8") 
 
     # remove everything that isn't a math symbol (to avoid evaluating malicious code)
     safe_expr = re.sub(r'[^0-9+\-*/().[] ]', '', expr)
@@ -35,7 +37,7 @@ def calculator(expr: str): # arguments should have a defined type
         return f"The result is: {result}"
     except Exception as e:
         print(f"\nAn error occurred:\n{e}\n")
-        return "Couldn't compute the result."
+        return f"Couldn't compute the result. An error occurred:\n{e}"
 
 # describe the use of the tool
 calculator.__doc__ = "Calculate the result of a mathematical expression."
@@ -70,7 +72,7 @@ def draw_graph(expr: str, x_range: list[float]):
         return "the graph was saved as graph.png in the directory '"+tools_dir+"'"
     except Exception as e:
         print(f"\nAn error occurred:\n{e}\n")
-        return "I couldn't draw the graph."
+        return f"I couldn't draw the graph. An error occurred:\n{e}"
 
 # describe the use of the tool
 draw_graph.__doc__ = "Plot a function given its mathematical expression and x range."
