@@ -1,10 +1,12 @@
 import json
 import threading
 from transformers import pipeline, AutoModelForCausalLM, AutoTokenizer, TextIteratorStreamer, BitsAndBytesConfig
-# pipeline is for direct inference, with AutoModelForCausalLM, AutoTokenizer you load the raw model
-# TextIteratorStreamer is for printing the answer as it is being generated
-# BitsAndBytesConfig is for quantization
 #from awq import AutoAWQForCausalLM
+"""
+- pipeline is for direct inference, with AutoModelForCausalLM, AutoTokenizer you load the raw model
+- BitsAndBytesConfig and awq are for quantization
+- TextIteratorStreamer and threading are for printing the answer as it is being generated
+"""
 
 from src.tools.manage_tools import * # import all the tools
 from src.configs.parse_config import verbose
@@ -46,14 +48,14 @@ class Model():
                     device_map="auto",  # automatically places layers on GPU(s) if possible
                     #dtype="auto"
                 )
-            """
+            # quantization structures (temporarily disabled):
+            """ 
             if self.quant_type == "AWQ":  # AWQ quantization
                 self.model = AutoAWQForCausalLM.from_quantized(
                     self.model_id,
                     device_map="auto",  # automatically places layers on GPU(s) if possible
                     #dtype="auto"
                 )
-            """
             if self.quant_type == "GPTQ":  # GPTQ quantization
                 self.tokenizer = AutoTokenizer.from_pretrained(self.model_id, trust_remote_code=True)
                 self.streamer = TextIteratorStreamer(self.tokenizer, skip_prompt=True, skip_special_tokens=True)
@@ -79,7 +81,8 @@ class Model():
                     device_map="auto",  # automatically places layers on GPU(s) if possible
                     quantization_config=quant_config
                 )
-
+            
+            #"""
         else:
             self.model = pipeline("text-generation", model=self.model_id)
 
@@ -109,10 +112,11 @@ class Model():
             # this is for deciding if a tool is needed (and which one)
             self.tool_messages.append({
                 "role": "system",
-                "content": f""" You are a classier for tool selection. There are some tools described in:\n{self.schemas}
+                "content": f""" You are a classier for tool selection. 
+                Tools at your disposal are described in:\n{self.schemas}
                 Your job is to return a list of JSON objects with tools are relevant to the user's request in the order they must be called.
-                You must follow all the following guidelines step-by-step:
                 
+                You must think step-by-step and comply to all the following guidelines:
                 1. Determine the final goal of the user request. If multiple goals are required or the final goal is complex, then break down the user request into simpler sub-tasks.
                 2. For each task, use the schemas as reference to determine relevant tools that can provide useful information that match the user's query.
                 3. For each relevant tool, use the schemas as reference to determine if the tool has requirements that can be provided by other tools. 
@@ -147,45 +151,34 @@ class Model():
                            f"### Question\n{user_prompt}"
             })
 
-            """
-            for tool in self.tool_results:
-                tool_message = [{
-                    "role": "system",
-                    "content": "The following data comes from tools. Treat it as correct and final. "
-                               "Incorporate the tool results directly into your final answer. "
-                               "Do not mention tools or describe how the data was obtained."
-                    },{
-                    "role": "tool",
-                    "name": tool["name"],
-                    "content": tool["result"]
-                    }]
-                self.messages.extend(tool_message)
-                self.tool_messages.extend(tool_message)
-            #"""
-
     # ----------------------------------------------------------------------------------------------
     # apply chat templates, generate and return an answer
-    def chat_template(self, messages):
+    def chat_template(self):
+        """ Note: the chat history (messages) is structured like this:
+        chat_history = [ {'generated_text': [
+                            {'role': 'user',       'content': '...'},
+                            {'role': 'assistant',  'content': '...'}
+                        ] } ]
+        """
+
         if self.raw_model:
             if self.tool_classifier :
                 inputs = self.tokenizer.apply_chat_template(
-                    messages,
+                    self.tool_messages,
                     tools=self.schemas,
                     add_generation_prompt=True,
                     tokenize=True,
                     return_dict=True,
                     return_tensors="pt",
                 ).to(self.model.device)
-                role="tool_manager"
             else:
                 inputs = self.tokenizer.apply_chat_template(
-                    messages,
+                    self.messages,
                     add_generation_prompt=True,
                     tokenize=True,
                     return_dict=True,
                     return_tensors="pt",
                 ).to(self.model.device)
-                role="assistant"
 
             def generate():
                 self.model.generate(**inputs, max_new_tokens=1200, streamer=self.streamer)
@@ -200,22 +193,17 @@ class Model():
                 response += token
             print()
 
-        else:
-            """ Note: chat structure is the following
-            chat_history = [ {'generated_text': [
-                                {'role': 'user',       'content': '...'},
-                                {'role': 'assistant',  'content': '...'}
-                            ] } ]
-            """
-            outputs = self.model(messages)
+        else: # using pipeline
+            if self.tool_classifier :
+                outputs = self.model(self.messages)
+            else:
+                outputs = self.model(self.tool_messages)
             response = outputs[0]['generated_text'][-1]["content"]
 
-            # TO FIX: tool manager is not implemented in this format
-
-        self.messages.append({
-            "role": role,
-            "content": response
-        })
+        if self.tool_classifier :
+            self.tool_messages.append({"role": "tool_manager", "content": response })
+        else:
+            self.messages.append({"role": "assistant", "content": response })
 
         return response
 
@@ -264,7 +252,7 @@ class Model():
     # ----------------------------------------------------------------------------------------------
     # ----------------------------------------------------------------------------------------------
     # ----------------------------------------------------------------------------------------------
-    def call(self, user_prompt, retriv_docs=None):
+    def call(self, user_prompt):
         """
         WORKFLOW:
             1) the model checks if it needs to call a tool or retrieve docs
@@ -278,7 +266,7 @@ class Model():
 
         # apply chat templates and return an answer
         if verbose > 1: print("-------------------------------------- \n## tool manager: ")
-        response = self.chat_template(self.tool_messages)
+        response = self.chat_template()
         if verbose>1 : print("--------------------------------------")
 
         self.parse_tools(response)
@@ -305,7 +293,7 @@ class Model():
         })
 
         if verbose>1 : print("-------------------------------------- \n## revised tool manager: ")
-        response = self.chat_template(self.tool_messages)
+        response = self.chat_template()
         if verbose>1 : print("--------------------------------------")
 
         self.parse_tools(response)
@@ -332,7 +320,7 @@ class Model():
 
         # apply chat templates and return an answer
         if verbose > 1: print("-------------------------------------- \n## AI: ")
-        response = self.chat_template(self.messages)
+        response = self.chat_template()
         if verbose>1 : print("--------------------------------------")
 
         if verbose>3 : print("\n\n-------------------------------------- \n## tool_messages history: \n", self.tool_messages, "\n--------------------------------------\n", sep="")
