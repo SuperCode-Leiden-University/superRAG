@@ -21,7 +21,7 @@ class Database():
             loader = DirectoryLoader(
                 "./" + self.docs_dir, +"/",
                 loader_cls=TextLoader,
-                glob="**/*.*", 
+                glob="**/*.*",
                 show_progress=True,
                 use_multithreading=True
             )

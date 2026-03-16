@@ -19,7 +19,7 @@ from src.tools.manage_tools import tool
 def calculator(expr: str): # arguments should have a defined type
     if verbose>0 : print(">> using the calculator")
     # replace '−' (U+2212) with '-' (U+002d), they look similar with this font, but the first one causes an error
-    expr.replace(u"\u2212", "-")
+    expr.replace("−", "-")
 
     # remove everything that isn't a math symbol (to avoid evaluating malicious code)
     safe_expr = re.sub(r'[^0-9+\-*/().[] ]', '', expr)
@@ -55,6 +55,9 @@ def draw_graph(expr: str, x_range: list[float]):
     if verbose>0 : print(">> using the draw_graph")
     try:
         if verbose>1 : print(">> converting the function")
+        # replace '−' (U+2212) with '-' (U+002d), they look similar with this font, but the first one causes an error
+        expr.replace("−", "-")
+
         # remove everything that isn't a math symbol (to avoid evaluating malicious code)
         safe_expr = re.sub(r'[^0-9+\-*/(). [],x]', '', expr)
         func = lambda x: eval(safe_expr)
