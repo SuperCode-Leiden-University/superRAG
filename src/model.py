@@ -32,7 +32,7 @@ class Model():
         self.tool_results = None
         self.tool_classifier = False # use the same model either to choose which tool to use or to generate an answer
         self.tools = get_tools() # tools for the agent
-        self.schemas = [build_tool_schema(f) for f in self.tools.values()] # no errors, good
+        self.schemas = [build_tool_schema(f) for f in self.tools.values()]
 
         self.messages = [] # history of the chat
         self.tool_messages = [] # messages for tool selection
@@ -241,7 +241,10 @@ class Model():
                     # skip the tools that don't have dependencies (req_flag=False) the second time (revise=True)
                     # this way the first time it will compute only results for tools with no dependencies
                     # and the second time it will compute only tools with dependencies
-                    req_flag = tool_name._tool_metadata["req_flag"]
+                    for s in self.schemas:
+                        fn = s.get('function', {}) # the second value is returned if the first cannot be found
+                        if fn.get('name') == tool_name:
+                            req_flag = fn.get('x_metadata', {}).get('req_flag', False)
                     skip = (req_flag and not revise) or (not req_flag and revise)
                     if skip :
                         print("Skipping tool:", tool_name)
