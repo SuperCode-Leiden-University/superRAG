@@ -245,7 +245,7 @@ class Model():
                         fn = s.get('function', {}) # the second value is returned if the first cannot be found
                         if fn.get('name') == tool_name:
                             req_flag = fn.get('x_metadata', {}).get('req_flag', False)
-                    skip = (not req_flag and not revise) or (req_flag and revise)
+                    skip = (req_flag and not revise) or (not req_flag and revise)
                     if skip :
                         print("Skipping tool:", tool_name)
                         self.tool_results.append({
@@ -292,10 +292,15 @@ class Model():
             response = self.chat_template()
             if verbose>1 : print("--------------------------------------")
 
-            self.parse_tools(response, revise)
-            print(">> TOOL RESULTS: \n", self.tool_results, "\n", sep="")
+            prev_tool_res = self.tool_results # backup the tool results in case the last tool manager returns an empty list
 
-            if self.tool_results is not None and self.tool_results is not []:
+            self.parse_tools(response, revise)
+            #print(">> TOOL RESULTS: \n", self.tool_results, "\n", sep="")
+
+            if self.tool_results is None or self.tool_results is []:
+                if revise: self.tool_messages = prev_tool_res
+                # if the query was already answered in previous iterations the tool manager may return nothing
+            else:
                 for tool in self.tool_results:
                     tool_message = [{
                         "role": "tool",
