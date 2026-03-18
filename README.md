@@ -60,6 +60,25 @@ Flavors can be found at https://megalinter.io/latest/flavors/.
 
 Mega-Linter can be reconfigured using the `.mega-linter.yml` file, present in this directory.
 
+#### TROUBLESHOOTING:
+
+If you're working on a remote server you may encounter this error:
+
+`Cannot connect to the Docker daemon at unix:///run/user/1005/podman/podman.sock. Is the docker daemon running?`
+
+The issue is that Docker is not enabled, which can be fixed like follows:
+1) `sudo systemctl start docker`
+2) `sudo systemctl enable docker`
+3) (optional) `sudo systemctl status docker` to verify that it is indeed active
+
+If it still does not work try `dpkg -l | grep docker`, if you see `podman-docker` then 
+you just need to remove the packege with `sudo apt remove podman-docker`.
+
+Finally check environment variables with `echo $DOCKER_HOST`, if you get something like 
+`unix:///run/user/1005/podman/podman.sock`, then run the following commands:
+1) `unset DOCKER_HOST` to clear the env variable
+2) `grep -R "DOCKER_HOST" ~/.bashrc ~/.profile ~/.zshrc` to remove it from shell config (this may not be necessary)
+
 ## Configuration file
     
 If you want to change the model, the name of the folder for the database, update the database or change verbosity, 
