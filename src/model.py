@@ -116,7 +116,7 @@ class Model():
                 Tools at your disposal are described in:\n{self.schemas}
                 Your job is to return a list of JSON objects with tools are relevant to the user's request in the order they must be called.
                 
-                You must think step-by-step and comply to all the following guidelines:
+                You must explain your reasoning step-by-step and comply to all the following guidelines:
                 1. Determine the final goal of the user request. If multiple goals are required or the final goal is complex, then break down the user request into simpler sub-tasks.
                 2. For each task, use the schemas as reference to determine relevant tools that can provide useful information that match the user's query.
                 3. For each relevant tool, use the schemas as reference to determine if the tool has requirements that can be provided by other tools. 
