@@ -9,7 +9,7 @@ from transformers import pipeline, AutoModelForCausalLM, AutoTokenizer, TextIter
 """
 
 from src.tools.manage_tools import * # import all the tools
-from src.configs.parse_config import verbose
+from src.configs.parse_config import verbose, max_new_tokens
 
 class Model():
     # define variables and import the model
@@ -181,7 +181,7 @@ class Model():
                 ).to(self.model.device)
 
             def generate():
-                self.model.generate(**inputs, max_new_tokens=1200, streamer=self.streamer)
+                self.model.generate(**inputs, max_new_tokens=max_new_tokens, streamer=self.streamer)
             #response = self.tokenizer.decode(outputs[0][inputs["input_ids"].shape[-1]:], skip_special_tokens=True) # wait for the whole answer before printing
 
             # this is for printing the tokens as they are generated

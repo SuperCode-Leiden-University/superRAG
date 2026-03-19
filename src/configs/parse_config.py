@@ -14,6 +14,7 @@ verbose = vars["verbose"] # how much info is printed: 0=none, 1=little, 2=all
 
 # ----------------------------------------------------------------------------------------------
 # chat model
+max_new_tokens = vars["model"]["max_new_tokens"] # max number of tokens that can be generated
 model_id = vars["model"]["ID"] # model ID from HuggingFace
 raw_model = vars["model"]["raw_model"]   # True if the model is loaded directly, False if loaded through pipeline
 quant_type = vars["model"]["quant_type"] # valid values: ("full", "bits", "GPTQ") --> check file formats!!!
