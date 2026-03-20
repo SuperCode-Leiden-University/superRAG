@@ -10,6 +10,7 @@ build/
 # Ignore system-generated files
 .DS_Store
 Thumbs.db
+__pycache__/
 
 # Ignore environment and secret files
 .env
