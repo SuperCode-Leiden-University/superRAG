@@ -112,16 +112,15 @@ class Model():
             # this is for deciding if a tool is needed (and which one)
             self.tool_messages.append({
                 "role": "system",
-                "content": f""" You are a classier for tool selection. 
-                Tools at your disposal are described in:\n{self.schemas}
+                "content": f""" You are a tool manager, tools at your disposal are described in:\n{self.schemas}
                 Your job is to return a list of JSON objects with tools are relevant to the user's request in the order they must be called.
+                You must only choose the tools, you must NEVER try to solve the problem directly.
                 
-                You must explain your reasoning step-by-step and comply to all the following guidelines:
+                You must explain your reasoning step-by-step for choosing each tool and comply to all the following guidelines:
                 1. Determine the final goal of the user request. If multiple goals are required or the final goal is complex, then break down the user request into simpler sub-tasks.
                 2. For each task, use the schemas as reference to determine relevant tools that can provide useful information that match the user's query.
                 3. For each relevant tool, use the schemas as reference to determine if the tool has requirements that can be provided by other tools. 
                 4. Built a list of JSON objects (this must be formatted as: ```json [...] ```) with the tools and their arguments (reference the schemas to check the required argument for each tool), you can include multiple tools if needed, or return an empty list if none of the tools fits.
-                5. Reorder the list so that tools that provide requirements are listed BEFORE relevant tools.
                 
                 Additional instructions:
                 - When calling 'run_megalinter' the flavor should align with the programming language unless the user specify a specific flavor. You must NEVER try to guess the flavor and must NEVER assume the programming language.
@@ -210,57 +209,60 @@ class Model():
     def parse_tools(self, response, revise=False):
         self.tool_results = []
 
-        if "{" in response:
+        if '"name": "' in response:
             if verbose > 0: print(">> parsing response for tools")
-            # json is written as: ```json [ { "name": "tool_name", "arguments": { "arg_name": "value"} }, ... ] ```
+            # Note: the LLM is not always consistent, sometimes there are multiple separate json objs instead of a list,
+            # or the json list is repeated multiple times, but the json obj is always written as:
+            # { "name": "tool_name", "arguments": { "arg_name": "value"} }
 
-            # find the actual start and end of the json
-            if verbose > 2:
-                begin = response.rfind("```json") + 7
-                end = response.rfind("```")
-                print(">> json obj:\n", response[begin:end], sep='')
+            tool_end = 0
+            end = response.rfind("}")+1 # find last occurrence (the +1 is just bc I use it in tool_end to include '}' in the string)
+            tool_request_list = []
 
-            tool_end = 0;
-            tool_temp = 1  # initializing
-            while tool_temp > 0:
-                # find the actual start and end of each tool
-                tool_begin = tool_end + response[tool_end:].find("{")
-                tool_temp = response[tool_end:].find("},") + 1  # this will be 0 for the last tool
-                if tool_temp != 0:
-                    tool_end = tool_end + tool_temp  # find the second "}" for each tool
-                else:
-                    tool_end = response.rfind("}") + 1
+            while tool_end < end:
+                # find where the tool begins
+                tool_check = response[tool_end:].find('"name": "')
+                if tool_check == -1: break # this cover the case in which I have no tool left but there are '}'
+                tool_temp = tool_end + tool_check # this is more robust signature than '{'
+                tool_begin = tool_end + response[tool_end:tool_temp].rfind("{") # find '{' before the signature
+                # find where the tool ends
+                tool_temp  = tool_begin + response[tool_begin:].find("}")+1
+                tool_end   = tool_temp  + response[tool_temp: ].find("}")+1
 
-                # print(">> parsing tool:", response[tool_begin:tool_end])
-                tool_request = json.loads(response[tool_begin:tool_end])
-                tool_name = tool_request["name"]
-                if tool_name in self.tools.keys():
-                    if verbose > 0: print(">> found tool:", tool_name)
+                print(">> JSON OBJ (PARTIAL): \n", response[tool_begin:tool_end], sep="")
 
-                    # skip tools that require dependencies (req_flag=True) the first time (revise=False) and
-                    # skip the tools that don't have dependencies (req_flag=False) the second time (revise=True)
-                    # this way the first time it will compute only results for tools with no dependencies
-                    # and the second time it will compute only tools with dependencies
-                    for s in self.schemas:
-                        fn = s.get('function', {}) # the second value is returned if the first cannot be found
-                        if fn.get('name') == tool_name:
-                            req_flag = fn.get('x_metadata', {}).get('req_flag', False)
-                    skip = (req_flag and not revise) or (not req_flag and revise)
-                    if skip :
-                        print("Skipping tool:", tool_name)
+                tool_request = json.loads(response[tool_begin:tool_end]) # load the json obj as a dictionary
+                if tool_request not in tool_request_list:
+                    tool_request_list.append(tool_request) # to avoid duplicates
+
+                    tool_name = tool_request["name"]
+                    if tool_name in self.tools.keys():
+                        if verbose > 0: print(">> found tool:", tool_name)
+
+                        # skip tools that require dependencies (req_flag=True) the first time (revise=False) and
+                        # skip the tools that don't have dependencies (req_flag=False) the second time (revise=True)
+                        # this way the first time it will compute only results for tools with no dependencies
+                        # and the second time it will compute only tools with dependencies
+                        for s in self.schemas:
+                            fn = s.get('function', {}) # the second value is returned if the first cannot be found
+                            if fn.get('name') == tool_name:
+                                req_flag = fn.get('x_metadata', {}).get('req_flag', False)
+                        skip = (req_flag and not revise) or (not req_flag and revise)
+                        if skip :
+                            print("Skipping tool:", tool_name)
+                            self.tool_results.append({
+                                "name": tool_name,
+                                "result": "This tool has requirements."
+                            })
+                            continue
+
+                        tool_result = dispatch_tool(self.tools, tool_name, tool_request["arguments"])
+                        # save the results to pass them to the model
                         self.tool_results.append({
                             "name": tool_name,
-                            "result": "This tool has requirements."
+                            "result": tool_result
                         })
-                        continue
-
-                    tool_result = dispatch_tool(self.tools, tool_name, tool_request["arguments"])
-                    # save the results to pass them to the model
-                    self.tool_results.append({
-                        "name": tool_name,
-                        "result": tool_result
-                    })
-                    if verbose > 2: print(">> tool result:", tool_result)
+                        if verbose > 2: print(">> tool result:", tool_result)
         else:
             if verbose > 0: print(">> no tool was found")
             self.tool_results = None
@@ -295,7 +297,7 @@ class Model():
             prev_tool_res = self.tool_results # backup the tool results in case the last tool manager returns an empty list
 
             self.parse_tools(response, revise)
-            #print(">> TOOL RESULTS: \n", self.tool_results, "\n", sep="")
+            print(">> TOOL RESULTS: \n", self.tool_results, "\n", sep="")
 
             if self.tool_results is None or self.tool_results is []:
                 if revise: self.tool_messages = prev_tool_res
@@ -313,7 +315,10 @@ class Model():
             if r<n_revise: # revise the answer to implement the correct dependencies
                 self.tool_messages.append({
                     "role": "user",
-                    "content": "Use the tools results to improve your previous answer and check the schema to make your answer compliant with the tools requirements."
+                    "content": """
+                    Use the tools results to improve your previous answer and check the schema to make your answer compliant 
+                    with the tools requirements. Treat tool results as correct and final.
+                    """
                 })
 
         # include the retrieved docs as context and feed it to the model

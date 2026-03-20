@@ -65,7 +65,7 @@ def draw_graph(expr: str, x_range: list[float]):
 
         if verbose>1 : print(">> converting the range")
         if isinstance(x_range, str): # convert the range back to a list if it's passed as a string by mistake
-            x_range = [float(x) for x in x_range.strip("[]").split(",")]
+            x_range = [float(x) for x in x_range.strip("[]").replace("−", "-").split(",")] # removes [] and separate at ","
             if verbose>1 : print(">> x_range =", x_range)
 
         x_points = np.linspace(x_range[0], x_range[1], 100)
