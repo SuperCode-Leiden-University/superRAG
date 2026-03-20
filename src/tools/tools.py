@@ -23,7 +23,6 @@ def calculator(expr: str): # arguments should have a defined type
 
     # remove everything that isn't a math symbol (to avoid evaluating malicious code)
     safe_expr = re.sub(r'[^0-9+\-*/().[] ]', '', expr)
-    if verbose>1 : print(">> safe_expr =", safe_expr)
     # Insert implicit multiplication: 5(4+3) --> 5*(4+3)
     safe_expr = re.sub(r'(\d)\s*\(', r'\1*(', safe_expr)
     if verbose>1 : print(">> safe_expr =", safe_expr)
@@ -33,7 +32,6 @@ def calculator(expr: str): # arguments should have a defined type
 
     try:
         result = eval(safe_expr)
-        if verbose>1 : print(">> calc result =", result)
         return f"The result is: {result}"
     except Exception as e:
         print(f"\nAn error occurred in the calculator:\n{e}\n")
