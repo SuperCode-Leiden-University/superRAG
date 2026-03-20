@@ -262,6 +262,10 @@ class Model():
             response = self.chat_template()
             if verbose>1 : print("--------------------------------------")
 
+            if "```json\n[]\n```" in response :
+                print(">> NO NEW TOOLS INCLUDED")
+                break # no new tools were added
+            
             tool_index = len(self.tool_results) # backup the tool results in case the last tool manager returns an empty list
 
             self.parse_tools(response, revise)
@@ -273,7 +277,7 @@ class Model():
                     "name": tool["name"],
                     "content": tool["result"]
                 }]
-                if revise: self.messages.extend(tool_message)
+                self.messages.extend(tool_message)
                 self.tool_messages.extend(tool_message)
 
             if r<n_revise: # revise the answer to implement the correct dependencies
