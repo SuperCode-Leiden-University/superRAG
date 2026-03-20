@@ -10,6 +10,7 @@ from transformers import pipeline, AutoModelForCausalLM, AutoTokenizer, TextIter
 
 from src.tools.manage_tools import * # import all the tools
 from src.configs.parse_config import verbose, max_new_tokens
+from src.configs.system_prompts import chat_assistant_prompt, tool_manager_prompt
 
 class Model():
     # define variables and import the model
@@ -29,8 +30,8 @@ class Model():
             --> GGUF quantized:   model.gguf                        (direct load, NOT with Transformers!)
         """
 
-        self.tool_results = None
-        self.tool_classifier = False # use the same model either to choose which tool to use or to generate an answer
+        self.tool_results = []
+        self.tool_selection = False # use the same model either to choose which tool to use or to generate an answer
         self.tools = get_tools() # tools for the agent
         self.schemas = [build_tool_schema(f) for f in self.tools.values()]
 
@@ -95,46 +96,17 @@ class Model():
             # this is the chat history
             self.messages.append({
                 "role": "system",
-                "content": """
-                You are a helpful AI assistant with access to a database and external tools. 
-                When tool results are provided, treat them as authoritative facts. 
-                Your job is to:
-                - Use the tool outputs as the primary source of truth.
-                - Incorporate the tool results directly into your final answer.
-                - Keep all names, numbers, and factual details exactly as returned.
-                - Never describe the tool‑use process, reasoning steps, or how results were obtained.
-                - Never invent alternative answers when tool results are available. 
-                You may summarize the results if the result is very long, 
-                but you must not add unsupported details.
-                """
+                "content": chat_assistant_prompt
             })
 
             # this is for deciding if a tool is needed (and which one)
             self.tool_messages.append({
                 "role": "system",
-                "content": f""" You are a tool manager, tools at your disposal are described in:\n{self.schemas}
-                Your job is to return a list of JSON objects with tools are relevant to the user's request in the order they must be called.
-                You must only choose the tools, you must NEVER try to solve the problem directly.
-                
-                You must explain your reasoning step-by-step for choosing each tool and comply to all the following guidelines:
-                1. Determine the final goal of the user request. If multiple goals are required or the final goal is complex, then break down the user request into simpler sub-tasks.
-                2. For each task, use the schemas as reference to determine relevant tools that can provide useful information that match the user's query.
-                3. For each relevant tool, use the schemas as reference to determine if the tool has requirements that can be provided by other tools. 
-                4. Built a list of JSON objects (this must be formatted as: ```json [...] ```) with the tools and their arguments (reference the schemas to check the required argument for each tool), you can include multiple tools if needed, or return an empty list if none of the tools fits.
-                
-                Additional instructions:
-                - When calling 'run_megalinter' the flavor should align with the programming language unless the user specify a specific flavor. You must NEVER try to guess the flavor and must NEVER assume the programming language.
-                - When calling 'search_database' you must first determine the level of complexity of the query (multi-step, broad or generic questions are considered complex, single-step or straightforward queries are considered easy) and determine the number of retrieved documents 'n_retriev' based on that (refer to the schema).
-                - Comments are NOT allowed inside JSON objects, you may add comments before or after the json markers (```json [...] ```).
-                - If you see the following pattern: 'var_name'=(math expression), than you need to call the calculator to solve (math expression) than replace 'var_name' with (result of the math expression) before continuing.
-                
-                Example: if the static analysis tool is relevant, check if the user provided a programming language or a flavor, if not than you need to first search the database to find out the programming language, than choose the flavor that matches the programming language.
-                In this case the json object will include the 'search_database' tool before the 'run_megalinter' tool.
-                """
+                "content": f"You are a tool manager, tools at your disposal are described in:\n\n{self.schemas}\n"+tool_manager_prompt
             })
 
         # decide if the model needs a tool or to retrieve info from the DB
-        if self.tool_classifier:
+        if self.tool_selection:
             if verbose>0 : print(">> calling the tool manager")
             self.tool_messages.append({
                 "role": "user",
@@ -161,7 +133,7 @@ class Model():
         """
 
         if self.raw_model:
-            if self.tool_classifier :
+            if self.tool_selection :
                 inputs = self.tokenizer.apply_chat_template(
                     self.tool_messages,
                     tools=self.schemas,
@@ -193,13 +165,13 @@ class Model():
             print()
 
         else: # using pipeline
-            if self.tool_classifier :
+            if self.tool_selection :
                 outputs = self.model(self.messages)
             else:
                 outputs = self.model(self.tool_messages)
             response = outputs[0]['generated_text'][-1]["content"]
 
-        if self.tool_classifier :
+        if self.tool_selection :
             self.tool_messages.append({"role": "tool_manager", "content": response })
         else:
             self.messages.append({"role": "assistant", "content": response })
@@ -207,8 +179,6 @@ class Model():
         return response
 
     def parse_tools(self, response, revise=False):
-        self.tool_results = []
-
         if '"name": "' in response:
             if verbose > 0: print(">> parsing response for tools")
             # Note: the LLM is not always consistent, sometimes there are multiple separate json objs instead of a list,
@@ -232,8 +202,8 @@ class Model():
                 print(">> JSON OBJ (PARTIAL): \n", response[tool_begin:tool_end], sep="")
 
                 tool_request = json.loads(response[tool_begin:tool_end]) # load the json obj as a dictionary
-                if tool_request not in tool_request_list:
-                    tool_request_list.append(tool_request) # to avoid duplicates
+                if tool_request not in tool_request_list: # to avoid duplicates
+                    tool_request_list.append(tool_request)
 
                     tool_name = tool_request["name"]
                     if tool_name in self.tools.keys():
@@ -249,23 +219,21 @@ class Model():
                                 req_flag = fn.get('x_metadata', {}).get('req_flag', False)
                         skip = (req_flag and not revise) or (not req_flag and revise)
                         if skip :
-                            print("Skipping tool:", tool_name)
-                            self.tool_results.append({
-                                "name": tool_name,
-                                "result": "This tool has requirements."
-                            })
-                            continue
+                            tool_result = "This tool has requirements."
+                            if verbose > 2: print(">> skipping tool:", tool_name)
+                        else:
+                            tool_result = dispatch_tool(self.tools, tool_name, tool_request["arguments"])
+                            if verbose > 2: print(">> tool result:", tool_result)
 
-                        tool_result = dispatch_tool(self.tools, tool_name, tool_request["arguments"])
                         # save the results to pass them to the model
-                        self.tool_results.append({
+                        tool_result = {
                             "name": tool_name,
                             "result": tool_result
-                        })
-                        if verbose > 2: print(">> tool result:", tool_result)
+                        }
+                        if tool_result not in self.tool_results:
+                            self.tool_results.append(tool_result)
         else:
             if verbose > 0: print(">> no tool was found")
-            self.tool_results = None
 
         # self.tool_messages.pop() # remove the last item
 
@@ -281,7 +249,7 @@ class Model():
         """
         # ----------------------------------------------------------------------------------------------
         # decide if it needs to retrieve context and/or to use tools
-        self.tool_classifier = True
+        self.tool_selection = True
         self.message_format(user_prompt)
 
         n_revise = 3
@@ -294,23 +262,19 @@ class Model():
             response = self.chat_template()
             if verbose>1 : print("--------------------------------------")
 
-            prev_tool_res = self.tool_results # backup the tool results in case the last tool manager returns an empty list
+            tool_index = len(self.tool_results) # backup the tool results in case the last tool manager returns an empty list
 
             self.parse_tools(response, revise)
             print(">> TOOL RESULTS: \n", self.tool_results, "\n", sep="")
 
-            if self.tool_results is None or self.tool_results is []:
-                if revise: self.tool_messages = prev_tool_res
-                # if the query was already answered in previous iterations the tool manager may return nothing
-            else:
-                for tool in self.tool_results:
-                    tool_message = [{
-                        "role": "tool",
-                        "name": tool["name"],
-                        "content": tool["result"]
-                    }]
-                    if revise: self.messages.extend(tool_message)
-                    self.tool_messages.extend(tool_message)
+            for tool in self.tool_results[tool_index:]: # add new tool results to the chat history
+                tool_message = [{
+                    "role": "tool",
+                    "name": tool["name"],
+                    "content": tool["result"]
+                }]
+                if revise: self.messages.extend(tool_message)
+                self.tool_messages.extend(tool_message)
 
             if r<n_revise: # revise the answer to implement the correct dependencies
                 self.tool_messages.append({
@@ -322,13 +286,15 @@ class Model():
                 })
 
         # include the retrieved docs as context and feed it to the model
-        self.tool_classifier = False
+        self.tool_selection = False
         self.message_format(user_prompt)
 
         # apply chat templates and return an answer
         if verbose > 1: print("-------------------------------------- \n## AI: ")
         response = self.chat_template()
         if verbose>1 : print("--------------------------------------")
+
+        self.tool_results = [] # reset tool results
 
         if verbose>3 : print("\n\n**************************************************************************** \n## tool_messages history: \n", self.tool_messages, "\n****************************************************************************\n", sep="")
         if verbose>3 : print("**************************************************************************** \n## messages history: \n", self.messages, "\n****************************************************************************\n\n", sep="")
