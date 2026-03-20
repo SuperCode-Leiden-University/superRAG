@@ -253,7 +253,7 @@ class Model():
         self.message_format(user_prompt)
 
         n_revise = 3
-        for r in range(n_revise): # refinement loop, by the 3rd iteration it should have the correct tools selected
+        for r in range(n_revise+1): # refinement loop, by the 3rd iteration it should have the correct tools selected
             if r<n_revise : revise = False # most often the model calls the tools for the requirements by the second try
             else: revise = True # then it can call the tools that need the requirements
 
