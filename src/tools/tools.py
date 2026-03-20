@@ -61,6 +61,7 @@ def draw_graph(expr: str, x_range: list[float]):
 
         # remove everything that isn't a math symbol (to avoid evaluating malicious code)
         safe_expr = re.sub(r'[^0-9+\-*/(). [],x]', '', expr)
+        if verbose>1 : print(">> safe_expr =", safe_expr)
         func = lambda x: eval(safe_expr)
 
         if verbose>1 : print(">> converting the range")
