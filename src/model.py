@@ -224,8 +224,8 @@ class Model():
                             if verbose > 2: print(">> skipping tool:", tool_name)
                         else:
                         #"""
-                        tool_result = dispatch_tool(self.tools, tool_name, tool_request["arguments"])
-                        if verbose > 2: print(">> tool result:", tool_result)
+                            tool_result = dispatch_tool(self.tools, tool_name, tool_request["arguments"])
+                            if verbose > 2: print(">> tool result:", tool_result)
 
                         # save the results to pass them to the model
                         tool_result = {
