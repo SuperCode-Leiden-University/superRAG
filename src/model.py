@@ -209,21 +209,17 @@ class Model():
                     if tool_name in self.tools.keys():
                         if verbose > 0: print(">> found tool:", tool_name)
 
-                        # skip tools that require dependencies (req_flag=True) the first time (revise=False) and
-                        # skip the tools that don't have dependencies (req_flag=False) the second time (revise=True)
+                        # skip tools that require dependencies (req_flag=True) the first time (revise=False)
                         # this way the first time it will compute only results for tools with no dependencies
-                        # and the second time it will compute only tools with dependencies
-                        #"""
                         for s in self.schemas:
                             fn = s.get('function', {}) # the second value is returned if the first cannot be found
                             if fn.get('name') == tool_name:
                                 req_flag = fn.get('x_metadata', {}).get('req_flag', False)
-                        skip = (req_flag and not revise) or (not req_flag and revise)
+                        skip = req_flag and not revise
                         if skip :
                             tool_result = "This tool has requirements."
                             if verbose > 2: print(">> skipping tool:", tool_name)
                         else:
-                        #"""
                             tool_result = dispatch_tool(self.tools, tool_name, tool_request["arguments"])
                             #if verbose > 2: print(">> tool result:", tool_result)
 
