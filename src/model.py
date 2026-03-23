@@ -199,9 +199,10 @@ class Model():
                 tool_temp  = tool_begin + response[tool_begin:].find("}")+1
                 tool_end   = tool_temp  + response[tool_temp: ].find("}")+1
 
-                print(">> JSON OBJ (PARTIAL): \n", response[tool_begin:tool_end], sep="")
+                tool_request = json.loads( response[tool_begin:tool_end].strip("  ") ) # remove extra spaces and load
+                print(">> JSON OBJ (PARTIAL): \n", tool_request, sep="")
 
-                tool_request = json.loads(response[tool_begin:tool_end]) # load the json obj as a dictionary
+                # load the json obj as a dictionary
                 if tool_request not in tool_request_list: # to avoid duplicates
                     tool_request_list.append(tool_request)
 
