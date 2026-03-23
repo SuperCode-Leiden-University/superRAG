@@ -234,6 +234,8 @@ class Model():
                         }
                         if tool_result not in self.tool_results:
                             self.tool_results.append(tool_result)
+                else:
+                    if verbose > 2: print(">> this tool was already called:", tool_name)
         else:
             if verbose > 0: print(">> no tool was found")
 
@@ -270,7 +272,7 @@ class Model():
             tool_index = len(self.tool_results) # backup the tool results in case the last tool manager returns an empty list
 
             self.parse_tools(response, revise)
-            print(">> TOOL RESULTS: \n", self.tool_results, "\n", sep="")
+            #print(">> TOOL RESULTS: \n", self.tool_results, "\n", sep="")
 
             for tool in self.tool_results[tool_index:]: # add new tool results to the chat history
                 tool_message = [{

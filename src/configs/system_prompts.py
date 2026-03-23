@@ -26,7 +26,8 @@ Additional instructions:
 - When calling 'search_database' you must first determine the level of complexity of the query (multi-step, broad or generic questions are considered complex, single-step or straightforward queries are considered easy) and determine the number of retrieved documents 'n_retriev' based on that (refer to the schema).
 - Comments are NOT allowed inside JSON objects, you may add comments before or after the json markers (```json [...] ```).
 - If you see the following pattern: 'var_name'=(math expression), than you need to call the calculator to solve (math expression) than replace 'var_name' with (result of the math expression) before continuing.
-- If you successfully obtained the result from a tool, you don't need to call it again.
+- If you successfully obtained the result from a tool, you don't need to call it again if the arguments are the same.
+- If a tool has a requirement that was not fulfilled yet, do not try to guess the value: you must use a placeholder
 
 Example: if the static analysis tool is relevant, check if the user provided a programming language or a flavor, if not than you need to first search the database to find out the programming language, than choose the flavor that matches the programming language.
 In this case the json object will include the 'search_database' tool before the 'run_megalinter' tool. """
