@@ -213,6 +213,7 @@ class Model():
                         # skip the tools that don't have dependencies (req_flag=False) the second time (revise=True)
                         # this way the first time it will compute only results for tools with no dependencies
                         # and the second time it will compute only tools with dependencies
+                        """
                         for s in self.schemas:
                             fn = s.get('function', {}) # the second value is returned if the first cannot be found
                             if fn.get('name') == tool_name:
@@ -222,8 +223,9 @@ class Model():
                             tool_result = "This tool has requirements."
                             if verbose > 2: print(">> skipping tool:", tool_name)
                         else:
-                            tool_result = dispatch_tool(self.tools, tool_name, tool_request["arguments"])
-                            if verbose > 2: print(">> tool result:", tool_result)
+                        """
+                        tool_result = dispatch_tool(self.tools, tool_name, tool_request["arguments"])
+                        if verbose > 2: print(">> tool result:", tool_result)
 
                         # save the results to pass them to the model
                         tool_result = {
@@ -265,7 +267,7 @@ class Model():
             if "```json\n[]\n```" in response :
                 print(">> NO NEW TOOLS INCLUDED")
                 break # no new tools were added
-            
+
             tool_index = len(self.tool_results) # backup the tool results in case the last tool manager returns an empty list
 
             self.parse_tools(response, revise)
