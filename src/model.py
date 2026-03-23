@@ -213,7 +213,7 @@ class Model():
                         # skip the tools that don't have dependencies (req_flag=False) the second time (revise=True)
                         # this way the first time it will compute only results for tools with no dependencies
                         # and the second time it will compute only tools with dependencies
-                        """
+                        #"""
                         for s in self.schemas:
                             fn = s.get('function', {}) # the second value is returned if the first cannot be found
                             if fn.get('name') == tool_name:
@@ -223,7 +223,7 @@ class Model():
                             tool_result = "This tool has requirements."
                             if verbose > 2: print(">> skipping tool:", tool_name)
                         else:
-                        """
+                        #"""
                         tool_result = dispatch_tool(self.tools, tool_name, tool_request["arguments"])
                         if verbose > 2: print(">> tool result:", tool_result)
 
@@ -255,10 +255,9 @@ class Model():
         self.message_format(user_prompt)
 
         n_revise = 3
-        for r in range(n_revise+1): # refinement loop, by the 3rd iteration it should have the correct tools selected
-            if r<n_revise : revise = False # most often the model calls the tools for the requirements by the second try
-            else: revise = True # then it can call the tools that need the requirements
+        revise = False  # most often the model calls the tools for the requirements by the second try
 
+        for r in range(n_revise+1): # refinement loop, by the 3rd iteration it should have the correct tools selected
             # apply chat templates and return an answer
             if verbose > 1: print(f"-------------------------------------- \n## tool manager {r+1}: ")
             response = self.chat_template()
@@ -290,6 +289,7 @@ class Model():
                     with the tools requirements. Treat tool results as correct and final.
                     """
                 })
+            revise = True  # then it can call the tools that need the requirements
 
         # include the retrieved docs as context and feed it to the model
         self.tool_selection = False
