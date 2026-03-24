@@ -35,8 +35,15 @@ class Model():
         self.tools = get_tools() # tools for the agent
         self.schemas = [build_tool_schema(f) for f in self.tools.values()]
 
-        self.messages = [] # history of the chat
-        self.tool_messages = [] # messages for tool selection
+        if verbose > 1: print(">> defining system prompt")
+        self.messages = [{
+            "role": "system",
+            "content": chat_assistant_prompt
+        }] # history of the chat
+        self.tool_messages = [{
+            "role": "system",
+            "content": f"You are a tool manager, tools at your disposal are described in:\n\n{self.schemas}\n" + tool_manager_prompt
+        }] # messages for tool selection
 
         ##### IMPORTING THE MODEL
         if self.raw_model:
@@ -90,21 +97,6 @@ class Model():
     # ----------------------------------------------------------------------------------------------
     # format the messages to be able to include tools and RAG
     def message_format(self, user_prompt):
-        # include the system prompts at the beginning of the chat
-        if not self.messages:
-            if verbose>1 : print(">> defining system prompt")
-            # this is the chat history
-            self.messages.append({
-                "role": "system",
-                "content": chat_assistant_prompt
-            })
-
-            # this is for deciding if a tool is needed (and which one)
-            self.tool_messages.append({
-                "role": "system",
-                "content": f"You are a tool manager, tools at your disposal are described in:\n\n{self.schemas}\n"+tool_manager_prompt
-            })
-
         # decide if the model needs a tool or to retrieve info from the DB
         if self.tool_selection:
             if verbose>0 : print(">> calling the tool manager")
@@ -202,7 +194,6 @@ class Model():
                 tool_request = json.loads( response[tool_begin:tool_end].strip("  ") ) # remove extra spaces and load
                 print(">> JSON OBJ (PARTIAL): \n", tool_request, sep="")
 
-                # load the json obj as a dictionary
                 if tool_request not in tool_request_list: # to avoid duplicates
                     tool_request_list.append(tool_request)
 
@@ -299,10 +290,10 @@ class Model():
         response = self.chat_template()
         if verbose>1 : print("--------------------------------------")
 
-        self.tool_results = [] # reset tool results
-
         #if verbose>3 : print("\n\n**************************************************************************** \n## tool_messages history: \n", self.tool_messages, "\n****************************************************************************\n", sep="")
         #if verbose>3 : print("**************************************************************************** \n## messages history: \n", self.messages, "\n****************************************************************************\n\n", sep="")
 
+        self.tool_results = [] # reset tool results
+        self.tool_messages = self.tool_messages[:1] # clear all, except the system prompt
 
         return response
