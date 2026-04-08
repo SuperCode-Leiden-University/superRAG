@@ -32,7 +32,7 @@ static double g_L1 = 1., g_m1 = 1., g_L2 = 1.,
 int main() {
   double g = 9.81, L1 = g_L1, m1 = g_m1, L2 = g_L2, m2 = g_m2;
 
-  int k = 0, N = 1000, n_var = 2,
+  int k = 0, N = 50, n_var = 2,
       neq = 2 * n_var; // deq=2=degree of differential equations, var=varing
                        // variables, assuming deq is the same for each variable
   double Ysol[neq], Y[neq], X[n_var], V[n_var]; // X = variabiables, V = dX/dt

@@ -260,7 +260,7 @@ class Model():
             tool_index = len(self.tool_results) # backup the tool results in case the last tool manager returns an empty list
 
             self.parse_tools(response, revise)
-            #print(">> TOOL RESULTS: \n", self.tool_results, "\n", sep="")
+            print(">> TOOL RESULTS: \n", self.tool_results, "\n", sep="")
 
             for tool in self.tool_results[tool_index:]: # add new tool results to the chat history
                 tool_message = [{

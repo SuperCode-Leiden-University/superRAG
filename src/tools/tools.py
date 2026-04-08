@@ -72,7 +72,12 @@ def draw_graph(expr: str, x_range: list[float]):
         plt.plot(x_points, y_points)
         plt.savefig(tools_dir+"/graph.png")
         plt.close()
-        return "the graph was saved as graph.png in the directory `"+tools_dir+"`"
+
+        # use the following command from terminal to download the graph (change <USER_NAME> to the actual name)
+        # scp -o ProxyJump=user1@server_1 user2@server_2:/path/to/file /local/path
+        # scp supercode:/home/<USER_NAME_REMOTE>/superRAG/src/tools/tools-outputs/graph.png /home/<USER_NAME_LOCAL>/Downloads/
+
+        return "the graph was saved as graph.png in the directory `"+tools_dir+"/`"
     except Exception as e:
         print(f"\nAn error occurred in the draw_graph tool:\n{e}\n")
         return f"I couldn't draw the graph. An error occurred:\n{e}"
@@ -143,9 +148,9 @@ search_database._tool_metadata = {
         }
 
 # ----------------------------------------------------------------------------------------------
-@tool
+#@tool
 def run_megalinter(flavor: str):
-    path = "megalinter-reports/megalinter.log"
+    path = tools_dir+"/megalinter-reports/"
     try:
         flavors = ['all', 'c_cpp', 'ci_light', 'cupcake', 'documentation', 'dotnet', 'dotnetweb', 'formatters', 'go', 'java', 'javascript', 'php', 'python', 'ruby', 'rust', 'salesforce', 'security', 'swift', 'terraform']
         if flavor not in flavors : # some are more likely to be misnamed by the LLM, this is a quick and dirty fix
@@ -156,7 +161,7 @@ def run_megalinter(flavor: str):
         command = "npx mega-linter-runner --flavor "+flavor
         # run shell command with: subprocess.run([command, "arg1", "arg2"], cwd="path/to/folder/", shell=True)
         #subprocess.run([command], shell=True) # run shell command
-        f = open(path)
+        f = open(path+"megalinter.log")
         logs = "Logs saved in "+path+"\n\nContents of the logs:\n\n"+f.read()
         f.close()
 
@@ -198,3 +203,36 @@ run_megalinter._tool_metadata = {
         }
 
 
+# ----------------------------------------------------------------------------------------------
+#@tool
+def run_perf(main_file: str):
+    exe_name = "myprog"
+    path = tools_dir+"/perf_files/"
+    try:
+        compile_command = "g++ -O2 -g "+main_file+" -o "+exe_name # only for C++ files
+        subprocess.run([compile_command], shell=True) # run shell command
+        # run shell command with: subprocess.run([command, "arg1", "arg2"], cwd="path/to/folder/", shell=True)
+
+        record_command = "perf record -g -e cycles -F 9999 ./"+exe_name+" -o "+path+"perf.data"
+        subprocess.run([record_command], shell=True) # run shell command
+
+        report_command = "perf report --stdio > "+path+"annotate.txt"
+        subprocess.run([report_command], shell=True) # run shell command
+        f = open(path)
+        logs = "Logs saved in "+path+"\n\nContents of the logs:\n\n"+f.read()
+        f.close()
+
+    except Exception as e:
+        print(f"\nAn error occurred in the run_perf tool:\n{e}\n")
+        return f"I couldn't run perf. An error occurred:\n{e}"
+
+    return logs
+
+# describe the use of the tool
+run_perf.__doc__ = "Use a dynamic analysis tool to find bottlenecks in the codebase."
+run_perf._tool_metadata = {
+            "provides": "report with how long the code spends for each function and operation, which can be used to improve the code performances",
+            "requires": "main file of the code, which can be found by searching the database",
+            "tags": ["dynamic analysis", "performance", "bottleneck"],
+            "examples": ""
+}

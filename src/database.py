@@ -3,7 +3,7 @@ from langchain_community.document_loaders import DirectoryLoader, TextLoader
 from langchain_community.vectorstores import FAISS
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-from src.configs.parse_config import verbose
+from src.configs.parse_config import verbose, chunk_size, chunk_overlap, tools_dir, docs_dir, db_dir, update_db
 
 
 class Database():
@@ -31,7 +31,7 @@ class Database():
 
             # ---------------------------------------------------------------------------------------------- #
             # split the docs into chunks
-            splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+            splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
             chunks = splitter.split_documents(docs)
             if verbose>1 : print(">> n_chunks =", len(chunks))
             # Note: chunk[0] = page_content='text' metadata={'source': 'test-code/filename'}

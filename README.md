@@ -60,7 +60,7 @@ Flavors can be found at https://megalinter.io/latest/flavors/.
 
 Mega-Linter can be reconfigured using the `.mega-linter.yml` file, present in this directory.
 
-#### TROUBLESHOOTING:
+###### TROUBLESHOOTING:
 
 If you're working on a remote server you may encounter this error:
 
@@ -78,6 +78,16 @@ Finally check environment variables with `echo $DOCKER_HOST`, if you get somethi
 `unix:///run/user/1005/podman/podman.sock`, then run the following commands:
 1) `unset DOCKER_HOST` to clear the env variable
 2) `grep -R "DOCKER_HOST" ~/.bashrc ~/.profile ~/.zshrc` to remove it from shell config (this may not be necessary)
+
+
+#### Installing Linux perf
+
+On Ubuntu: `sudo apt install linux-tools-common` 
+https://packages.ubuntu.com/eoan/linux-tools-common
+
+On Debian: `sudo apt install linux-perf` 
+https://packages.debian.org/buster/linux-perf
+
 
 ## Configuration file
     

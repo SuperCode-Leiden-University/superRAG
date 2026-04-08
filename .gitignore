@@ -16,10 +16,11 @@ __pycache__/
 .env
 .venv/
 .idea/
-megalinter-reports/
 
 # ignore testing material
 test*/
 test*.*
 
-src/tools/tools-outputs/
+tools-outputs/
+megalinter-reports/
+perf-files/

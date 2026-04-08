@@ -26,6 +26,10 @@ emb_model_id = vars["emb_model"] # model ID from HuggingFace
 # ----------------------------------------------------------------------------------------------
 # tools & database (RAG)
 tools_dir = vars["tools_dir"] # where I save the results from the agent's tools
+
+chunk_size = vars["chunk_size"]
+chunk_overlap = vars["chunk_overlap"]
+
 docs_dir  = vars["docs_dir"]  # where I save the files for RAG
 db_dir    = vars["db_dir"]    # where I save the vector database (db) for RAG
 update_db = vars["update_db"] # if I want to update the db (for example because I changed some files)
