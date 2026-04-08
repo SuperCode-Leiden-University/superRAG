@@ -224,24 +224,24 @@ def run_perf(main_file: str):
 
         # Compile
         subprocess.run(
-            ["g++", "-O2", "-g", main_file, "-o", exe_name],
-            cwd=docs_dir, check=True
+            ["g++ -O2 -g "+main_file+" -o "+exe_name],
+            cwd=docs_dir, shell=True, check=True
         )
 
         # Record perf data
         subprocess.run(
-            ["perf", "record", "-g", "-e", "cycles", "-F", "9999", "-o", "../"+path+"/perf.data", "./"+exe_name],
-            cwd=docs_dir, check=True
+            ["perf record -g -e cycles -F 9999 -o ../"+path+"/perf.data ./"+exe_name],
+            cwd=docs_dir, shell=True, check=True
         )
 
         # Generate report
         subprocess.run(
-            ["perf", "annotate", "--stdio", "-i", "perf.data"],
-            cwd=path, check=True,
+            ["perf annotate --stdio > annotate.txt"],
+            cwd=path, shell=True, check=True,
             #stdout=open(path+"/annotate.txt", "w")
         )
 
-        f = open(path)
+        f = open(path+"/annotate.txt")
         logs = "Logs saved in "+path+"\n\nContents of the logs:\n\n"+f.read()
         f.close()
 
