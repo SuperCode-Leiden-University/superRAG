@@ -1,4 +1,4 @@
-import re
+import re, os
 import subprocess
 import matplotlib.pyplot as plt
 import numpy as np
@@ -207,17 +207,40 @@ run_megalinter._tool_metadata = {
 #@tool
 def run_perf(main_file: str):
     exe_name = "myprog"
-    path = tools_dir+"/perf_files/"
+    path = tools_dir+"/perf_files"
+    os.makedirs(path, exist_ok=True)
     try:
-        compile_command = "g++ -O2 -g "+main_file+" -o "+exe_name # only for C++ files
-        subprocess.run([compile_command], shell=True) # run shell command
+        """
+        compile_command = "echo '\ncompiling:' && pwd && g++ -O2 -g "+main_file+" -o "+exe_name # only for C++ files
+        subprocess.run(compile_command, cwd=docs_dir, shell=True) # run shell command
         # run shell command with: subprocess.run([command, "arg1", "arg2"], cwd="path/to/folder/", shell=True)
 
-        record_command = "perf record -g -e cycles -F 9999 ./"+exe_name+" -o "+path+"perf.data"
-        subprocess.run([record_command], shell=True) # run shell command
+        record_command = "echo '\nrecording:' && pwd && perf record -g -e cycles -F 9999 ./"+exe_name+" -o ../"+path+"/perf.data"
+        subprocess.run(record_command, cwd=docs_dir, shell=True) # run shell command
 
-        report_command = "perf report --stdio > "+path+"annotate.txt"
-        subprocess.run([report_command], shell=True) # run shell command
+        report_command = "echo '\nreporting:' && pwd && perf report --stdio > annotate.txt"
+        subprocess.run(report_command, cwd=path, shell=True) # run shell command
+        #"""
+
+        # Compile
+        subprocess.run(
+            ["g++", "-O2", "-g", main_file, "-o", exe_name],
+            cwd=docs_dir, check=True
+        )
+
+        # Record perf data
+        subprocess.run(
+            ["perf", "record", "-g", "-e", "cycles", "-F", "9999", "-o", "../"+path+"/perf.data", "./"+exe_name],
+            cwd=docs_dir, check=True
+        )
+
+        # Generate report
+        subprocess.run(
+            ["perf", "annotate", "--stdio", "-i", "perf.data"],
+            cwd=path, check=True,
+            #stdout=open(path+"/annotate.txt", "w")
+        )
+
         f = open(path)
         logs = "Logs saved in "+path+"\n\nContents of the logs:\n\n"+f.read()
         f.close()
