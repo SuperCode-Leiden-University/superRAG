@@ -148,7 +148,7 @@ search_database._tool_metadata = {
         }
 
 # ----------------------------------------------------------------------------------------------
-#@tool
+@tool
 def run_megalinter(flavor: str):
     path = tools_dir+"/megalinter-reports/"
     try:
@@ -204,41 +204,23 @@ run_megalinter._tool_metadata = {
 
 
 # ----------------------------------------------------------------------------------------------
-#@tool
+@tool
 def run_perf(main_file: str):
     exe_name = "myprog"
     path = tools_dir+"/perf_files"
     os.makedirs(path, exist_ok=True)
     try:
-        """
-        compile_command = "echo '\ncompiling:' && pwd && g++ -O2 -g "+main_file+" -o "+exe_name # only for C++ files
-        subprocess.run(compile_command, cwd=docs_dir, shell=True) # run shell command
-        # run shell command with: subprocess.run([command, "arg1", "arg2"], cwd="path/to/folder/", shell=True)
-
-        record_command = "echo '\nrecording:' && pwd && perf record -g -e cycles -F 9999 ./"+exe_name+" -o ../"+path+"/perf.data"
-        subprocess.run(record_command, cwd=docs_dir, shell=True) # run shell command
-
-        report_command = "echo '\nreporting:' && pwd && perf report --stdio > annotate.txt"
-        subprocess.run(report_command, cwd=path, shell=True) # run shell command
-        #"""
-
-        # Compile
-        subprocess.run(
+        subprocess.run( # compile (for C++)
             ["g++ -O2 -g "+main_file+" -o "+exe_name],
             cwd=docs_dir, shell=True, check=True
         )
-
-        # Record perf data
-        subprocess.run(
+        subprocess.run( # record perf data
             ["perf record -g -e cycles -F 9999 -o ../"+path+"/perf.data ./"+exe_name],
             cwd=docs_dir, shell=True, check=True
         )
-
-        # Generate report
-        subprocess.run(
+        subprocess.run( # generate annotated report from perf data
             ["perf annotate --stdio > annotate.txt"],
             cwd=path, shell=True, check=True,
-            #stdout=open(path+"/annotate.txt", "w")
         )
 
         f = open(path+"/annotate.txt")
