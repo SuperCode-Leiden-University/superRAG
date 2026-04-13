@@ -183,13 +183,11 @@ class Model():
 
             while tool_end < end:
                 # find where the tool begins
-                tool_check = response[tool_end:].find('"name": "')
-                if tool_check == -1: break # this cover the case in which I have no tool left but there are '}'
-                tool_temp = tool_end + tool_check # this is more robust signature than '{'
-                tool_begin = tool_end + response[tool_end:tool_temp].rfind("{") # find '{' before the signature
-                # find where the tool ends
-                tool_temp  = tool_begin + response[tool_begin:].find("}")+1
-                tool_end   = tool_temp  + response[tool_temp: ].find("}")+1
+                tool_check = response.find('"name": "', tool_end) # this is a more robust signature for finding tools
+                if tool_check == -1: break # this cover the case in which I have no tool left but there are some '{}'
+                tool_begin = response.rfind("{", tool_end, tool_check) # find '{' between the last tool and the signature
+                tool_temp = response.find("}", tool_begin)+1 # there are two '}', this find the first
+                tool_end  = response.find("}", tool_temp)+1  # and this find where the tool actually ends
 
                 tool_request = json.loads( response[tool_begin:tool_end].strip("  ") ) # remove extra spaces and load
                 print(">> JSON OBJ (PARTIAL): \n", tool_request, sep="")

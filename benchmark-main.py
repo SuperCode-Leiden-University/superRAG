@@ -1,7 +1,7 @@
 # libraries
 import torch
 from datetime import datetime
-from datasets import load_dataset
+from datasets import load_dataset # load datasets from Hugging Face
 
 # my packages
 from src.model import Model
@@ -54,6 +54,11 @@ for i in range(L_test):
     prompt = sample["prompt"]
     sol = sample["canonical_solution"]
 
+    def_start = prompt.find("def")
+    def_end = prompt.find("\n", def_start)
+    func_def = prompt[def_start:def_end]
+    print("func_def:", func_def)
+    break """
     try:
         start = datetime.now()
         response = model.call(prompt)
@@ -63,3 +68,4 @@ for i in range(L_test):
 
     except Exception as e:
         print(f"\nAn error occurred:\n{e}\n")
+    #"""
