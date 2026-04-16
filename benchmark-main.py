@@ -9,7 +9,17 @@ from src.model import Model
 # importing variables from the config file
 from src.configs.parse_config import verbose, model_id, raw_model, quant_type
 
-
+""" bash command for lm-eval
+lm_eval \
+  --model python \
+  --model_args model_path=benchmark_main.py \
+  --tasks humaneval \
+  --batch_size 1 \
+  --num_fewshot 0 \
+  --output_path results/qwen2.5-humaneval
+"""
+# from phd-supercode run from terminal:
+# docker compose -f src/docker_env/sandbox_code.yml run --rm sandbox_code python -m human_eval.evaluate_functional_correctness samples_humaneval.jsonl
 
 # ---------------------------------------------------------------------------------------------- #
 # check if I have an Nvidia GPU on the machine
@@ -28,6 +38,8 @@ model = Model(model_id, raw_model, quant_type)
 
 # importing the benchmark from hugging face
 dataset = load_dataset("openai/openai_humaneval")
+# dataset = load_dataset("bigcode/crosscodeeval")["test"]
+
 print("Dataset structure:\n", dataset, sep="")
 """ dataset looks like this:
     DatasetDict({

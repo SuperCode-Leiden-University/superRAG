@@ -17,6 +17,8 @@ bitsandbytes # for the quantized files
 
 pyyaml # for the config file
 
+lm-eval # for evaluating benchmarks
+
 
 #networkx # general purpose
 #PyCG # static call graph
