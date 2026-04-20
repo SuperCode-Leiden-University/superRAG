@@ -4,25 +4,25 @@ from datetime import datetime
 from datasets import load_dataset # load datasets from Hugging Face
 
 # my packages
-from src.model import Model
+from supercode.model import Model
 
 # importing variables from the config file
-from src.configs.parse_config import verbose
+from supercode.configs.parse_config import verbose
 
-""" bash command for lm-eval
-lm_eval \
+""" bash command for lm-eval (python_file=src/supercode/code_processing.py,)
+python -m lm_eval \
   --model supercode_model \
-  --model_args python_file=src/code_processing.py,model_path=src/model.py \
+  --model_args model_path=src/supercode/model.py \
   --tasks humaneval \
   --batch_size 1 \
   --num_fewshot 0 \
   --write_out \
-  --output_path src/docker_env/results
+  --output_path src/supercode/docker_env/results
 """
 """ bash command to run docker and then evaluate the humaneval benchmark 
-docker compose -f src/docker_env/sandbox_code.yml run --rm sandbox_code python -m human_eval.evaluate_functional_correctness samples_humaneval.jsonl
+docker compose -f supercode/docker_env/sandbox_code.yml run --rm sandbox_code python -m human_eval.evaluate_functional_correctness samples_humaneval.jsonl
 
-Note: this assumes that results are saved in src/docker_env/results/samples_humaneval.jsonl
+Note: this assumes that results are saved in supercode/docker_env/results/samples_humaneval.jsonl
 """
 
 

@@ -1,6 +1,7 @@
 import json
 import threading
-from transformers import pipeline, AutoModelForCausalLM, AutoTokenizer, TextIteratorStreamer, BitsAndBytesConfig
+from transformers import pipeline, AutoModelForCausalLM, AutoTokenizer, TextIteratorStreamer
+
 #from awq import AutoAWQForCausalLM
 """
 - pipeline is for direct inference, with AutoModelForCausalLM, AutoTokenizer you load the raw model
@@ -8,9 +9,9 @@ from transformers import pipeline, AutoModelForCausalLM, AutoTokenizer, TextIter
 - TextIteratorStreamer and threading are for printing the answer as it is being generated
 """
 
-from src.tools.manage_tools import * # import all the tools
-from src.configs.parse_config import verbose, model_id, raw_model, quant_type, max_new_tokens, temperature
-from src.configs.system_prompts import chat_assistant_prompt, tool_manager_prompt
+from supercode.tools.manage_tools import * # import all the tools
+from supercode.configs.parse_config import verbose, model_id, raw_model, quant_type, max_new_tokens, temperature
+from supercode.configs.system_prompts import chat_assistant_prompt, tool_manager_prompt
 
 class Model():
     # define variables and import the model

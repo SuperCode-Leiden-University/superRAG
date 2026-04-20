@@ -5,9 +5,9 @@ import numpy as np
 from datetime import datetime
 from langchain_huggingface import HuggingFaceEmbeddings
 
-from src.configs.parse_config import verbose, emb_model_id, tools_dir, docs_dir, db_dir, update_db
-from src.database import Database
-from src.tools.manage_tools import tool
+from supercode.configs.parse_config import verbose, emb_model_id, tools_dir, docs_dir, db_dir, update_db
+from supercode.database import Database
+from supercode.tools.manage_tools import tool
 
 
 
@@ -75,7 +75,7 @@ def draw_graph(expr: str, x_range: list[float]):
 
         # use the following command from terminal to download the graph (change <USER_NAME> to the actual name)
         # scp -o ProxyJump=user1@server_1 user2@server_2:/path/to/file /local/path
-        # scp supercode:/home/<USER_NAME_REMOTE>/superRAG/src/tools/tools-outputs/graph.png /home/<USER_NAME_LOCAL>/Downloads/
+        # scp supercode-temp:/home/<USER_NAME_REMOTE>/superRAG/supercode/tools/tools-outputs/graph.png /home/<USER_NAME_LOCAL>/Downloads/
 
         return "the graph was saved as graph.png in the directory `"+tools_dir+"/`"
     except Exception as e:

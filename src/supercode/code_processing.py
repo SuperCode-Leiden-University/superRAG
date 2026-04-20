@@ -1,7 +1,16 @@
-from lm_eval.api.model import LM
-from lm_eval.api.registry import register_model
+# top of src/supercode/code_processing.py
+import logging, os
+logfile = os.path.join(os.path.dirname(__file__), "lm_eval_import.log")
+logging.basicConfig(filename=logfile, level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+logging.getLogger(__name__).info("START module import of code_processing.py")
 
-from src.model import Model
+
+
+from lm_eval.api.model import TemplateLM
+from lm_eval.api.registry import register_model, model_registry
+
+from supercode.model import Model
+logging.getLogger(__name__).info("END module import")
 
 
 """ sample structure for HumanEval:
@@ -41,32 +50,50 @@ I need a class that inherits from `lm_eval.api.model.LM` and it need 3 methods:
 I only care about code generation, so I can implement the first and raise `NotImplementedError` for the others.
 """
 
-@register_model("supercode_model")
-class SuperCodeLM(LM):
-    def __init__(self, **kwargs):
-        super().__init__()
-        self.model = Model()
+print(os.getcwd())
+print("LOADING supercode.code_processing")
 
-    def generate_until(self, requests):
-        outputs = []
-        for req in requests:
-            prompt = req["prompt"]
-            max_new_tokens = req.get("max_gen_toks", 256) # limit number of tokens
-            stop = req.get("until", None) # HumanEval expects the model to generate only the function body
 
-            response = self.model.call(prompt, max_new_tokens=max_new_tokens, stop=stop)
-            outputs.append(response)
-        return outputs
+# Only register if not already present
+if "supercode_model" not in model_registry._objs:
+    @register_model("supercode_model")
+    class SuperCodeLM(TemplateLM):
+        def __init__(self, **kwargs):
+            super().__init__()
+            print("start __init__")
+            self.model = Model()
+            print("ended __init__")
 
-    def loglikelihood(self, requests):
-        raise NotImplementedError("Not needed for HumanEval")
+        def generate_until(self, requests):
+            print("start generate_until")
 
-    def loglikelihood_rolling(self, requests):
-        raise NotImplementedError("Not needed for HumanEval")
+            outputs = []
+            for req in requests:
+                prompt = req["prompt"]
+                max_new_tokens = req.get("max_gen_toks", 256) # limit number of tokens
+                stop = req.get("until", None) # HumanEval expects the model to generate only the function body
+
+                response = self.model.call(prompt, max_new_tokens=max_new_tokens, stop=stop)
+                outputs.append(response)
+            print("end generate_until")
+            return outputs
+
+        def loglikelihood(self, requests):
+            raise NotImplementedError("Not needed for HumanEval")
+
+        def loglikelihood_rolling(self, requests):
+            raise NotImplementedError("Not needed for HumanEval")
+else:
+    # If already registered, import the existing class for local use (optional)
+    SuperCodeLM = model_registry._objs["supercode_model"]
+logging.getLogger(__name__).info("END class def (SuperCodeLM)")
 
 
 def create_model(**kwargs):
+    print("start create_model")
     return SuperCodeLM(**kwargs)
+
+logging.getLogger(__name__).info("END func def (create_model)")
 
 
 # extract the code from the model's answer

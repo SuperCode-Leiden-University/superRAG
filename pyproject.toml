@@ -1,0 +1,12 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "supercode"
+version = "0.1.0"
+description = "SuperCode model package"
+requires-python = ">=3.8"
+
+[tool.setuptools.packages.find]
+where = ["src"]
