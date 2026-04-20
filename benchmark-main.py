@@ -1,5 +1,5 @@
 # libraries
-import torch
+import torch, pprint
 from datetime import datetime
 from datasets import load_dataset # load datasets from Hugging Face
 
@@ -7,19 +7,26 @@ from datasets import load_dataset # load datasets from Hugging Face
 from src.model import Model
 
 # importing variables from the config file
-from src.configs.parse_config import verbose, model_id, raw_model, quant_type
+from src.configs.parse_config import verbose
 
 """ bash command for lm-eval
 lm_eval \
-  --model python \
-  --model_args model_path=benchmark_main.py \
+  --model supercode_model \
+  --model_args python_file=src/code_processing.py,model_path=src/model.py \
   --tasks humaneval \
   --batch_size 1 \
   --num_fewshot 0 \
-  --output_path results/qwen2.5-humaneval
+  --write_out \
+  --output_path src/docker_env/results
 """
-# from phd-supercode run from terminal:
-# docker compose -f src/docker_env/sandbox_code.yml run --rm sandbox_code python -m human_eval.evaluate_functional_correctness samples_humaneval.jsonl
+""" bash command to run docker and then evaluate the humaneval benchmark 
+docker compose -f src/docker_env/sandbox_code.yml run --rm sandbox_code python -m human_eval.evaluate_functional_correctness samples_humaneval.jsonl
+
+Note: this assumes that results are saved in src/docker_env/results/samples_humaneval.jsonl
+"""
+
+
+
 
 # ---------------------------------------------------------------------------------------------- #
 # check if I have an Nvidia GPU on the machine
@@ -34,7 +41,7 @@ if verbose>1 :
 ##### IMPORTING THE MODEL & BENCHMARK
 
 # "model" is for processing text and generating an answer
-model = Model(model_id, raw_model, quant_type)
+model = Model()
 
 # importing the benchmark from hugging face
 dataset = load_dataset("openai/openai_humaneval")
@@ -52,7 +59,7 @@ print("Dataset structure:\n", dataset, sep="")
 test_set = dataset["test"]
 L_test = len(test_set)
 sample = test_set[0]
-print("\n# task_id:\n", sample["task_id"], "\n\n# prompt:\n", sample["prompt"], "\n\n# canonical_solution:\n", sample["canonical_solution"], sep="")
+#print("\nsample 0:"); pprint.pprint(sample)
 
 
 # ---------------------------------------------------------------------------------------------- #
@@ -70,7 +77,8 @@ for i in range(L_test):
     def_end = prompt.find("\n", def_start)
     func_def = prompt[def_start:def_end]
     print("func_def:", func_def)
-    break """
+    break
+    """
     try:
         start = datetime.now()
         response = model.call(prompt)

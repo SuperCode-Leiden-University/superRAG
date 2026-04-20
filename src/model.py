@@ -9,18 +9,19 @@ from transformers import pipeline, AutoModelForCausalLM, AutoTokenizer, TextIter
 """
 
 from src.tools.manage_tools import * # import all the tools
-from src.configs.parse_config import verbose, max_new_tokens
+from src.configs.parse_config import verbose, model_id, raw_model, quant_type, max_new_tokens, temperature
 from src.configs.system_prompts import chat_assistant_prompt, tool_manager_prompt
 
 class Model():
     # define variables and import the model
-    def __init__(self, model_id, raw_model=True, quant_type="full"):
+    def __init__(self):
         # "model" here refers only to the one used for processing text and generating an answer
 
         ##### model's variables
         self.model_id = model_id # name of the model from Hugging Face
         self.raw_model = raw_model # True if the model is loaded directly, False if loaded through pipeline
         self.quant_type = quant_type # valid values: ("full", "bits", "GPTQ") --> check file formats!!!
+        self.gen_args = None
         """
         NOTE: the model can be loaded as quantized only if someone published the quantized version (see files):
             --> full precision:   model.safetensors                 (direct load)
@@ -144,7 +145,13 @@ class Model():
                 ).to(self.model.device)
 
             def generate():
-                self.model.generate(**inputs, max_new_tokens=max_new_tokens, streamer=self.streamer)
+                # check if kwargs are passed in model.call(), otherwise use the values in the config file
+                self.model.generate(
+                    **inputs,
+                    max_new_tokens=self.gen_args.get("max_new_tokens",max_new_tokens),
+                    temperature=self.gen_args.get("temperature",temperature),
+                    streamer=self.streamer
+                )
             #response = self.tokenizer.decode(outputs[0][inputs["input_ids"].shape[-1]:], skip_special_tokens=True) # wait for the whole answer before printing
 
             # this is for printing the tokens as they are generated
@@ -230,7 +237,7 @@ class Model():
     # ----------------------------------------------------------------------------------------------
     # ----------------------------------------------------------------------------------------------
     # ----------------------------------------------------------------------------------------------
-    def call(self, user_prompt):
+    def call(self, user_prompt, **kwargs):
         """
         WORKFLOW:
             1) the model checks if it needs to call a tool or retrieve docs
@@ -239,6 +246,7 @@ class Model():
         """
         # ----------------------------------------------------------------------------------------------
         # decide if it needs to retrieve context and/or to use tools
+        self.gen_args = kwargs # model's settings like temperature and max tokens (defaul vals in config)
         self.tool_selection = True
         self.message_format(user_prompt)
 

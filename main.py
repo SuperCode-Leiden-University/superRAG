@@ -6,7 +6,7 @@ from datetime import datetime
 from src.model import Model
 
 # importing variables from the config file
-from src.configs.parse_config import verbose, model_id, raw_model, quant_type
+from src.configs.parse_config import verbose
 
 
 
@@ -23,7 +23,7 @@ if verbose>1 :
 ##### IMPORTING THE MODEL
 
 # "model" is for processing text and generating an answer
-model = Model(model_id, raw_model, quant_type)
+model = Model()
 
 
 # ---------------------------------------------------------------------------------------------- #
