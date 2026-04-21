@@ -40,6 +40,7 @@ def calculator(expr: str): # arguments should have a defined type
 # describe the use of the tool
 calculator.__doc__ = "Calculate the result of a mathematical expression."
 calculator._tool_metadata = {
+            #"name": calculator.__name__,
             "provides": "numerical solution of a math equation",
             "requires": "math expression provided by the user",
             "tags": ["math", "calculator", "equation", "solve", "result"],
@@ -85,6 +86,7 @@ def draw_graph(expr: str, x_range: list[float]):
 # describe the use of the tool
 draw_graph.__doc__ = "Plot a function given its mathematical expression and x range."
 draw_graph._tool_metadata = {
+            #"name": draw_graph.__name__,
             "provides": "path where the graph was saved",
             "requires": "math function provided by the user and range of the function provided by the user, "
                         "use [-10, +10] if no range is given",
@@ -133,6 +135,7 @@ search_database.__doc__ = """
     - what the code does and how.
 """
 search_database._tool_metadata = {
+            #"name": search_database.__name__,
             "provides": "chunks of documents with relevant information and metadata of the documents "
                         "(like source file and programming language)",
             "requires": """
@@ -174,6 +177,7 @@ def run_megalinter(flavor: str):
 # describe the use of the tool
 run_megalinter.__doc__ = "Use a static analysis tool to find errors and warnings in the codebase."
 run_megalinter._tool_metadata = {
+            #"name": run_megalinter.__name__,
             "provides": "report with errors, warnings and best practices suggestions for the codebase",
             "requires": "flavor from the user or programming language, which can be found by searching the database",
             "tags": ["static analysis", "errors", "warnings"],
@@ -236,6 +240,7 @@ def run_perf(main_file: str):
 # describe the use of the tool
 run_perf.__doc__ = "Use a dynamic analysis tool to find bottlenecks in the codebase."
 run_perf._tool_metadata = {
+            #"name": run_perf.__name__,
             "provides": "report with how long the code spends for each function and operation, which can be used to improve the code performances",
             "requires": "main file of the code, which can be found by searching the database",
             "tags": ["dynamic analysis", "performance", "bottleneck"],

@@ -36,6 +36,7 @@ class Model():
         self.tool_selection = False # use the same model either to choose which tool to use or to generate an answer
         self.tools = get_tools() # tools for the agent
         self.schemas = [build_tool_schema(f) for f in self.tools.values()]
+        self.details = [f._tool_metadata for f in self.tools.values()] # info about requirements
 
         if verbose > 1: print(">> defining system prompt")
         self.messages = [{
@@ -251,7 +252,7 @@ class Model():
         self.tool_selection = True
         self.message_format(user_prompt)
 
-        n_revise = 3
+        n_revise = -1#3
         revise = False  # most often the model calls the tools for the requirements by the second try
 
         for r in range(n_revise+1): # refinement loop, by the 3rd iteration it should have the correct tools selected

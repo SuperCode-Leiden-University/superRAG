@@ -5,9 +5,10 @@ from datasets import load_dataset # load datasets from Hugging Face
 
 # my packages
 from supercode.model import Model
+from supercode.code_processing import extract_code
 
 # importing variables from the config file
-from supercode.configs.parse_config import verbose
+from supercode.configs.parse_config import verbose, gen_code_dir
 
 """ bash command for lm-eval (python_file=src/supercode/code_processing.py,)
 python -m lm_eval \
@@ -77,8 +78,7 @@ for i in range(L_test):
     def_end = prompt.find("\n", def_start)
     func_def = prompt[def_start:def_end]
     print("func_def:", func_def)
-    break
-    """
+
     try:
         start = datetime.now()
         response = model.call(prompt)
@@ -86,6 +86,15 @@ for i in range(L_test):
         end = datetime.now()
         if verbose>0 : print(">> Time to Answer =", end-start)
 
+        # convert to json
+        json_sample = extract_code(sample, response)
+        print("\n\njson_sample", json_sample, sep="\n")
+
+        # save as jsonl (json line: json objects separated by newline characters)
+        with open(gen_code_dir+"/humaneval.jsonl", "a") as f:
+            f.write(str(json_sample)+"\n\n")
+            f.close()
+
     except Exception as e:
         print(f"\nAn error occurred:\n{e}\n")
-    #"""
+    break

@@ -1,10 +1,7 @@
-# top of src/supercode/code_processing.py
 import logging, os
 logfile = os.path.join(os.path.dirname(__file__), "lm_eval_import.log")
 logging.basicConfig(filename=logfile, level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logging.getLogger(__name__).info("START module import of code_processing.py")
-
-
 
 from lm_eval.api.model import TemplateLM
 from lm_eval.api.registry import register_model, model_registry
@@ -100,13 +97,13 @@ logging.getLogger(__name__).info("END func def (create_model)")
 def extract_code(sample, response):
 
     def_index = response.find(sample["entry_point"]) # robust signature for finding the function
-    code_start = response.rfind("```", def_index)+3 # code blocks start and end with ``` (exclude ```)
-    code_end = response.find("```", def_index)
+    code_start = response.rfind("def", 0, def_index) # this works for functions, but not for classes
+    code_end = response.find("```", def_index) # code blocks start and end with ``` (exclude ```)
 
     code = response[code_start:code_end].strip()
 
-    sample = {
+    json_sample = {
         "task_id": sample["task_id"],
         "completion": code
     }
-    return sample
+    return json_sample

@@ -11,6 +11,7 @@ def tool(func):
     func.__is_tool__ = True
 
     func._tool_metadata = {
+            #"name": None,
             "provides": None,
             "requires": None,
             "tags": None,
