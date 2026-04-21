@@ -84,8 +84,9 @@ for i in range(L_test):
     try:
         # standard HumanEval code
         problems = read_problems()
+        print("\nproblems:\n", problems, sep="") ; print("\n\n")
 
-        num_samples_per_task = 200
+        num_samples_per_task = 1 #200
         samples = [
             dict(task_id=task_id, completion=model.call(problems[task_id]["prompt"]))
             for task_id in problems
