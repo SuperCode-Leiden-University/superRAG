@@ -1,7 +1,9 @@
 # libraries
-import torch, pprint
+import torch, pprint # pretty-print for dict
 from datetime import datetime
 from datasets import load_dataset # load datasets from Hugging Face
+
+from human_eval.data import write_jsonl, read_problems
 
 # my packages
 from supercode.model import Model
@@ -69,7 +71,7 @@ sample = test_set[0]
 ##### BENCHMARK THE MODEL
 for i in range(L_test):
     print("exemple ", i, "/", L_test, sep ="" )
-
+    """
     sample = test_set[i]
     prompt = sample["prompt"]
     sol = sample["canonical_solution"]
@@ -78,13 +80,21 @@ for i in range(L_test):
     def_end = prompt.find("\n", def_start)
     func_def = prompt[def_start:def_end]
     print("func_def:", func_def)
-
+    #"""
     try:
-        start = datetime.now()
-        response = model.call(prompt)
+        # standard HumanEval code
+        problems = read_problems()
 
-        end = datetime.now()
-        if verbose>0 : print(">> Time to Answer =", end-start)
+        num_samples_per_task = 200
+        samples = [
+            dict(task_id=task_id, completion=model.call(problems[task_id]["prompt"]))
+            for task_id in problems
+            for _ in range(num_samples_per_task)
+        ]
+        write_jsonl(gen_code_dir+"/samples.jsonl", samples)
+        """
+        # my code
+        response = model.call(prompt)
 
         # convert to json
         json_sample = extract_code(sample, response)
@@ -94,7 +104,7 @@ for i in range(L_test):
         with open(gen_code_dir+"/humaneval.jsonl", "a") as f:
             f.write(str(json_sample)+"\n\n")
             f.close()
-
+        #"""
     except Exception as e:
         print(f"\nAn error occurred:\n{e}\n")
     break

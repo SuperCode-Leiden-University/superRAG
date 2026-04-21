@@ -17,7 +17,8 @@ bitsandbytes # for the quantized files
 
 pyyaml # for the config file
 
-lm-eval # for evaluating benchmarks
+lm-eval # for evaluating multiple benchmarks
+human-eval # humaneval benchmark
 
 
 #networkx # general purpose
