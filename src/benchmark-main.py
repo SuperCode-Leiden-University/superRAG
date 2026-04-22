@@ -68,10 +68,30 @@ sample = test_set[0]
 # ---------------------------------------------------------------------------------------------- #
 # ---------------------------------------------------------------------------------------------- #
 # ---------------------------------------------------------------------------------------------- #
+try:
+    # standard HumanEval code
+    problems = read_problems()
+    num_samples_per_task = 2 #200
+    #"""
+    samples = [
+        dict(
+            task_id=task_id, # info on a single problem
+            completion=extract_code(problems[task_id], model.call(problems[task_id]["prompt"]))
+        )
+        for task_id in problems
+        for _ in range(num_samples_per_task)
+    ]
+    write_jsonl(gen_code_dir+"/samples.jsonl", samples)
+    print("\n\nevaluationg samples:")
+    subprocess.run(["evaluate_functional_correctness " + gen_code_dir + "/samples.jsonl"], shell=True)
+except Exception as e:
+    print(f"\nAn error occurred:\n{e}\n")
+
+"""
 ##### BENCHMARK THE MODEL
 for i in range(L_test):
     print("exemple ", i, "/", L_test, sep ="" )
-    """
+    
     sample = test_set[i]
     prompt = sample["prompt"]
     sol = sample["canonical_solution"]
@@ -80,33 +100,20 @@ for i in range(L_test):
     def_end = prompt.find("\n", def_start)
     func_def = prompt[def_start:def_end]
     print("func_def:", func_def)
-    #"""
     try:
-        # standard HumanEval code
-        problems = read_problems()
-        num_samples_per_task = 2 #200
-
-        samples = [
-            dict(task_id=task_id, completion=model.call(problems[task_id]["prompt"]))
-            for task_id in problems
-            for _ in range(num_samples_per_task)
-        ]
-        write_jsonl(gen_code_dir+"/samples.jsonl", samples)
-        """
         # my code
         response = model.call(prompt)
 
         # convert to json
-        json_sample = extract_code(sample, response)
+        code = extract_code(sample, response)
+        json_sample = code_to_json(sample, code)
         print("\n\njson_sample", json_sample, sep="\n")
 
         # save as jsonl (json line: json objects separated by newline characters)
         with open(gen_code_dir+"/humaneval.jsonl", "a") as f:
             f.write(str(json_sample)+"\n\n")
             f.close()
-        #"""
-        print("\n\nevaluationg samples:")
-        subprocess.run(["evaluate_functional_correctness "+gen_code_dir+"/samples.jsonl"], shell=True)
     except Exception as e:
         print(f"\nAn error occurred:\n{e}\n")
     break
+#"""
