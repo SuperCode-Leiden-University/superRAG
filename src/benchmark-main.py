@@ -45,6 +45,8 @@ if verbose>1 :
 
 # "model" is for processing text and generating an answer
 model = Model()
+
+general_prompt = "write a function based on the following description.\n"
 benchmark_file = gen_code_dir+"/humaneval_baseline.jsonl"
 
 # importing the benchmark from hugging face
@@ -78,7 +80,7 @@ try:
         for _ in range(num_samples_per_task):
             sample = problems[task_id]
 
-            response = model.call(sample["prompt"], reset_memory=True) # generate the answer for all task independently
+            response = model.call(general_prompt+sample["prompt"], reset_memory=True) # generate the answer for all task independently
             code = extract_code(sample, response)
             json_sample = code_to_json(sample, code)
 
