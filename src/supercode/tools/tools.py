@@ -4,7 +4,7 @@ import numpy as np
 from datetime import datetime
 from langchain_huggingface import HuggingFaceEmbeddings
 
-from supercode.configs.parse_config import verbose, emb_model_id, tools_dir, docs_dir, db_dir, update_db
+from supercode.configs.parse_config import verbose, emb_model_id, tools_dir, docs_dir, db_dir, update_db, gen_code_dir
 from supercode.database import Database
 from supercode.tools.manage_tools import tool
 
@@ -159,10 +159,10 @@ def run_megalinter(flavor: str):
             if flavor=="cpp" or flavor=="c" : flavor="c_cpp"
             if flavor in ["ci", "docker", "jenkins", "json", "yaml", "xml"] : flavor="ci_light"
 
-
-        command = "npx mega-linter-runner --flavor "+flavor
+        # TEMPORARY PATCH
+        command = "cd "+gen_code_dir+" && npx mega-linter-runner --flavor "+flavor
         # run shell command with: subprocess.run([command, "arg1", "arg2"], cwd="path/to/folder/", shell=True)
-        #subprocess.run([command], shell=True) # run shell command
+        subprocess.run([command], shell=True) # run shell command
         f = open(path+"megalinter.log")
         logs = "Logs saved in "+path+"\n\nContents of the logs:\n\n"+f.read()
         f.close()

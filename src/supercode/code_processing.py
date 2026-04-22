@@ -94,18 +94,20 @@ logging.getLogger(__name__).info("END func def (create_model)")
 
 
 # extract the code from the model's answer
-def extract_code(sample, response):
-    def_index = response.find(sample["entry_point"]) # robust signature for finding the function
-    code_start = response.rfind("def", 0, def_index) # this works for functions, but not for classes
-    code_end = response.find("```", def_index) # code blocks start and end with ``` (exclude ```)
+def extract_code(response, entry_point=None):
+    if entry_point == None: entry_index = len(response)
+    else: entry_index = response.find(entry_point) # robust signature for finding the function
+
+    code_start = response.rfind("def", 0, entry_index) # this works for functions, but not for classes
+    code_end = response.find("```", code_start) # code blocks start and end with ``` (exclude ```)
 
     code = response[code_start:code_end].strip()
     return code
 
 
-def code_to_json(sample, code):
+def code_to_json(task_id, code):
     json_sample = {
-        "task_id": sample["task_id"],
+        "task_id": task_id,
         "completion": code
     }
     return json_sample

@@ -10,8 +10,10 @@ from transformers import pipeline, AutoModelForCausalLM, AutoTokenizer, TextIter
 """
 
 from supercode.tools.manage_tools import * # import all the tools
-from supercode.configs.parse_config import verbose, model_id, raw_model, quant_type, max_new_tokens, temperature
+from supercode.configs.parse_config import verbose, model_id, raw_model, quant_type, max_new_tokens, temperature, gen_code_dir
 from supercode.configs.system_prompts import chat_assistant_prompt, tool_manager_prompt
+from supercode.code_processing import *
+
 
 class Model():
     # define variables and import the model
@@ -299,10 +301,42 @@ class Model():
         self.tool_selection = False
         self.message_format(user_prompt)
 
+        #########################################################################################################
+        #########################################################################################################
+        #########################################################################################################
+        # TEMPORARY PATCH
+        gen_code_file = gen_code_dir + "/gen_code_temp.py"
+
+        # apply chat templates and return an answer
+        if verbose > 1: print("-------------------------------------- \n## (temp) AI: ")
+        response = self.chat_template()
+        if verbose > 1: print("--------------------------------------")
+
+        code = extract_code(response)
+        with open(gen_code_file, "w") as f:
+            f.write(str(code) + "\n\n")
+            f.close()
+
+        tool_name = "run_megalinter"
+        tool_args = "python"
+        tool_result = dispatch_tool(self.tools, tool_name, tool_args)
+        tool_message = [{
+            "role": "tool",
+            "name": tool_name,
+            "content": tool_result
+        },{
+            "role": "user",
+            "content": "Use the tools results to improve your previous answer. Treat tool results as correct and final."
+        }]
+        self.messages.extend(tool_message)
+        #########################################################################################################
+        #########################################################################################################
+        #########################################################################################################
+
         # apply chat templates and return an answer
         if verbose > 1: print("-------------------------------------- \n## AI: ")
         response = self.chat_template()
-        if verbose>1 : print("--------------------------------------")
+        if verbose > 1: print("--------------------------------------")
 
         #if verbose>3 : print("\n\n**************************************************************************** \n## tool_messages history: \n", self.tool_messages, "\n****************************************************************************\n", sep="")
         #if verbose>3 : print("**************************************************************************** \n## messages history: \n", self.messages, "\n****************************************************************************\n\n", sep="")

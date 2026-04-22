@@ -47,7 +47,7 @@ if verbose>1 :
 model = Model()
 
 general_prompt = "write a function based on the following description.\n"
-benchmark_file = gen_code_dir+"/humaneval_baseline.jsonl"
+benchmark_file = gen_code_dir+"/humaneval_patch.jsonl"
 
 # importing the benchmark from hugging face
 dataset = load_dataset("openai/openai_humaneval")
@@ -81,8 +81,8 @@ try:
             sample = problems[task_id]
 
             response = model.call(general_prompt+sample["prompt"], reset_memory=True) # generate the answer for all task independently
-            code = extract_code(sample, response)
-            json_sample = code_to_json(sample, code)
+            code = extract_code(response, sample["entry_point"])
+            json_sample = code_to_json(sample["task_id"], code)
 
             # save as jsonl (json line: json objects separated by newline characters)
             with open(benchmark_file, "a") as f:
