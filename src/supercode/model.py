@@ -13,6 +13,8 @@ from supercode.tools.manage_tools import * # import all the tools
 from supercode.configs.parse_config import verbose, model_id, raw_model, quant_type, max_new_tokens, temperature, gen_code_dir
 from supercode.configs.system_prompts import chat_assistant_prompt, tool_manager_prompt
 from supercode.code_processing import *
+from supercode.tools.tools import *
+
 
 
 class Model():
@@ -324,7 +326,8 @@ class Model():
 
         tool_name = "run_megalinter"
         tool_args = "python"
-        tool_result = dispatch_tool(self.tools, tool_name, tool_args)
+        # tool_result = dispatch_tool(self.tools, tool_name, tool_args)
+        tool_result = run_megalinter("python")
         tool_message = [{
             "role": "tool",
             "name": tool_name,
