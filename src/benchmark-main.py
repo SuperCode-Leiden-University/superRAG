@@ -1,5 +1,5 @@
 # libraries
-import torch, pprint # pretty-print for dict
+import torch, subprocess, pprint # pretty-print for dict
 from datetime import datetime
 from datasets import load_dataset # load datasets from Hugging Face
 
@@ -84,9 +84,8 @@ for i in range(L_test):
     try:
         # standard HumanEval code
         problems = read_problems()
-        print("\nproblems:\n", problems, sep="") ; print("\n\n")
+        num_samples_per_task = 2 #200
 
-        num_samples_per_task = 1 #200
         samples = [
             dict(task_id=task_id, completion=model.call(problems[task_id]["prompt"]))
             for task_id in problems
@@ -106,6 +105,8 @@ for i in range(L_test):
             f.write(str(json_sample)+"\n\n")
             f.close()
         #"""
+        print("\n\nevaluationg samples:")
+        subprocess.run(["evaluate_functional_correctness "+gen_code_dir+"/samples.jsonl"], shell=True)
     except Exception as e:
         print(f"\nAn error occurred:\n{e}\n")
     break
