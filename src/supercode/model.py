@@ -39,14 +39,7 @@ class Model():
         self.details = [f._tool_metadata for f in self.tools.values()] # info about requirements
 
         if verbose > 1: print(">> defining system prompt")
-        self.messages = [{
-            "role": "system",
-            "content": chat_assistant_prompt
-        }] # history of the chat
-        self.tool_messages = [{
-            "role": "system",
-            "content": f"You are a tool manager, tools at your disposal are described in:\n\n{self.schemas}\n" + tool_manager_prompt
-        }] # messages for tool selection
+        self.reset_memory() # keep only the system prompts
 
         ##### IMPORTING THE MODEL
         if self.raw_model:
@@ -96,6 +89,16 @@ class Model():
             #"""
         else:
             self.model = pipeline("text-generation", model=self.model_id)
+
+    def reset_memory(self):
+        self.messages = [{
+            "role": "system",
+            "content": chat_assistant_prompt
+        }] # history of the chat
+        self.tool_messages = [{
+            "role": "system",
+            "content": f"You are a tool manager, tools at your disposal are described in:\n\n{self.schemas}\n" + tool_manager_prompt
+        }] # messages for tool selection
 
     # ----------------------------------------------------------------------------------------------
     # format the messages to be able to include tools and RAG
@@ -239,7 +242,7 @@ class Model():
     # ----------------------------------------------------------------------------------------------
     # ----------------------------------------------------------------------------------------------
     # ----------------------------------------------------------------------------------------------
-    def call(self, user_prompt, **kwargs):
+    def call(self, user_prompt, reset_memory=False, **kwargs):
         """
         WORKFLOW:
             1) the model checks if it needs to call a tool or retrieve docs
@@ -251,6 +254,9 @@ class Model():
         self.gen_args = kwargs # model's settings like temperature and max tokens (defaul vals in config)
         self.tool_selection = True
         self.message_format(user_prompt)
+
+        if reset_memory: # do not keep memory of previous answers
+            self.reset_memory() # keep only the system prompts
 
         n_revise = -1#3
         revise = False  # most often the model calls the tools for the requirements by the second try

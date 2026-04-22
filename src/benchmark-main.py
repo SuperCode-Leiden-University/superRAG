@@ -7,7 +7,7 @@ from human_eval.data import write_jsonl, read_problems
 
 # my packages
 from supercode.model import Model
-from supercode.code_processing import extract_code
+from supercode.code_processing import *
 
 # importing variables from the config file
 from supercode.configs.parse_config import verbose, gen_code_dir
@@ -45,6 +45,7 @@ if verbose>1 :
 
 # "model" is for processing text and generating an answer
 model = Model()
+benchmark_file = gen_code_dir+"/humaneval_baseline.jsonl"
 
 # importing the benchmark from hugging face
 dataset = load_dataset("openai/openai_humaneval")
@@ -72,18 +73,32 @@ try:
     # standard HumanEval code
     problems = read_problems()
     num_samples_per_task = 2 #200
-    #"""
+
+    for task_id in problems:
+        for _ in range(num_samples_per_task):
+            sample = problems[task_id]
+
+            response = model.call(sample["prompt"], reset_memory=True) # generate the answer for all task independently
+            code = extract_code(sample, response)
+            json_sample = code_to_json(sample, code)
+
+            # save as jsonl (json line: json objects separated by newline characters)
+            with open(benchmark_file, "a") as f:
+                f.write(str(json_sample) + "\n\n")
+                f.close()
+    """
     samples = [
         dict(
             task_id=task_id, # info on a single problem
-            completion=extract_code(problems[task_id], model.call(problems[task_id]["prompt"]))
+            completion=extract_code(problems[task_id], model.call(problems[task_id]["prompt"], memory=False))
         )
         for task_id in problems
         for _ in range(num_samples_per_task)
     ]
     write_jsonl(gen_code_dir+"/samples.jsonl", samples)
+    """
     print("\n\nevaluationg samples:")
-    subprocess.run(["evaluate_functional_correctness " + gen_code_dir + "/samples.jsonl"], shell=True)
+    subprocess.run(["evaluate_functional_correctness " + benchmark_file], shell=True)
 except Exception as e:
     print(f"\nAn error occurred:\n{e}\n")
 
