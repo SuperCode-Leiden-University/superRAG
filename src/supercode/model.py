@@ -312,7 +312,12 @@ class Model():
         response = self.chat_template()
         if verbose > 1: print("--------------------------------------")
 
-        code = extract_code(response)
+        # code = extract_code(response) # gives an error for some reason, but I'm too tired
+
+        code_start = response.rfind("def")  # this works for functions, but not for classes
+        code_end = response.find("```", code_start)  # code blocks start and end with ``` (exclude ```)
+        code = response[code_start:code_end].strip()
+
         with open(gen_code_file, "w") as f:
             f.write(str(code) + "\n\n")
             f.close()
