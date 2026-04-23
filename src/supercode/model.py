@@ -321,7 +321,7 @@ class Model():
         code = response[code_start:code_end].strip()
 
         with open(gen_code_file, "w") as f:
-            f.write(str(code) + "\n\n")
+            f.write(code)
             f.close()
 
         # tool_result = dispatch_tool(self.tools, tool_name, tool_args)

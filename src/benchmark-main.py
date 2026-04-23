@@ -87,7 +87,7 @@ try:
 
             # save as jsonl (json line: json objects separated by newline characters)
             with open(benchmark_file, "a") as f:
-                f.write(str(json_sample) + "\n\n")
+                f.write(str(json_sample) + "\n")
                 f.close()
     """
     samples = [
