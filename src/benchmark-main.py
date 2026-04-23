@@ -75,7 +75,7 @@ sample = test_set[0]
 try:
     # standard HumanEval code
     problems = read_problems()
-    num_samples_per_task = 2 #200
+    num_samples_per_task = 1 #200
 
     for task_id in problems:
         for _ in range(num_samples_per_task):
