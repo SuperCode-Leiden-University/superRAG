@@ -33,7 +33,7 @@ CPP_CPPLINT_ARGUMENTS: "--filter=-whitespace"
 C_CPPLINT_ARGUMENTS: "--filter=-whitespace"
 
 # only look in the directory (but this assumes you downloaded mega-linter in the repository!)
-FILTER_REGEX_INCLUDE: (supercode/docker_env/results/) #(RAG-codebase/)
+FILTER_REGEX_INCLUDE: (supercode/docker_env/results/gen_code/) #(RAG-codebase/)
 
 # How much output the script will generate to the console: INFO (default), DEBUG, WARNING or ERROR. 
 LOG_LEVEL: INFO

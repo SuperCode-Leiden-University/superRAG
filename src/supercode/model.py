@@ -324,13 +324,11 @@ class Model():
             f.write(str(code) + "\n\n")
             f.close()
 
-        tool_name = "run_megalinter"
-        tool_args = "python"
         # tool_result = dispatch_tool(self.tools, tool_name, tool_args)
         tool_result = run_megalinter("python")
         tool_message = [{
             "role": "tool",
-            "name": tool_name,
+            "name": "run_megalinter",
             "content": tool_result
         },{
             "role": "user",
