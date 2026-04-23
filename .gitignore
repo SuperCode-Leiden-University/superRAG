@@ -21,7 +21,7 @@ __pycache__/
 test*/
 test*.*
 
-tools-outputs/
+#tools-outputs/
 megalinter-reports/
 perf-files/
 perf.dat*
