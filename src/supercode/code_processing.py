@@ -99,7 +99,7 @@ def extract_code(response, entry_point=None):
     else: entry_index = response.find(entry_point) # robust signature for finding the function
 
     code_def = response.rfind("def", 0, entry_index)  # this works for functions, but not for classes
-    code_start = response.rfind("```", 0, code_def)
+    code_start = response.rfind("```", 0, code_def)+3
     if response.rfind("python", code_start, code_def):
         code_start += 6 # remove "python" as well if present
     code_end = response.find("```", code_start)  # code blocks start and end with ``` (exclude ```)

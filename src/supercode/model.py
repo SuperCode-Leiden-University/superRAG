@@ -317,7 +317,7 @@ class Model():
         # code = extract_code(response) # gives an error for some reason, but I'm too tired
 
         code_def = response.rfind("def")  # this works for functions, but not for classes
-        code_start = response.rfind("```", 0, code_def)
+        code_start = response.rfind("```", 0, code_def)+3
         if response.rfind("python", code_start, code_def):
             code_start += 6 # remove "python" as well if present
         code_end = response.find("```", code_start)  # code blocks start and end with ``` (exclude ```)

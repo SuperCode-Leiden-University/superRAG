@@ -77,6 +77,10 @@ try:
     problems = read_problems()
     num_samples_per_task = 1 #200
 
+    # create an empty file (or overwrite if the file exists)
+    with open(benchmark_file, "w") as f:
+        f.close()
+
     for task_id in problems:
         for _ in range(num_samples_per_task):
             sample = problems[task_id]
