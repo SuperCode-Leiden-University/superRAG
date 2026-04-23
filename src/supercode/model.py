@@ -335,7 +335,7 @@ class Model():
             "content": tool_result
         },{
             "role": "user",
-            "content": "Use the tools results to improve your previous answer. Treat tool results as correct and final."
+            "content": "Use the tools results to improve your previous answer. Treat tool results as correct and final. Always include the full function in your answer."
         }]
         self.messages.extend(tool_message)
         #########################################################################################################

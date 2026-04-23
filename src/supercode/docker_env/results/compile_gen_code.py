@@ -21,6 +21,9 @@ for sample in samples:
     #print("### sample:", sample["task_id"])
     function = sample["completion"]
 
+    # extract examples with solutions from the prompt
+    #index_start = function.find("def ")+4
+
     with tempfile.NamedTemporaryFile("w", suffix=".py", delete=False) as tmp:
         tmp.write(function)
         tmp_path = tmp.name
