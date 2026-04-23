@@ -1,12 +1,11 @@
-version: '3.9'
 services:
     sandbox_code: # isolated container for compiling the generated code
-        image: sandbox_code:1.0 # my sandboxing image built from Dockerfile
+        image: humaneval-sandbox #sandbox_code # my sandboxing image built from Dockerfile
         network_mode: "none" # no network access
 
         cpus: 1 # CPU limit
         mem_limit: 2g # memory limit
 
         volumes: # for saving data
-        - ./results:/workspace # mount generated samples
+        - ./results:/workspace # mount generated, basically "workplace/" is replaced by "results/"  
         working_dir: /workspace

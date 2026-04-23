@@ -21,10 +21,14 @@ ENV PATH="/opt/venv/bin:$PATH"
 # install HumanEval evaluator inside the venv
 RUN pip install --no-cache-dir human-eval
 
+# copy all the files inside results to the container
+COPY results/ /workspace/results/
+
 WORKDIR /workspace
 
 # add and set my agent as a user
 #RUN useradd my_agent
 #USER my_agent
 
-# CMD["python", "main.py"] # to run the application
+# to run the application, IMPORTANT: not even comments after this command!!!
+CMD ["python3", "temp.py"]

@@ -160,7 +160,8 @@ def run_megalinter(flavor: str):
             if flavor in ["ci", "docker", "jenkins", "json", "yaml", "xml"] : flavor="ci_light"
 
         # TEMPORARY PATCH
-        command = "cd "+gen_code_dir+" && npx mega-linter-runner --flavor "+flavor
+        #command = "cd "+gen_code_dir+" && npx mega-linter-runner --flavor "+flavor
+        command = "npx mega-linter-runner --flavor "+flavor
         # run shell command with: subprocess.run([command, "arg1", "arg2"], cwd="path/to/folder/", shell=True)
         subprocess.run([command], shell=True) # run shell command
         f = open(path+"megalinter.log")
