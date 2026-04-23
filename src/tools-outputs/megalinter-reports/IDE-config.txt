@@ -1,0 +1,29 @@
+MegaLinter can help you to define the same linter configuration locally
+
+INSTRUCTIONS
+
+- Copy the content of IDE-config folder at the root of your repository
+- if you are using Visual Studio Code, just reopen your project after the copy, and you will be prompted to install recommended extensions
+- If not, you can install extensions manually using the following links.
+
+IDE EXTENSIONS APPLICABLE TO YOUR PROJECT
+
+clang-format (C)
+  - vscode:
+    - Clang-Format: https://marketplace.visualstudio.com/items?itemName=xaver.clang-format
+  - emacs:
+    - clang-format: https://releases.llvm.org/21.1.0/tools/clang/docs/ClangFormat.html#emacs-integration
+
+clang-format (CPP)
+  - vscode:
+    - Clang-Format: https://marketplace.visualstudio.com/items?itemName=xaver.clang-format
+  - emacs:
+    - clang-format: https://releases.llvm.org/21.1.0/tools/clang/docs/ClangFormat.html#emacs-integration
+
+trivy (REPOSITORY)
+  - vscode:
+    - VSCode Trivy: https://marketplace.visualstudio.com/items?itemName=AquaSecurityOfficial.trivy-vulnerability-scanner
+
+trivy-sbom (REPOSITORY)
+  - vscode:
+    - VSCode Trivy: https://marketplace.visualstudio.com/items?itemName=AquaSecurityOfficial.trivy-vulnerability-scanner

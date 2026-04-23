@@ -22,7 +22,7 @@ test*/
 test*.*
 
 #tools-outputs/
-megalinter-reports/
-perf-files/
-perf.dat*
+#megalinter-reports/
+#perf-files/
+#perf.dat*
 #docker_env/results/

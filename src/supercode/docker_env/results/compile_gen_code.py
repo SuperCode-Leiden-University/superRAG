@@ -22,7 +22,7 @@ for sample in samples:
     function = sample["completion"]
 
     with tempfile.NamedTemporaryFile("w", suffix=".py", delete=False) as tmp:
-        tmp.write("from typing import List \n"+function)
+        tmp.write(function)
         tmp_path = tmp.name
     try:
         result = subprocess.run(

@@ -307,7 +307,7 @@ class Model():
         #########################################################################################################
         #########################################################################################################
         # TEMPORARY PATCH
-        gen_code_file = gen_code_dir + "/gen_code_temp.py"
+        gen_code_file = gen_code_dir + "/gen_code/gen_code_temp.py"
 
         # apply chat templates and return an answer
         if verbose > 1: print("-------------------------------------- \n## (temp) AI: ")
@@ -316,7 +316,10 @@ class Model():
 
         # code = extract_code(response) # gives an error for some reason, but I'm too tired
 
-        code_start = response.rfind("def")  # this works for functions, but not for classes
+        code_def = response.rfind("def")  # this works for functions, but not for classes
+        code_start = response.rfind("```", 0, code_def)
+        if response.rfind("python", code_start, code_def):
+            code_start += 6 # remove "python" as well if present
         code_end = response.find("```", code_start)  # code blocks start and end with ``` (exclude ```)
         code = response[code_start:code_end].strip()
 
