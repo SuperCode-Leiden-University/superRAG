@@ -48,7 +48,7 @@ if verbose>1 :
 model = Model()
 
 general_prompt = "write a function based on the following description.\n"
-benchmark_file = gen_code_dir+"/humaneval_patch.jsonl"
+benchmark_file = gen_code_dir+"/humaneval_baseline.jsonl"
 
 # importing the benchmark from hugging face
 dataset = load_dataset("openai/openai_humaneval")
