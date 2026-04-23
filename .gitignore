@@ -25,4 +25,4 @@ tools-outputs/
 megalinter-reports/
 perf-files/
 perf.dat*
-docker_env/results/
+#docker_env/results/
