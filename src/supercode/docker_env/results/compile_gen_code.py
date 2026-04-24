@@ -27,7 +27,7 @@ with open("humaneval_baseline.jsonl") as f:
 
 for sample in samples:
     #print("### sample:", sample["task_id"])
-    function = sample["completion"]
+    function = sample["code"]
 
     # extract examples with solutions from the prompt
     #index_start = function.find("def ")+4

@@ -102,7 +102,7 @@ def extract_code(response, entry_point=None):
         print("function not found")
         return ""
     code_start = response.rfind("```", 0, code_def)+3
-    if response.rfind("python", code_start, code_def):
+    if response.rfind("python", code_start, code_def)>-1:
         code_start += 6 # remove "python" as well if present
     code_end = response.find("```", code_start)  # code blocks start and end with ``` (exclude ```)
 
