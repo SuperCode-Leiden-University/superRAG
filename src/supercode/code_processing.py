@@ -95,10 +95,12 @@ logging.getLogger(__name__).info("END func def (create_model)")
 
 # extract the code from the model's answer
 def extract_code(response, entry_point=None):
-    if entry_point == None: entry_index = len(response)
-    else: entry_index = response.find(entry_point) # robust signature for finding the function
+    if entry_point == None: code_def = response.find("def ") # if entry_point is unknown
+    else: code_def = response.find("def "+entry_point) # robust signature for finding the function
 
-    code_def = response.rfind("def", 0, entry_index)  # this works for functions, but not for classes
+    if code_def==-1:
+        print("function not found")
+        return ""
     code_start = response.rfind("```", 0, code_def)+3
     if response.rfind("python", code_start, code_def):
         code_start += 6 # remove "python" as well if present
@@ -111,9 +113,10 @@ def extract_code(response, entry_point=None):
     return code
 
 
-def code_to_json(task_id, code):
+def convert_to_json(task_id, response, code):
     json_sample = {
         "task_id": task_id,
-        "completion": code
+        "completion": response, # backup the model's answer
+        "code": code
     }
     return json_sample

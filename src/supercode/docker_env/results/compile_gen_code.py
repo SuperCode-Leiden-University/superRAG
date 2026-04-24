@@ -2,10 +2,18 @@ import subprocess
 import ast
 import tempfile
 
+from datasets import load_dataset # load datasets from Hugging Face
+from supercode.configs.parse_config import verbose, gen_code_dir
+
 
 success_count = 0
 failure_count = 0
 samples = []
+
+benchmark_file = gen_code_dir+"/humaneval_patch_results.txt"
+
+# importing the benchmark from hugging face
+dataset = load_dataset("openai/openai_humaneval")
 
 with open("humaneval_baseline.jsonl") as f:
     for i, line in enumerate(f, start=1):

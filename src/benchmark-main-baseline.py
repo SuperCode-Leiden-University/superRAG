@@ -87,7 +87,7 @@ try:
 
             response = model.call(general_prompt+sample["prompt"], reset_memory=True) # generate the answer for all task independently
             code = extract_code(response, sample["entry_point"])
-            json_sample = code_to_json(sample["task_id"], code)
+            json_sample = convert_to_json(sample["task_id"], response, code)
 
             # save as jsonl (json line: json objects separated by newline characters)
             with open(benchmark_file, "a") as f:
