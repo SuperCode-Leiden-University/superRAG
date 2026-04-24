@@ -1,7 +1,7 @@
 services:
     sandbox_code: # isolated container for compiling the generated code
         image: humaneval-sandbox #sandbox_code # my sandboxing image built from Dockerfile
-        network_mode: "none" # no network access
+        #network_mode: "none" # no network access
 
         cpus: 1 # CPU limit
         mem_limit: 2g # memory limit

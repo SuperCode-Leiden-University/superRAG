@@ -19,6 +19,7 @@ RUN python3 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 # install HumanEval evaluator inside the venv
+RUN pip install --no-cache-dir datasets
 RUN pip install --no-cache-dir human-eval
 
 # copy all the files inside results to the container
@@ -31,4 +32,4 @@ WORKDIR /workspace
 #USER my_agent
 
 # to run the application, IMPORTANT: not even comments after this command!!!
-CMD ["python3", "temp.py"]
+CMD ["python3", "compile_gen_code.py"]

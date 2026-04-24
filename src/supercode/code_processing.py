@@ -99,8 +99,9 @@ def extract_code(response, entry_point=None):
     else: code_def = response.find("def "+entry_point) # robust signature for finding the function
 
     if code_def==-1:
-        print("function not found")
+        print("WARNING: function not found")
         return ""
+
     code_start = response.rfind("```", 0, code_def)+3
     if response.rfind("python", code_start, code_def)>-1:
         code_start += 6 # remove "python" as well if present

@@ -17,6 +17,7 @@ bitsandbytes # for the quantized files
 
 pyyaml # for the config file
 
+datasets
 lm-eval # for evaluating multiple benchmarks
 human-eval # humaneval benchmark
 
