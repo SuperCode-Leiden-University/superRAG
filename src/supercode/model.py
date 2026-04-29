@@ -21,6 +21,7 @@ class Model():
     # define variables and import the model
     def __init__(self):
         # "model" here refers only to the one used for processing text and generating an answer
+        print("### model_id = "+model_id)
 
         ##### model's variables
         self.model_id = model_id # name of the model from Hugging Face
@@ -314,25 +315,35 @@ class Model():
         response = self.chat_template()
         if verbose > 1: print("--------------------------------------")
 
-        # code = extract_code(response) # gives an error for some reason, but I'm too tired
-
+        code = extract_code(response) # gives an error for some reason, but I'm too tired
+        """
         code_def = response.rfind("def")  # this works for functions, but not for classes
         code_start = response.rfind("```", 0, code_def)+3
         if response.rfind("python", code_start, code_def):
             code_start += 6 # remove "python" as well if present
         code_end = response.find("```", code_start)  # code blocks start and end with ``` (exclude ```)
         code = response[code_start:code_end].strip()
-
+        #"""
         with open(gen_code_file, "w") as f:
             f.write(code)
             f.close()
 
         # tool_result = dispatch_tool(self.tools, tool_name, tool_args)
-        tool_result = run_megalinter("python")
+        megalinter_result = run_megalinter("python")
+        compiler_result = compiler(code)
+        perf_result = run_perf("gen_code_temp.py")
         tool_message = [{
             "role": "tool",
             "name": "run_megalinter",
-            "content": tool_result
+            "content": megalinter_result
+        },{
+            "role": "tool",
+            "name": "compiler",
+            "content": compiler_result
+        },{
+            "role": "tool",
+            "name": "run_perf",
+            "content": perf_result
         },{
             "role": "user",
             "content": "Use the tools results to improve your previous answer. Treat tool results as correct and final. Always include the full function in your answer."
