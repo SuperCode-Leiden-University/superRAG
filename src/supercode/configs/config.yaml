@@ -8,7 +8,7 @@ model:
         # file size (for 1.5B) is: GPTQ-Int4 (1.16 GB) ~ AWQ (1.63 GB) < full (3.1 GB) < GGUF (9.76 GB)
         #Qwen/Qwen3-Coder-Next # MoE, 3B active and 80B total
         #Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF
-        Qwen/Qwen2.5-Coder-1.5B-Instruct
+        Qwen/Qwen2.5-Coder-0.5B-Instruct
         #Qwen/Qwen2.5-Coder-1.5B-Instruct-AWQ
         #Qwen/Qwen2.5-Coder-1.5B-Instruct-GPTQ-Int4
     raw_model: true

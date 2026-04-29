@@ -21,6 +21,7 @@ class Model():
     # define variables and import the model
     def __init__(self):
         # "model" here refers only to the one used for processing text and generating an answer
+        print("### model_id = " + model_id)
 
         ##### model's variables
         self.model_id = model_id # name of the model from Hugging Face

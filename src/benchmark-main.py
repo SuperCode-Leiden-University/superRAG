@@ -47,7 +47,7 @@ if verbose>1 :
 # "model" is for processing text and generating an answer
 model = Model()
 
-general_prompt = "write a function based on the following description.\n"
+general_prompt = "write a function based on the following description and check that the function returns the expected results for the examples provided.\n"
 benchmark_file = gen_code_dir+"/humaneval_patch.jsonl"
 
 # importing the benchmark from hugging face
@@ -102,40 +102,9 @@ try:
         for task_id in problems
         for _ in range(num_samples_per_task)
     ]
-    write_jsonl(gen_code_dir+"/samples.jsonl", samples)
+    write_jsonl(gen_code_dir+"/samples.jsonl", samples) # basically converts the dictionary to a 'real' jsonl and save it
     """
     print("\n\nevaluationg samples:")
     subprocess.run(["evaluate_functional_correctness " + benchmark_file], shell=True)
 except Exception as e:
     print(f"\nAn error occurred:\n{e}\n")
-
-"""
-##### BENCHMARK THE MODEL
-for i in range(L_test):
-    print("exemple ", i, "/", L_test, sep ="" )
-    
-    sample = test_set[i]
-    prompt = sample["prompt"]
-    sol = sample["canonical_solution"]
-
-    def_start = prompt.find("def")
-    def_end = prompt.find("\n", def_start)
-    func_def = prompt[def_start:def_end]
-    print("func_def:", func_def)
-    try:
-        # my code
-        response = model.call(prompt)
-
-        # convert to json
-        code = extract_code(sample, response)
-        json_sample = code_to_json(sample, code)
-        print("\n\njson_sample", json_sample, sep="\n")
-
-        # save as jsonl (json line: json objects separated by newline characters)
-        with open(gen_code_dir+"/humaneval.jsonl", "a") as f:
-            f.write(str(json_sample)+"\n\n")
-            f.close()
-    except Exception as e:
-        print(f"\nAn error occurred:\n{e}\n")
-    break
-#"""

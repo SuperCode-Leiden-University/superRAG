@@ -1,4 +1,4 @@
-import re, os, subprocess
+import re, os, subprocess, tempfile
 import matplotlib.pyplot as plt
 import numpy as np
 from datetime import datetime
@@ -245,3 +245,41 @@ run_perf._tool_metadata = {
             "tags": ["dynamic analysis", "performance", "bottleneck"],
             "examples": ""
 }
+
+
+@tool
+def compiler(function):
+    # this only checks if the code compiles (semantic correctness)
+    with tempfile.NamedTemporaryFile("w", suffix=".py", delete=False) as tmp:
+        tmp.write(function)
+        tmp_path = tmp.name
+    try:
+        result = subprocess.run( # run a program from inside the container (and remove the container afterwards)
+            ["docker", "run", "--rm", "sandbox_code", "python3", tmp_path],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=10 # seconds
+        )
+        return True, result.stdout
+    except Exception as e:
+        return False, e
+
+@tool
+def check_unit_tests(function, test, entry_point):
+    # this checks if the unit tests return the expected result (functional correctness)
+
+    with tempfile.NamedTemporaryFile("w", suffix=".py", delete=False) as tmp:
+        tmp.write(function+"\n\n"+test+"\n\ncheck("+entry_point+")")
+        tmp_path = tmp.name
+    try:
+        result = subprocess.run(
+            ["python3", tmp_path],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=10 # seconds
+        )
+        return True, result.stdout
+    except Exception as e:
+        return False, e
