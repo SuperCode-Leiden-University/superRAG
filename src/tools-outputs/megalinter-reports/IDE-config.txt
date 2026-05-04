@@ -8,18 +8,6 @@ INSTRUCTIONS
 
 IDE EXTENSIONS APPLICABLE TO YOUR PROJECT
 
-clang-format (C)
-  - vscode:
-    - Clang-Format: https://marketplace.visualstudio.com/items?itemName=xaver.clang-format
-  - emacs:
-    - clang-format: https://releases.llvm.org/21.1.0/tools/clang/docs/ClangFormat.html#emacs-integration
-
-clang-format (CPP)
-  - vscode:
-    - Clang-Format: https://marketplace.visualstudio.com/items?itemName=xaver.clang-format
-  - emacs:
-    - clang-format: https://releases.llvm.org/21.1.0/tools/clang/docs/ClangFormat.html#emacs-integration
-
 trivy (REPOSITORY)
   - vscode:
     - VSCode Trivy: https://marketplace.visualstudio.com/items?itemName=AquaSecurityOfficial.trivy-vulnerability-scanner

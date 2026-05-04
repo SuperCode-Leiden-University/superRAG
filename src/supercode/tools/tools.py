@@ -213,14 +213,22 @@ def run_perf(main_file: str):
     path = tools_dir+"/perf_files"
     os.makedirs(path, exist_ok=True)
     try:
-        subprocess.run( # compile (for C++)
-            ["g++ -O2 -g "+main_file+" -o "+exe_name],
-            cwd=docs_dir, shell=True, check=True
-        )
-        subprocess.run( # record perf data
-            ["perf record -g -e cycles -F 9999 -o ../"+path+"/perf.data ./"+exe_name],
-            cwd=docs_dir, shell=True, check=True
-        )
+        if ".cpp" in main_file: # compile (for C++)
+            subprocess.run(
+                ["g++ -O2 -g "+main_file+" -o "+exe_name],
+                cwd=docs_dir, shell=True, check=True
+            )
+            subprocess.run( # record perf data
+                ["perf record -g -e cycles -F 9999 -o ../"+path+"/perf.data ./"+exe_name],
+                cwd=docs_dir, shell=True, check=True
+            )
+        elif ".py" in main_file:  # compile (for C++)
+            subprocess.run( # record perf data
+                ["perf record -g -e cycles -F 9999 -o ../"+path+"/perf.data python ./"+main_file],
+                cwd=docs_dir, shell=True, check=True
+            )
+        else:
+            print("WARNING: file format not implemented in run_perf tool")
         subprocess.run( # generate annotated report from perf data
             ["perf annotate --stdio > annotate.txt"],
             cwd=path, shell=True, check=True,

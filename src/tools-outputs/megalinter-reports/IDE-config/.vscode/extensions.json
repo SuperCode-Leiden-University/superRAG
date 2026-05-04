@@ -1,6 +1,5 @@
 {
     "recommendations": [
-        "AquaSecurityOfficial.trivy-vulnerability-scanner",
-        "xaver.clang-format"
+        "AquaSecurityOfficial.trivy-vulnerability-scanner"
     ]
 }

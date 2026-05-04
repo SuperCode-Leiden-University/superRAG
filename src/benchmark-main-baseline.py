@@ -46,8 +46,8 @@ if verbose>1 :
 # "model" is for processing text and generating an answer
 model = Model()
 
-general_prompt = "write a function based on the following description.\n"
-benchmark_file = gen_code_dir+"/humaneval_baseline"+model_id+".jsonl"
+general_prompt = "write a function based on the following description and use assert to check that the function returns the expected results for the examples provided.\n"
+benchmark_file = gen_code_dir+"/humaneval_baseline-"+model_id[model_id.find("/")+1:]+".jsonl"
 
 # importing the benchmark from hugging face
 dataset = load_dataset("openai/openai_humaneval")

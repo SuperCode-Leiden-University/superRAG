@@ -9,10 +9,10 @@ from transformers import pipeline, AutoModelForCausalLM, AutoTokenizer, TextIter
 - TextIteratorStreamer and threading are for printing the answer as it is being generated
 """
 
+from supercode.code_processing import *
 from supercode.tools.manage_tools import * # import all the tools
 from supercode.configs.parse_config import verbose, model_id, raw_model, quant_type, max_new_tokens, temperature, gen_code_dir
 from supercode.configs.system_prompts import chat_assistant_prompt, tool_manager_prompt
-from supercode.code_processing import *
 from supercode.tools.tools import *
 
 
@@ -315,11 +315,15 @@ class Model():
         response = self.chat_template()
         if verbose > 1: print("--------------------------------------")
 
+        """
         code = extract_code(response) # gives an error for some reason, but I'm too tired
         """
-        code_def = response.rfind("def")  # this works for functions, but not for classes
+        code_def = response.find("def ") # if entry_point is unknown
+        if code_def==-1:
+            print("WARNING: function not found")
+            return ""
         code_start = response.rfind("```", 0, code_def)+3
-        if response.rfind("python", code_start, code_def):
+        if response.rfind("python", code_start, code_def)>-1:
             code_start += 6 # remove "python" as well if present
         code_end = response.find("```", code_start)  # code blocks start and end with ``` (exclude ```)
         code = response[code_start:code_end].strip()
@@ -331,7 +335,7 @@ class Model():
         # tool_result = dispatch_tool(self.tools, tool_name, tool_args)
         megalinter_result = run_megalinter("python")
         compiler_result = compiler(code)
-        perf_result = run_perf("gen_code_temp.py")
+        #perf_result = run_perf("gen_code_temp.py")
         tool_message = [{
             "role": "tool",
             "name": "run_megalinter",
@@ -340,10 +344,10 @@ class Model():
             "role": "tool",
             "name": "compiler",
             "content": compiler_result
-        },{
-            "role": "tool",
-            "name": "run_perf",
-            "content": perf_result
+        #},{
+        #    "role": "tool",
+        #    "name": "run_perf",
+        #    "content": perf_result
         },{
             "role": "user",
             "content": "Use the tools results to improve your previous answer. Treat tool results as correct and final. Always include the full function in your answer."
