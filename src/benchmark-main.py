@@ -9,9 +9,8 @@ from human_eval.data import write_jsonl, read_problems
 from supercode.model import Model
 from supercode.code_processing import *
 
-
 # importing variables from the config file
-from supercode.configs.parse_config import verbose, gen_code_dir
+from supercode.configs.parse_config import verbose, gen_code_dir, model_id
 
 """ bash command for lm-eval (python_file=src/supercode/code_processing.py,)
 python -m lm_eval \
@@ -48,7 +47,7 @@ if verbose>1 :
 model = Model()
 
 general_prompt = "write a function based on the following description and check that the function returns the expected results for the examples provided.\n"
-benchmark_file = gen_code_dir+"/humaneval_patch.jsonl"
+benchmark_file = gen_code_dir+"/humaneval_patch"+model_id+".jsonl"
 
 # importing the benchmark from hugging face
 dataset = load_dataset("openai/openai_humaneval")
