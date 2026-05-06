@@ -265,7 +265,7 @@ def compiler(function):
     try:
         print("run command with docker run")
         result = subprocess.run( # run a program from inside the container (and remove the container afterwards)
-            ["docker", "run", "--rm", "debian:13", "python3", tmp_path],
+            ["docker", "run", "--rm", "debian:13", "python", tmp_path],
             check=True,
             capture_output=True,
             text=True,
