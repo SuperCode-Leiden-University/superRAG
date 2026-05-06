@@ -1,10 +1,11 @@
-FROM ubuntu:latest
+FROM debian:13
 # Alpine is a lightweight Linux distribution
 
 RUN apt-get update 
 
 # install basic packages
-RUN apt-get install -y time sudo # utilities
+
+RUN apt-get install -y time #sudo # utilities
 RUN apt-get install -y libffi-dev libssl-dev # pip
 RUN apt-get install -y build-essential # C/C++ compilers
 RUN apt-get install -y python3 python3-pip python3-dev python3.13-venv # Python
