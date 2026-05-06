@@ -308,7 +308,8 @@ class Model():
         #########################################################################################################
         #########################################################################################################
         # TEMPORARY PATCH
-        gen_code_file = gen_code_dir + "/gen_code/gen_code_temp.py"
+        gen_code_file = "gen_code_temp.py"
+        gen_code_path = gen_code_dir + "/gen_code/"+gen_code_file
 
         # apply chat templates and return an answer
         if verbose > 1: print("-------------------------------------- \n## (temp) AI: ")
@@ -328,14 +329,14 @@ class Model():
         code_end = response.find("```", code_start)  # code blocks start and end with ``` (exclude ```)
         code = response[code_start:code_end].strip()
         #"""
-        with open(gen_code_file, "w") as f:
+        with open(gen_code_path, "w") as f:
             f.write(code)
             f.close()
 
         # tool_result = dispatch_tool(self.tools, tool_name, tool_args)
         megalinter_result = run_megalinter("python")
-        compiler_result = compiler(code)
-        #perf_result = run_perf("gen_code_temp.py")
+        compiler_result = compiler(gen_code_path)
+        #perf_result = run_perf(gen_code_file)
         tool_message = [{
             "role": "tool",
             "name": "run_megalinter",

@@ -1,11 +1,12 @@
 services:
     sandbox_code: # isolated container for compiling the generated code
-        image: humaneval-sandbox #sandbox_code # my sandboxing image built from Dockerfile
+        image: sandbox_code # my sandboxing image built from Dockerfile
         #network_mode: "none" # no network access
-
+        
+        tty: true # keeps the container running by simulating a terminal
         cpus: 1 # CPU limit
         mem_limit: 2g # memory limit
-
+        
         volumes: # for saving data
         - ./results:/workspace # mount generated, basically "workplace/" is replaced by "results/"  
         working_dir: /workspace

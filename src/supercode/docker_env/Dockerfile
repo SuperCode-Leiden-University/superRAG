@@ -1,4 +1,4 @@
-FROM debian:13
+FROM ubuntu:latest
 # Alpine is a lightweight Linux distribution
 
 RUN apt-get update 
