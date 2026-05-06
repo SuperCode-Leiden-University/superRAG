@@ -256,7 +256,7 @@ run_perf._tool_metadata = {
 
 
 @tool
-def compiler(code_path):
+def sandboxed_compiler(code_path):
     # this only checks if the code compiles (semantic correctness)
     """
     with tempfile.NamedTemporaryFile("w", suffix=".py", delete=False) as tmp:
@@ -264,17 +264,23 @@ def compiler(code_path):
         tmp.write(function)
         tmp_path = tmp.name
     """
+    # IMPORTANT: the docker image can see ONLY files inside "results/"
+    # and all paths in the container should be relative to "results/"!
     try:
-        print("run command with docker run")
+        docker_code_path = code_path[code_path.find("results/"):]
+        print(">> run command with docker run")
+        subprocess.run("pwd")
         result = subprocess.run( # run a program from inside the container (and remove the container afterwards)
-            ["docker", "run", "--rm", "sandbox_code", "python", code_path],
+            ["docker", "run", "--rm", "sandbox_code", "python", docker_code_path],
             check=True,
             capture_output=True,
             text=True,
             timeout=10 # seconds
         )
+        print(">> command run successfully")
         return True, result.stdout
     except Exception as e:
+        print("Error in compiler tool:", e)
         return False, e
 
 @tool
