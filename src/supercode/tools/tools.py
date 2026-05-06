@@ -259,11 +259,13 @@ run_perf._tool_metadata = {
 def compiler(function):
     # this only checks if the code compiles (semantic correctness)
     with tempfile.NamedTemporaryFile("w", suffix=".py", delete=False) as tmp:
+        print("create temp file")
         tmp.write(function)
         tmp_path = tmp.name
     try:
+        print("run command with docker run")
         result = subprocess.run( # run a program from inside the container (and remove the container afterwards)
-            ["docker", "run", "--rm", "sandbox_code", "python3", tmp_path],
+            ["docker", "run", "--rm", "debian:13", "python3", tmp_path],
             check=True,
             capture_output=True,
             text=True,
