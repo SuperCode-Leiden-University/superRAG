@@ -334,14 +334,14 @@ class Model():
             f.close()
 
         # tool_result = dispatch_tool(self.tools, tool_name, tool_args)
-        megalinter_result = run_megalinter("python")
+        #megalinter_result = run_megalinter("python")
         compiler_result = sandboxed_compiler(gen_code_path)
         #perf_result = run_perf(gen_code_file)
         tool_message = [{
-            "role": "tool",
-            "name": "run_megalinter",
-            "content": megalinter_result
-        },{
+        #    "role": "tool",
+        #    "name": "run_megalinter",
+        #    "content": megalinter_result
+        #},{
             "role": "tool",
             "name": "sandboxed_compiler",
             "content": compiler_result
