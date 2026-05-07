@@ -17,7 +17,7 @@ from supercode.tools.tools import *
 
 
 
-class Model():
+class Model_baseline():
     # define variables and import the model
     def __init__(self):
         # "model" here refers only to the one used for processing text and generating an answer

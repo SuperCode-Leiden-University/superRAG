@@ -6,7 +6,7 @@ from datasets import load_dataset # load datasets from Hugging Face
 from human_eval.data import write_jsonl, read_problems
 
 # my packages
-from supercode.model_baseline import Model
+from supercode.model_baseline import Model_baseline
 from supercode.code_processing import *
 
 # importing variables from the config file
@@ -44,7 +44,7 @@ if verbose>1 :
 ##### IMPORTING THE MODEL & BENCHMARK
 
 # "model" is for processing text and generating an answer
-model = Model()
+model = Model_baseline()
 
 general_prompt = "write a function based on the following description and use assert to check that the function returns the expected results for the examples provided.\n"
 benchmark_file = gen_code_dir+"/humaneval_baseline-"+model_id[model_id.find("/")+1:]+".jsonl"
