@@ -1,12 +1,13 @@
-def add(x: int, y: int) -> int:
-    """Add two numbers x and y
-    >>> add(2, 3)
-    5
-    >>> add(5, 7)
-    12
+def same_chars(s0: str, s1: str) -> bool:
     """
-    return x + y
+    Check if two words have the same characters.
+    """
+    return set(s0) == set(s1)
 
 # Assertions to check the expected results
-assert add(2, 3) == 5, "Test case 1 failed"
-assert add(5, 7) == 12, "Test case 2 failed"
+assert same_chars('eabcdzzzz', 'dddzzzzzzzddeddabc') == True
+assert same_chars('abcd', 'dddddddabc') == True
+assert same_chars('dddddddabc', 'abcd') == True
+assert same_chars('eabcd', 'dddddddabc') == False
+assert same_chars('abcd', 'dddddddabce') == False
+assert same_chars('eabcdzzzz', 'dddzzzzzzzddddabc') == False

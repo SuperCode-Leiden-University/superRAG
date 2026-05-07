@@ -103,7 +103,7 @@ try:
     ]
     write_jsonl(gen_code_dir+"/samples.jsonl", samples) # basically converts the dictionary to a 'real' jsonl and save it
     """
-    print("\n\nevaluationg samples:")
-    subprocess.run(["evaluate_functional_correctness " + benchmark_file], shell=True)
+    #print("\n\nevaluationg samples:")
+    #subprocess.run(["evaluate_functional_correctness " + benchmark_file], shell=True)
 except Exception as e:
     print(f"\nAn error occurred:\n{e}\n")
