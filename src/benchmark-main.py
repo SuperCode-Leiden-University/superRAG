@@ -74,7 +74,7 @@ sample = test_set[0]
 try:
     # standard HumanEval code
     problems = read_problems()
-    num_samples_per_task = 1 #200
+    num_samples_per_task = 2 #200
 
     # create an empty file (or overwrite if the file exists)
     with open(benchmark_file, "w") as f:
