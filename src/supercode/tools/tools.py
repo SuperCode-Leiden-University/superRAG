@@ -284,20 +284,39 @@ def sandboxed_compiler(code_path):
         return False, e
 
 @tool
-def check_unit_tests(function, test, entry_point):
+def check_unit_tests(function, test=None, entry_point=None):
     # this checks if the unit tests return the expected result (functional correctness)
 
-    with tempfile.NamedTemporaryFile("w", suffix=".py", delete=False) as tmp:
-        tmp.write(function+"\n\n"+test+"\n\ncheck("+entry_point+")")
-        tmp_path = tmp.name
-    try:
-        result = subprocess.run(
-            ["python3", tmp_path],
-            check=True,
-            capture_output=True,
-            text=True,
-            timeout=10 # seconds
-        )
-        return True, result.stdout
-    except Exception as e:
-        return False, e
+    if test == None:
+        #print(">> compilation check")
+        with tempfile.NamedTemporaryFile("w", suffix=".py", delete=False) as tmp:
+            tmp.write(function)
+            tmp_path = tmp.name
+        try:
+            result = subprocess.run(  # run a program from inside the container (and remove the container afterwards)
+                ["python3", tmp_path],
+                check=True,
+                capture_output=True,
+                text=True,
+                timeout=10  # seconds
+            )
+            return True, result.stdout
+        except Exception as e:
+            return False, e
+
+    else:
+        #print(">> test check")
+        with tempfile.NamedTemporaryFile("w", suffix=".py", delete=False) as tmp:
+            tmp.write(function+"\n\n"+test+"\n\ncheck("+entry_point+")")
+            tmp_path = tmp.name
+        try:
+            result = subprocess.run(  # run a program from inside the container (and remove the container afterwards)
+                ["python3", tmp_path],
+                check=True,
+                capture_output=True,
+                text=True,
+                timeout=10  # seconds
+            )
+            return True, result.stdout
+        except Exception as e:
+            return False, e
