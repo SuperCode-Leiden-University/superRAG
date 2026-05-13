@@ -9,11 +9,11 @@ from transformers import pipeline, AutoModelForCausalLM, AutoTokenizer, TextIter
 - TextIteratorStreamer and threading are for printing the answer as it is being generated
 """
 
-from supercode.code_processing import *
-from supercode.tools.manage_tools import * # import all the tools
-from supercode.configs.parse_config import verbose, model_id, raw_model, quant_type, max_new_tokens, temperature, gen_code_dir
-from supercode.configs.system_prompts import chat_assistant_prompt, tool_manager_prompt
-from supercode.tools.tools import *
+from src.code_processing import *
+from src.tools.manage_tools import * # import all the tools
+from src.configs.parse_config import verbose, model_id, raw_model, quant_type, max_new_tokens, temperature, gen_code_dir
+from src.configs.system_prompts import chat_assistant_prompt, tool_manager_prompt
+from src.tools.tools import *
 
 
 

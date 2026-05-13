@@ -6,7 +6,7 @@ logging.getLogger(__name__).info("START module import of code_processing.py")
 from lm_eval.api.model import TemplateLM
 from lm_eval.api.registry import register_model, model_registry
 
-from supercode.model import Model
+from src.model import Model
 logging.getLogger(__name__).info("END module import")
 
 
@@ -48,7 +48,7 @@ I only care about code generation, so I can implement the first and raise `NotIm
 """
 
 print(os.getcwd())
-print("LOADING supercode.code_processing")
+print("LOADING src.code_processing")
 
 
 # Only register if not already present

@@ -3,10 +3,10 @@ import torch
 from datetime import datetime
 
 # my packages
-from supercode.model import Model
+from src.model import Model
 
 # importing variables from the config file
-from supercode.configs.parse_config import verbose
+from src.configs.parse_config import verbose
 
 
 

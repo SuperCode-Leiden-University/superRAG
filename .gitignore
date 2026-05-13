@@ -12,6 +12,7 @@ build/
 Thumbs.db
 .ruff*
 __pycache__/
+hf_cache/
 
 # Ignore environment and secret files
 .env

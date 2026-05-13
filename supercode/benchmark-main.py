@@ -6,26 +6,26 @@ from datasets import load_dataset # load datasets from Hugging Face
 from human_eval.data import write_jsonl, read_problems
 
 # my packages
-from supercode.model import Model
-from supercode.code_processing import *
+from src.model import Model
+from src.code_processing import *
 
 # importing variables from the config file
-from supercode.configs.parse_config import verbose, gen_code_dir, model_id
+from src.configs.parse_config import verbose, gen_code_dir, model_id
 
-""" bash command for lm-eval (python_file=src/supercode/code_processing.py,)
+""" bash command for lm-eval (python_file=supercode/src/code_processing.py,)
 python -m lm_eval \
   --model supercode_model \
-  --model_args model_path=src/supercode/model.py \
+  --model_args model_path=supercode/src/model.py \
   --tasks humaneval \
   --batch_size 1 \
   --num_fewshot 0 \
   --write_out \
-  --output_path src/supercode/docker_env/results
+  --output_path supercode/src/docker_env/results
 """
 """ bash command to run docker and then evaluate the humaneval benchmark 
-docker compose -f supercode/docker_env/sandbox_code.yml run --rm sandbox_code python -m human_eval.evaluate_functional_correctness samples_humaneval.jsonl
+docker compose -f src/docker_env/sandbox_code.yml run --rm sandbox_code python -m human_eval.evaluate_functional_correctness samples_humaneval.jsonl
 
-Note: this assumes that results are saved in supercode/docker_env/results/samples_humaneval.jsonl
+Note: this assumes that results are saved in src/docker_env/results/samples_humaneval.jsonl
 """
 
 
