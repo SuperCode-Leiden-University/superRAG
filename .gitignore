@@ -10,11 +10,12 @@ build/
 # Ignore system-generated files
 .DS_Store
 Thumbs.db
+.ruff*
 __pycache__/
 
 # Ignore environment and secret files
 .env
-../.venv/
+.venv/
 .idea/
 
 # ignore testing material
