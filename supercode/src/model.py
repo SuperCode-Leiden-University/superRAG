@@ -9,9 +9,8 @@ from transformers import pipeline, AutoModelForCausalLM, AutoTokenizer, TextIter
 - TextIteratorStreamer and threading are for printing the answer as it is being generated
 """
 
-from src.code_processing import *
 from src.tools.manage_tools import * # import all the tools
-from src.configs.parse_config import verbose, model_id, raw_model, quant_type, max_new_tokens, temperature, gen_code_dir
+from src.configs.parse_config import model_id, raw_model, quant_type, max_new_tokens, temperature
 from src.configs.system_prompts import chat_assistant_prompt, tool_manager_prompt
 from src.tools.tools import *
 
@@ -247,12 +246,13 @@ class Model():
     # ----------------------------------------------------------------------------------------------
     # ----------------------------------------------------------------------------------------------
     # ----------------------------------------------------------------------------------------------
-    def call(self, user_prompt, reset_memory=False, **kwargs):
+    def call(self, user_prompt, reset_memory=False, baseline=False, **kwargs):
         """
         WORKFLOW:
             1) the model checks if it needs to call a tool or retrieve docs
             2) the tool is called and/or docs are retrieved
             3) the model integrates the results with its answer
+        if baseline is True, then the model doesn't use any external info
         """
         # ----------------------------------------------------------------------------------------------
         # decide if it needs to retrieve context and/or to use tools
@@ -260,103 +260,104 @@ class Model():
         self.tool_selection = True
         self.message_format(user_prompt)
 
-        if reset_memory: # do not keep memory of previous answers
+        if reset_memory: # do not keep memory of previous answers, useful for benchmarks
             self.reset_memory() # keep only the system prompts
 
-        n_revise = -1#3
-        revise = False  # most often the model calls the tools for the requirements by the second try
+        if not baseline:
+            n_revise = 1#3
+            revise = False  # most often the model calls the tools for the requirements by the second try
 
-        for r in range(n_revise+1): # refinement loop, by the 3rd iteration it should have the correct tools selected
+            for r in range(n_revise+1): # refinement loop, by the 3rd iteration it should have the correct tools selected
+                # apply chat templates and return an answer
+                if verbose > 1: print(f"-------------------------------------- \n## tool manager {r+1}: ")
+                response = self.chat_template()
+                if verbose>1 : print("--------------------------------------")
+
+                if "```json\n[]\n```" in response :
+                    print(">> NO NEW TOOLS INCLUDED")
+                    break # no new tools were added
+
+                tool_index = len(self.tool_results) # backup the tool results in case the last tool manager returns an empty list
+
+                self.parse_tools(response, revise)
+                print(">> TOOL RESULTS: \n", self.tool_results, "\n", sep="")
+
+                for tool in self.tool_results[tool_index:]: # add new tool results to the chat history
+                    tool_message = [{
+                        "role": "tool",
+                        "name": tool["name"],
+                        "content": tool["result"]
+                    }]
+                    self.messages.extend(tool_message)
+                    self.tool_messages.extend(tool_message)
+
+                if r<n_revise: # revise the answer to implement the correct dependencies
+                    self.tool_messages.append({
+                        "role": "user",
+                        "content": """
+                        Use the tools results to improve your previous answer and check the schema to make your answer compliant 
+                        with the tools requirements. Treat tool results as correct and final.
+                        """
+                    })
+                revise = True  # then it can call the tools that need the requirements
+
+            # include the retrieved docs as context and feed it to the model
+            self.tool_selection = False
+            self.message_format(user_prompt)
+
+            #########################################################################################################
+            #########################################################################################################
+            #########################################################################################################
+            # TEMPORARY PATCH
+            """
+            gen_code_file = "gen_code_temp.py"
+            gen_code_path = gen_code_dir + "/gen_code/"+gen_code_file
+    
             # apply chat templates and return an answer
-            if verbose > 1: print(f"-------------------------------------- \n## tool manager {r+1}: ")
+            if verbose > 1: print("-------------------------------------- \n## (temp) AI: ")
             response = self.chat_template()
-            if verbose>1 : print("--------------------------------------")
-
-            if "```json\n[]\n```" in response :
-                print(">> NO NEW TOOLS INCLUDED")
-                break # no new tools were added
-
-            tool_index = len(self.tool_results) # backup the tool results in case the last tool manager returns an empty list
-
-            self.parse_tools(response, revise)
-            print(">> TOOL RESULTS: \n", self.tool_results, "\n", sep="")
-
-            for tool in self.tool_results[tool_index:]: # add new tool results to the chat history
-                tool_message = [{
-                    "role": "tool",
-                    "name": tool["name"],
-                    "content": tool["result"]
-                }]
-                self.messages.extend(tool_message)
-                self.tool_messages.extend(tool_message)
-
-            if r<n_revise: # revise the answer to implement the correct dependencies
-                self.tool_messages.append({
-                    "role": "user",
-                    "content": """
-                    Use the tools results to improve your previous answer and check the schema to make your answer compliant 
-                    with the tools requirements. Treat tool results as correct and final.
-                    """
-                })
-            revise = True  # then it can call the tools that need the requirements
-
-        # include the retrieved docs as context and feed it to the model
-        self.tool_selection = False
-        self.message_format(user_prompt)
-
-        #########################################################################################################
-        #########################################################################################################
-        #########################################################################################################
-        # TEMPORARY PATCH
-        gen_code_file = "gen_code_temp.py"
-        gen_code_path = gen_code_dir + "/gen_code/"+gen_code_file
-
-        # apply chat templates and return an answer
-        if verbose > 1: print("-------------------------------------- \n## (temp) AI: ")
-        response = self.chat_template()
-        if verbose > 1: print("--------------------------------------")
-
-        """
-        code = extract_code(response) # gives an error for some reason, but I'm too tired
-        """
-        code_def = response.find("def ") # if entry_point is unknown
-        if code_def==-1:
-            print("WARNING: function not found")
-            return ""
-        code_start = response.rfind("```", 0, code_def)+3
-        if response.rfind("python", code_start, code_def)>-1:
-            code_start += 6 # remove "python" as well if present
-        code_end = response.find("```", code_start)  # code blocks start and end with ``` (exclude ```)
-        code = response[code_start:code_end].strip()
-        #"""
-        with open(gen_code_path, "w") as f:
-            f.write(code)
-            f.close()
-
-        # tool_result = dispatch_tool(self.tools, tool_name, tool_args)
-        #megalinter_result = run_megalinter("python")
-        compiler_result = sandboxed_compiler(gen_code_path)
-        #perf_result = run_perf(gen_code_file)
-        tool_message = [{
-        #    "role": "tool",
-        #    "name": "run_megalinter",
-        #    "content": megalinter_result
-        #},{
-            "role": "tool",
-            "name": "sandboxed_compiler",
-            "content": compiler_result
-        #},{
-        #    "role": "tool",
-        #    "name": "run_perf",
-        #    "content": perf_result
-        },{
-            "role": "user",
-            "content": "Use the tools results to improve your previous answer. Treat tool results as correct and final. Always include the full function in your answer."
-        }]
-        self.messages.extend(tool_message)
-        #########################################################################################################
-        #########################################################################################################
-        #########################################################################################################
+            if verbose > 1: print("--------------------------------------")
+    
+            #code = extract_code(response) # gives an error for some reason, but I'm too tired
+            code_def = response.find("def ") # if entry_point is unknown
+            if code_def==-1:
+                print("WARNING: function not found")
+                return ""
+            code_start = response.rfind("```", 0, code_def)+3
+            if response.rfind("python", code_start, code_def)>-1:
+                code_start += 6 # remove "python" as well if present
+            code_end = response.find("```", code_start)  # code blocks start and end with ``` (exclude ```)
+            code = response[code_start:code_end].strip()
+    
+            with open(gen_code_path, "w") as f:
+                f.write(code)
+                f.close()
+    
+            # tool_result = dispatch_tool(self.tools, tool_name, tool_args)
+            #megalinter_result = run_megalinter("python")
+            compiler_result = sandboxed_compiler(gen_code_path)
+            #perf_result = run_perf(gen_code_file)
+            tool_message = [{
+            #    "role": "tool",
+            #    "name": "run_megalinter",
+            #    "content": megalinter_result
+            #},{
+                "role": "tool",
+                "name": "sandboxed_compiler",
+                "content": compiler_result
+            #},{
+            #    "role": "tool",
+            #    "name": "run_perf",
+            #    "content": perf_result
+            },{
+                "role": "user",
+                "content": "Use the tools results to improve your previous answer. Treat tool results as correct and final. Always include the full function in your answer."
+            }]
+            self.messages.extend(tool_message)
+            #"""
+            #########################################################################################################
+            #########################################################################################################
+            #########################################################################################################
 
         # apply chat templates and return an answer
         if verbose > 1: print("-------------------------------------- \n## AI: ")

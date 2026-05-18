@@ -8,5 +8,5 @@ services:
         mem_limit: 2g # memory limit
         
         volumes: # for saving data
-        - ./results:/workspace # mount generated, basically "workplace/" is replaced by "results/"  
+        - ./results:/workspace # mount generated, basically "workplace/" is replaced by "results/"
         working_dir: /workspace

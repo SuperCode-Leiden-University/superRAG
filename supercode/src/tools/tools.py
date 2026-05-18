@@ -5,7 +5,7 @@ from datetime import datetime
 from langchain_huggingface import HuggingFaceEmbeddings
 
 from src.configs.parse_config import verbose, emb_model_id, tools_dir, docs_dir, db_dir, update_db, gen_code_dir
-from src.database import Database
+from src.database.database import Database
 from src.tools.manage_tools import tool
 
 
@@ -150,7 +150,7 @@ search_database._tool_metadata = {
         }
 
 # ----------------------------------------------------------------------------------------------
-@tool
+#@tool
 def run_megalinter(flavor: str):
     path = tools_dir+"/megalinter-reports/"
     try:
