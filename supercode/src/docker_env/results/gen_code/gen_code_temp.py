@@ -1,15 +1,16 @@
-print("Hello world")
+def return_even(n):
+    # Initialize an empty list to store even numbers
+    even_numbers = []
+    
+    # Loop through the range from 0 to n
+    for i in range(n + 1):
+        # Check if the current number is even
+        if i % 2 == 0:
+            # Append the even number to the list
+            even_numbers.append(i)
+    
+    # Return the list of even numbers
+    return even_numbers
 
-def same_chars(s0: str, s1: str) -> bool:
-    """
-    Check if two words have the same characters.
-    """
-    return set(s0) == set(s1)
-
-# Assertions to check the expected results
-assert same_chars('eabcdzzzzQQQQ', 'dddzzzzzzzddeddabc') == True
-assert same_chars('abcd', 'dddddddabc') == True
-assert same_chars('dddddddabc', 'abcd') == True
-assert same_chars('eabcd', 'dddddddabc') == False
-assert same_chars('abcd', 'dddddddabce') == False
-assert same_chars('eabcdzzzz', 'dddzzzzzzzddddabc') == False
+# Test the function with the provided test case
+assert return_even(5) == [0, 2, 4]

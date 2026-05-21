@@ -24,8 +24,6 @@ RUN pip install --no-cache-dir datasets
 RUN pip install --no-cache-dir human-eval
 
 # copy all the files inside results to the container
-COPY results/ /workspace/results/
-
 WORKDIR /workspace
 
 # add and set my agent as a user

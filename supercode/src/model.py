@@ -13,6 +13,7 @@ from src.tools.manage_tools import * # import all the tools
 from src.configs.parse_config import model_id, raw_model, quant_type, max_new_tokens, temperature
 from src.configs.system_prompts import chat_assistant_prompt, tool_manager_prompt
 from src.tools.tools import *
+from src.tools.code_processing import *
 
 
 
@@ -283,7 +284,7 @@ class Model():
             self.reset_memory() # keep only the system prompts
 
         if not baseline:
-            n_revise = 1#3
+            n_revise = -1#3
             revise = False  # most often the model calls the tools for the requirements by the second try
 
             for r in range(n_revise+1): # refinement loop, by the 3rd iteration it should have the correct tools selected
@@ -328,7 +329,7 @@ class Model():
             #########################################################################################################
             #########################################################################################################
             # TEMPORARY PATCH
-            """
+            #""" write a python function that returns all even numbers from 0 to n, then assert return_even(5)==[0,2,4]
             gen_code_file = "gen_code_temp.py"
             gen_code_path = gen_code_dir + "/gen_code/"+gen_code_file
     
@@ -336,8 +337,9 @@ class Model():
             if verbose > 1: print("-------------------------------------- \n## (temp) AI: ")
             response = self.chat_template()
             if verbose > 1: print("--------------------------------------")
-    
-            #code = extract_code(response) # gives an error for some reason, but I'm too tired
+
+            code = extract_code(response) # gives an error for some reason, but I'm too tired
+            """
             code_def = response.find("def ") # if entry_point is unknown
             if code_def==-1:
                 print("WARNING: function not found")
@@ -347,8 +349,11 @@ class Model():
                 code_start += 6 # remove "python" as well if present
             code_end = response.find("```", code_start)  # code blocks start and end with ``` (exclude ```)
             code = response[code_start:code_end].strip()
+            #"""
+            print(">> extracting the code:\n", code)
     
             with open(gen_code_path, "w") as f:
+                print(">> saving the code at", gen_code_path)
                 f.write(code)
                 f.close()
     

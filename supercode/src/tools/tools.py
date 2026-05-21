@@ -97,6 +97,7 @@ draw_graph._tool_metadata = {
 # ----------------------------------------------------------------------------------------------
 @tool
 def search_database(query: str, n_retriv: int):
+    if verbose>0 : print(">> using the search_database")
     if n_retriv < 1: return "No document has been retrieved"
     try:
         # "emb_model" is for creating the embeddings for the vector database (for RAG)
@@ -152,6 +153,7 @@ search_database._tool_metadata = {
 # ----------------------------------------------------------------------------------------------
 #@tool
 def run_megalinter(flavor: str):
+    if verbose>0 : print(">> using the run_megalinter")
     path = tools_dir+"/megalinter-reports/"
     try:
         flavors = ['all', 'c_cpp', 'ci_light', 'cupcake', 'documentation', 'dotnet', 'dotnetweb', 'formatters', 'go', 'java', 'javascript', 'php', 'python', 'ruby', 'rust', 'salesforce', 'security', 'swift', 'terraform']
@@ -209,6 +211,7 @@ run_megalinter._tool_metadata = {
 # ----------------------------------------------------------------------------------------------
 #@tool
 def run_perf(main_file: str):
+    if verbose>0 : print(">> using the run_perf")
     exe_name = "myprog"
     path = tools_dir+"/perf-reports"
     os.makedirs(path, exist_ok=True)
@@ -257,6 +260,7 @@ run_perf._tool_metadata = {
 
 @tool
 def sandboxed_compiler(code_path):
+    if verbose>0 : print(">> using the sandboxed_compiler")
     # this only checks if the code compiles (semantic correctness)
     """
     with tempfile.NamedTemporaryFile("w", suffix=".py", delete=False) as tmp:
@@ -268,16 +272,19 @@ def sandboxed_compiler(code_path):
     # and all paths in the container should be relative to "results/"!
     try:
         docker_code_path = code_path[code_path.find("results/"):]
+        abs_docker_path = "/home/elisa/PycharmProjects/phd-leiden-supercode/supercode/src/docker_env"
+        # abs_docker_path = code_path[:code_path.find("results/")] # RELATIVE PATHS DO NOT WORK
         print(">> run command with docker run")
         subprocess.run("pwd")
         # docker run --rm sandbox_code python3 results/gen_code/gen_code_temp.py
+        # docker run --mount type=bind,src=/home/elisa/PycharmProjects/phd-leiden-supercode/supercode/src/docker_env/results,dst=/workspace --rm sandbox_code
         result = subprocess.run( # run a program from inside the container (and remove the container afterwards)
-            ["docker", "run", "--rm", "sandbox_code", "python3", docker_code_path],
+            ["docker", "run", "--mount", "type=bind,src="+abs_docker_path+",dst=/workspace", "--rm", "sandbox_code", "python3", docker_code_path],
             capture_output=True,
             text=True,
             timeout=10 # seconds
         )
-        #print(">> command run successfully\n", result)
+        if verbose>1 : print(">> command run successfully\n", result)
         return result.returncode, result.stdout+"\n"+result.stderr
     except Exception as e:
         print("Error in sandboxed_compiler tool:", e)
@@ -285,6 +292,7 @@ def sandboxed_compiler(code_path):
 
 @tool
 def check_unit_tests(function, test=None, entry_point=None):
+    if verbose>0 : print(">> using the check_unit_tests")
     # this checks if the unit tests return the expected result (functional correctness)
 
     if test == None:
@@ -299,8 +307,8 @@ def check_unit_tests(function, test=None, entry_point=None):
                 text=True,
                 timeout=10  # seconds
             )
-            #print(">> command run successfully\n", result)
-            return result.returncode, result.stdout, result.stderr
+            if verbose>1 : print(">> command run successfully\n", result)
+            return result.returncode, result.stdout+"\n"+result.stderr
         except Exception as e:
             print("Error in check_unit_tests tool:", e)
             return "Error in check_unit_tests tool:"+e
