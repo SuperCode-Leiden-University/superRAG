@@ -23,8 +23,8 @@ hf_cache/
 test*/
 test*.*
 
-tools-outputs/
+#tools-outputs/
 megalinter-reports/
-perf-files/
+perf-reports/
 perf.dat*
 docker_env/results/

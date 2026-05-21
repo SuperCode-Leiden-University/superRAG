@@ -10,7 +10,9 @@ faiss-cpu
 #faiss-gpu
 sentence-transformers
 accelerate
-bitsandbytes # for the quantized files
+
+bitsandbytes # for quantizing the model
+sinq # for quantizing the model
 #optimum # for the GPTQ models --> broken, internal incompatibilities with the new version of transformers
 #autoawq # for the AWQ models --> broken, internal incompatibilities with the new version of transformers
 #intel_extension_for_pytorch # for the AWQ models

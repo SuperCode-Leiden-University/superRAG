@@ -1,3 +1,5 @@
+print("Hello world")
+
 def same_chars(s0: str, s1: str) -> bool:
     """
     Check if two words have the same characters.
@@ -5,7 +7,7 @@ def same_chars(s0: str, s1: str) -> bool:
     return set(s0) == set(s1)
 
 # Assertions to check the expected results
-assert same_chars('eabcdzzzz', 'dddzzzzzzzddeddabc') == True
+assert same_chars('eabcdzzzzQQQQ', 'dddzzzzzzzddeddabc') == True
 assert same_chars('abcd', 'dddddddabc') == True
 assert same_chars('dddddddabc', 'abcd') == True
 assert same_chars('eabcd', 'dddddddabc') == False

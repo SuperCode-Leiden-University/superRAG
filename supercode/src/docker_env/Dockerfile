@@ -33,4 +33,4 @@ WORKDIR /workspace
 #USER my_agent
 
 # to run the application, IMPORTANT: not even comments after this command!!!
-CMD ["python3", "compile_gen_code.py"]
+#CMD ["python3", "results/compile_gen_code.py"]

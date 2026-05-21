@@ -207,10 +207,10 @@ run_megalinter._tool_metadata = {
 
 
 # ----------------------------------------------------------------------------------------------
-@tool
+#@tool
 def run_perf(main_file: str):
     exe_name = "myprog"
-    path = tools_dir+"/perf_files"
+    path = tools_dir+"/perf-reports"
     os.makedirs(path, exist_ok=True)
     try:
         if ".cpp" in main_file: # compile (for C++)
@@ -270,18 +270,18 @@ def sandboxed_compiler(code_path):
         docker_code_path = code_path[code_path.find("results/"):]
         print(">> run command with docker run")
         subprocess.run("pwd")
+        # docker run --rm sandbox_code python3 results/gen_code/gen_code_temp.py
         result = subprocess.run( # run a program from inside the container (and remove the container afterwards)
-            ["docker", "run", "--rm", "sandbox_code", "python", docker_code_path],
-            check=True,
+            ["docker", "run", "--rm", "sandbox_code", "python3", docker_code_path],
             capture_output=True,
             text=True,
             timeout=10 # seconds
         )
-        print(">> command run successfully")
-        return True, result.stdout
+        #print(">> command run successfully\n", result)
+        return result.returncode, result.stdout+"\n"+result.stderr
     except Exception as e:
-        print("Error in compiler tool:", e)
-        return False, e
+        print("Error in sandboxed_compiler tool:", e)
+        return "Error in sandboxed_compiler tool:"+e
 
 @tool
 def check_unit_tests(function, test=None, entry_point=None):
@@ -295,14 +295,15 @@ def check_unit_tests(function, test=None, entry_point=None):
         try:
             result = subprocess.run(  # run a program from inside the container (and remove the container afterwards)
                 ["python3", tmp_path],
-                check=True,
                 capture_output=True,
                 text=True,
                 timeout=10  # seconds
             )
-            return True, result.stdout
+            #print(">> command run successfully\n", result)
+            return result.returncode, result.stdout, result.stderr
         except Exception as e:
-            return False, e
+            print("Error in check_unit_tests tool:", e)
+            return "Error in check_unit_tests tool:"+e
 
     else:
         #print(">> test check")
@@ -312,11 +313,12 @@ def check_unit_tests(function, test=None, entry_point=None):
         try:
             result = subprocess.run(  # run a program from inside the container (and remove the container afterwards)
                 ["python3", tmp_path],
-                check=True,
                 capture_output=True,
                 text=True,
                 timeout=10  # seconds
             )
-            return True, result.stdout
+            #print(">> command run successfully\n", result)
+            return result.returncode, result.stdout+"\n"+result.stderr
         except Exception as e:
-            return False, e
+            print("Error in check_unit_tests tool:", e)
+            return "Error in check_unit_tests tool:"+e

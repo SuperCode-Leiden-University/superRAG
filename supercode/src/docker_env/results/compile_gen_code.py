@@ -47,7 +47,7 @@ for sample in samples:
     test = problems[task_id]["test"]
 
     # check just the code
-    if check_unit_tests(function)[0]: comp_pass+=1
+    if check_unit_tests(function)[0]==0: comp_pass+=1
     else: comp_fail+=1
 
     # check with test cases

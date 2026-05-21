@@ -1,6 +1,6 @@
-import json
+import json, torch
 import threading
-from transformers import pipeline, AutoModelForCausalLM, AutoTokenizer, TextIteratorStreamer
+from transformers import pipeline, AutoModelForCausalLM, AutoTokenizer, TextIteratorStreamer, SinqConfig
 
 #from awq import AutoAWQForCausalLM
 """
@@ -58,12 +58,31 @@ class Model():
                 )
             # quantization structures (temporarily disabled):
             """ 
+            if self.quant_type == "sinq":
+                print(">> quantizing")
+                quant_config = SinqConfig(
+                    nbits=4,
+                    group_size=64,
+                    tiling_mode="1D",
+                    method="sinq",
+                    modules_to_not_convert=["lm_head"]
+                )
+                self.tokenizer = AutoTokenizer.from_pretrained(self.model_id)
+                self.model = AutoModelForCausalLM.from_pretrained(
+                    self.model_id,
+                    quantization_config=quant_config,
+                    device_map="auto",  # automatically places layers on GPU(s) if possible
+                    dtype=torch.bfloat16
+                )
+                #model.save_pretrained("/path/to/save/"+self.model_id+"-sinq-4bit") # save quantized version
+            
             if self.quant_type == "AWQ":  # AWQ quantization
                 self.model = AutoAWQForCausalLM.from_quantized(
                     self.model_id,
                     device_map="auto",  # automatically places layers on GPU(s) if possible
                     #dtype="auto"
                 )
+            
             if self.quant_type == "GPTQ":  # GPTQ quantization
                 self.tokenizer = AutoTokenizer.from_pretrained(self.model_id, trust_remote_code=True)
                 self.streamer = TextIteratorStreamer(self.tokenizer, skip_prompt=True, skip_special_tokens=True)

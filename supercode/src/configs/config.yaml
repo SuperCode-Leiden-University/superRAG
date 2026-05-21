@@ -12,16 +12,20 @@ model:
         #Qwen/Qwen2.5-Coder-1.5B-Instruct-AWQ
         #Qwen/Qwen2.5-Coder-1.5B-Instruct-GPTQ-Int4
     raw_model: true # True if the model is loaded directly, False if loaded through pipeline
-    quant_type: full # valid values: ("full", "AWQ", "GPTQ", "bits") --> check file formats!!!
+    quant_type: full # valid values: ("full", "sinq", "AWQ", "GPTQ", "bits") --> check file formats!!!
     temperature: 0.2 # 0 = always select the most likely word, 1 = random
     max_new_tokens: 500 # max number of tokens that can be generated
 
     # NOTE: the model can be loaded as quantized only if someone published the quantized version (see file's extensions):
-    #       --> full precision: model.safetensors                 (direct load)
-    #       --> full precision: pytorch_model.bin.index.json      (direct load, NOT with Transformers!)
-    #       --> 4bit quantized: model-4bit.safetensors            (needs bitsandbytes)
-    #       --> GPTQ quantized: gptq_model-4bit-128g.safetensors  (direct load)
-    #       --> GGUF quantized: model.gguf                        (direct load, NOT with Transformers!)
+    # --> full precision, based on:
+    #     - model.safetensors
+    #     - pytorch_model.bin.index.json (NOT compatible with Transformers!)
+    # --> on-the-fly quantization, based on:
+    #     - model-4bit.safetensors (needs bitsandbytes, sinq, HQQ or torchao)
+    # --> calibration-based quantization (direct load), based on:
+    #     - model.safetensors (AWQ)
+    #     - gptq_model-4bit-128g.safetensors
+    #     - model.gguf (NOT compatible with Transformers!)
 
 # embedding model for building the database (for RAG)
 emb_model: sentence-transformers/msmarco-bert-base-dot-v5  # model ID from HuggingFace
