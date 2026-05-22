@@ -41,7 +41,8 @@ if verbose>1 :
 # ---------------------------------------------------------------------------------------------- #
 # ---------------------------------------------------------------------------------------------- #
 ##### BENCHMARK SETTINGS
-baseline = False
+baseline = True
+num_samples_per_task = 5 #200
 # if baseline is true then the model does not use any external info
 # if it is false, it checks first if it can find the baseline solution and then ask the model to improve it
 
@@ -50,14 +51,15 @@ dataset = load_dataset("openai/openai_humaneval"); bench_name = "humaneval"
 # dataset = load_dataset("bigcode/crosscodeeval")["test"]; bench_name = "crosscodeeval"
 
 if baseline:
-    print("benchmark baseline for "+bench_name)
-    general_prompt = "write a function based on the following description and use assert to check that the function returns the expected results for the examples provided.\n"
-    benchmark_file = gen_code_dir + "/"+bench_name+"_baseline-" + model_id[model_id.find("/") + 1:] + ".jsonl"
+    print("benchmark baseline and model for "+bench_name)
 else:
     print("benchmark model for "+bench_name)
-    general_prompt = "improve this function based on the following description and use assert to check that the function returns the expected results for the examples provided.\n"
-    baseline_file = gen_code_dir + "/"+bench_name+"_baseline-" + model_id[model_id.find("/") + 1:] + ".jsonl"
-    benchmark_file = gen_code_dir+"/"+bench_name+"_patch-"+model_id[model_id.find("/")+1:]+".jsonl"
+
+baseline_prompt =     "write a function based on the following description, use assert to check that the function returns the expected results for the examples provided and print('function terminated with no errors') at the end."
+general_prompt = "improve this function based on the following description, use assert to check that the function returns the expected results for the examples provided and print('function terminated with no errors') at the end."
+
+baseline_file  = gen_code_dir+"/"+bench_name+"_baseline-" +model_id[model_id.find("/")+1:]+"_"+str(num_samples_per_task)+".jsonl"
+benchmark_file = gen_code_dir+"/"+bench_name+"_benchmark-"+model_id[model_id.find("/")+1:]+"_"+str(num_samples_per_task)+".jsonl"
 
 # ----------------------------------------------------------------------------------------------
 # "model" is for processing text and generating an answer
@@ -85,43 +87,54 @@ try:
     # standard HumanEval code
     problems = read_problems()
     n_tasks = len(problems)
-    num_samples_per_task = 5 #200
 
     # create an empty file (or overwrite if the file exists)
     with open(benchmark_file, "w") as f:
         f.close()
 
     if not baseline: # load the baseline functions
-        baseline_funcs = []
-        print("reading jsonl for " + baseline_file + "...")
+        baseline_codes = []
+        print("reading jsonl for "+baseline_file+"...")
         with open(gen_code_dir + "/" + baseline_file + ".jsonl") as f:
             for i, line in enumerate(f, start=1):
                 try:
-                    baseline_funcs.append(ast.literal_eval(line))
+                    baseline_codes.append(ast.literal_eval(line))
                 except Exception as e:
                     print("Error on line", i)
                     print("Line content:", repr(line))
                     raise Exception("jsonl file is not written correctly")
-        if len(baseline_funcs) != num_samples_per_task*n_tasks:
-            print("n_baseline:", len(baseline_funcs), "\nn_samples:", num_samples_per_task*n_tasks)
-            raise Exception("baseline file does not match the expected number of samples")
+        if len(baseline_codes) != num_samples_per_task*n_tasks:
+            print("WARNING: baseline file does not match the expected number of samples")
+            print("n_baseline:", len(baseline_codes), "\nn_samples:", num_samples_per_task*n_tasks)
+            print("Evaluating baseline first")
+            baseline=True
+
 
     for i, task_id in enumerate(problems):
         for j in range(num_samples_per_task):
             sample = problems[task_id]
 
-            if baseline:
-                response = model.call(general_prompt+"\n\n"+sample["prompt"], reset_memory=True, baseline=baseline)
+            if baseline: # create the baseline
+                response = model.call(baseline_prompt+"\n\n"+sample["prompt"], reset_memory=True, baseline=True)
+                baseline_code = extract_code(response, sample["entry_point"])
+                baseline_json_sample = convert_to_json(sample["task_id"], response, baseline_code)
             else:
-                # first retrieve the baseline function, then ask the model to improve it
-                baseline_func = baseline_funcs[i*(j+1)]
-                response = model.call(general_prompt+"\n\n"+sample["prompt"]+"\n\n"+baseline_func, reset_memory=True, baseline=baseline)
+                # retrieve the baseline function
+                baseline_code = baseline_codes[i*(j+1)]
+
+            # then ask the model to improve the baseline
+            response = model.call(general_prompt+"\n\n"+sample["prompt"], code=baseline_code, reset_memory=True, baseline=False)
 
             # generate the answer for all task independently
             code = extract_code(response, sample["entry_point"])
             json_sample = convert_to_json(sample["task_id"], response, code)
 
             # save as jsonl (json line: json objects separated by newline characters)
+            if baseline:
+                with open(baseline_file, "a") as f:
+                    f.write(str(baseline_json_sample) + "\n")
+                    f.close()
+            
             with open(benchmark_file, "a") as f:
                 f.write(str(json_sample) + "\n")
                 f.close()
@@ -135,8 +148,8 @@ try:
         for _ in range(num_samples_per_task)
     ]
     write_jsonl(gen_code_dir+"/samples.jsonl", samples) # basically converts the dictionary to a 'real' jsonl and save it
+    print("\n\nevaluationg samples:")
+    subprocess.run(["evaluate_functional_correctness " + benchmark_file], shell=True)
     """
-    #print("\n\nevaluationg samples:")
-    #subprocess.run(["evaluate_functional_correctness " + benchmark_file], shell=True)
 except Exception as e:
     print(f"\nAn error occurred:\n{e}\n")

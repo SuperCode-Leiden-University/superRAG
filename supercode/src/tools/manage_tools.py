@@ -1,5 +1,6 @@
 import inspect
 import importlib
+import pprint
 from typing import get_type_hints
 
 from src.configs.parse_config import verbose
@@ -47,7 +48,7 @@ def get_tools():
 # ----------------------------------------------------------------------------------------------
 # build the json file to call the tool
 def build_tool_schema(func):
-    if verbose>0 : print(">> building tool schema for:", func.__name__)
+    #if verbose>0 : print(">> building tool schema for:", func.__name__)
     hints = get_type_hints(func)
     props = {name: {"type": python_to_json_type(tp)} for name, tp in hints.items()}
 
@@ -64,7 +65,7 @@ def build_tool_schema(func):
             "x_metadata" : func._tool_metadata,
         }
     }
-    if verbose>2 : print(scheme,"\n")
+    #if verbose>2 : pprint.pprint(scheme) ; print("")
     return scheme
 
 # ----------------------------------------------------------------------------------------------

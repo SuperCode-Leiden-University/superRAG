@@ -1,16 +1,24 @@
-def return_even(n):
-    # Initialize an empty list to store even numbers
-    even_numbers = []
-    
-    # Loop through the range from 0 to n
-    for i in range(n + 1):
-        # Check if the current number is even
-        if i % 2 == 0:
-            # Append the even number to the list
-            even_numbers.append(i)
-    
-    # Return the list of even numbers
-    return even_numbers
+from typing import List
 
-# Test the function with the provided test case
-assert return_even(5) == [0, 2, 4]
+def has_close_elements(numbers: List[float], threshold: float) -> bool:
+    """ Check if in given list of numbers, are any two numbers closer to each other than
+    given threshold.
+    >>> has_close_elements([1.0, 2.0, 3.0], 0.5)
+    False
+    >>> has_close_elements([1.0, 2.8, 3.0, 4.0, 5.0, 2.0], 0.3)
+    True
+    """
+    # Sort the list to make it easier to find close elements
+    sorted_numbers = sorted(numbers)
+    
+    # Iterate through the sorted list and check for close elements
+    for i in range(len(sorted_numbers) - 1):
+        if abs(sorted_numbers[i] - sorted_numbers[i + 1]) < threshold:
+            return True
+    
+    return False
+
+# Test cases
+assert has_close_elements([1.0, 2.0, 3.0], 0.5) == False
+assert has_close_elements([1.0, 2.8, 3.0, 4.0, 5.0, 2.0], 0.3) == True
+print('end of the function')

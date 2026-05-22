@@ -1,3 +1,4 @@
+########################################################################################################################
 # complete prompt for the chat assistant
 chat_assistant_prompt = """You are a helpful AI assistant with access to a database and external tools. 
 When tool results are provided, treat them as authoritative facts. 
@@ -10,6 +11,10 @@ Your job is to:
 You may summarize the results if the result is very long, 
 but you must not add unsupported details. """
 
+# prompt to add before the user_prompt
+chat_assistant_prequery = "Use the following information to answer the question in natural language.\n\n### Question:\n"
+
+########################################################################################################################
 # partial prompt for the tool manager
 tool_manager_prompt = """
 Your job is to return a list of JSON objects with tools are relevant to the user's request in the order they must be called.
@@ -31,3 +36,8 @@ Additional instructions:
 
 Example: if the static analysis tool is relevant, check if the user provided a programming language or a flavor, if not than you need to first search the database to find out the programming language, than choose the flavor that matches the programming language.
 In this case the json object will include the 'search_database' tool before the 'run_megalinter' tool. """
+
+# prompt to add before the user_prompt
+tool_manager_prequery = "Based on the following question decide if there is a tool you can use.\n\n### Question:\n"
+# prompt to revise previous answers to check dependencies
+tool_manager_revise = "Use the tools results to improve your previous answer and check the schema to make your answer compliant with the tools requirements. Treat tool results as correct and final."

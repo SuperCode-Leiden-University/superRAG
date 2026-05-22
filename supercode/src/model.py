@@ -1,4 +1,5 @@
 import json, torch
+import pprint
 import threading
 from transformers import pipeline, AutoModelForCausalLM, AutoTokenizer, TextIteratorStreamer, SinqConfig
 
@@ -11,7 +12,7 @@ from transformers import pipeline, AutoModelForCausalLM, AutoTokenizer, TextIter
 
 from src.tools.manage_tools import * # import all the tools
 from src.configs.parse_config import model_id, raw_model, quant_type, max_new_tokens, temperature
-from src.configs.system_prompts import chat_assistant_prompt, tool_manager_prompt
+from src.configs.system_prompts import *
 from src.tools.tools import *
 from src.tools.code_processing import *
 
@@ -28,14 +29,6 @@ class Model():
         self.raw_model = raw_model # True if the model is loaded directly, False if loaded through pipeline
         self.quant_type = quant_type # valid values: ("full", "bits", "GPTQ") --> check file formats!!!
         self.gen_args = None
-        """
-        NOTE: the model can be loaded as quantized only if someone published the quantized version (see files):
-            --> full precision:   model.safetensors                 (direct load)
-            --> full precision:   pytorch_model.bin.index.json      (direct load, NOT with Transformers!)
-            --> 4bit quantized:   model-4bit.safetensors            (needs bitsandbytes)
-            --> GPTQ quantized:   gptq_model-4bit-128g.safetensors  (direct load)
-            --> GGUF quantized:   model.gguf                        (direct load, NOT with Transformers!)
-        """
 
         self.tool_results = []
         self.tool_selection = False # use the same model either to choose which tool to use or to generate an answer
@@ -126,22 +119,25 @@ class Model():
 
     # ----------------------------------------------------------------------------------------------
     # format the messages to be able to include tools and RAG
-    def message_format(self, user_prompt):
-        # decide if the model needs a tool or to retrieve info from the DB
-        if self.tool_selection:
-            if verbose>0 : print(">> calling the tool manager")
-            self.tool_messages.append({
-                "role": "user",
-                "content": f"Based on the following question decide if there is a tool you can use.\n\n"
-                           f"### Question\n{user_prompt}\n"
-            })
-        else:
-            if verbose>0 : print(">> elaborating the results from tools")
+    def message_format(self, recipient, role, content, **kwargs):
+        # recipient can be: assistant, tool_manager or both
 
+        # add message for the chat assistant
+        if recipient!="tool_manager": # messages for the assistant
+            if role=="user" : content=chat_assistant_prequery+content
             self.messages.append({
-                "role": "user",
-                "content": f"Use the following information to answer the question in natural language.\n\n"
-                           f"### Question\n{user_prompt}"
+                "role": role,
+                "content": content,
+                **kwargs # add optional extra arguments (ex: tool's name)
+            })
+
+        # add message for the tool manager
+        if recipient!="assistant": # messages for the tool_manager
+            if role=="user" : content=tool_manager_prequery+content
+            self.tool_messages.append({
+                "role": role,
+                "content": content,
+                **kwargs # add optional extra arguments (ex: tool's name)
             })
 
     # ----------------------------------------------------------------------------------------------
@@ -199,10 +195,10 @@ class Model():
                 outputs = self.model(self.tool_messages)
             response = outputs[0]['generated_text'][-1]["content"]
 
-        if self.tool_selection :
-            self.tool_messages.append({"role": "tool_manager", "content": response })
+        if self.tool_selection : # save the response in the message history
+            self.message_format(recipient="tool_manager", role="tool_manager", content=response)
         else:
-            self.messages.append({"role": "assistant", "content": response })
+            self.message_format(recipient="assistant", role="assistant", content=response)
 
         return response
 
@@ -210,7 +206,7 @@ class Model():
         if '"name": "' in response:
             if verbose > 0: print(">> parsing response for tools")
             # Note: the LLM is not always consistent, sometimes there are multiple separate json objs instead of a list,
-            # or the json list is repeated multiple times, but the json obj is always written as:
+            # or the JSON list is repeated multiple times, but the JSON obj is always written as:
             # { "name": "tool_name", "arguments": { "arg_name": "value"} }
 
             tool_end = 0
@@ -266,7 +262,7 @@ class Model():
     # ----------------------------------------------------------------------------------------------
     # ----------------------------------------------------------------------------------------------
     # ----------------------------------------------------------------------------------------------
-    def call(self, user_prompt, reset_memory=False, baseline=False, **kwargs):
+    def call(self, user_prompt, code=None, reset_memory=False, baseline=False, **kwargs):
         """
         WORKFLOW:
             1) the model checks if it needs to call a tool or retrieve docs
@@ -276,16 +272,15 @@ class Model():
         """
         # ----------------------------------------------------------------------------------------------
         # decide if it needs to retrieve context and/or to use tools
-        self.gen_args = kwargs # model's settings like temperature and max tokens (defaul vals in config)
-        self.tool_selection = True
-        self.message_format(user_prompt)
+        self.gen_args = kwargs # model's settings like temperature and max tokens (default vals in config)
+        if reset_memory: self.reset_memory() # forget previous answers and keep only the system prompts, useful for benchmarks
 
-        if reset_memory: # do not keep memory of previous answers, useful for benchmarks
-            self.reset_memory() # keep only the system prompts
+        self.message_format(recipient="both", role="user", content=user_prompt) # save the user_prompt in the message history
 
         if not baseline:
             n_revise = -1#3
             revise = False  # most often the model calls the tools for the requirements by the second try
+            self.tool_selection = True
 
             for r in range(n_revise+1): # refinement loop, by the 3rd iteration it should have the correct tools selected
                 # apply chat templates and return an answer
@@ -303,93 +298,60 @@ class Model():
                 print(">> TOOL RESULTS: \n", self.tool_results, "\n", sep="")
 
                 for tool in self.tool_results[tool_index:]: # add new tool results to the chat history
-                    tool_message = [{
-                        "role": "tool",
-                        "name": tool["name"],
-                        "content": tool["result"]
-                    }]
-                    self.messages.extend(tool_message)
-                    self.tool_messages.extend(tool_message)
+                    self.message_format(recipient="both", role="tool", content=tool["result"], name=tool["name"])
 
                 if r<n_revise: # revise the answer to implement the correct dependencies
-                    self.tool_messages.append({
-                        "role": "user",
-                        "content": """
-                        Use the tools results to improve your previous answer and check the schema to make your answer compliant 
-                        with the tools requirements. Treat tool results as correct and final.
-                        """
-                    })
+                    self.message_format(recipient="tool_manager", role="user", content=tool_manager_revise)
+
                 revise = True  # then it can call the tools that need the requirements
 
             # include the retrieved docs as context and feed it to the model
             self.tool_selection = False
-            self.message_format(user_prompt)
 
             #########################################################################################################
             #########################################################################################################
             #########################################################################################################
             # TEMPORARY PATCH
-            #""" write a python function that returns all even numbers from 0 to n, then assert return_even(5)==[0,2,4]
+            #""" write a python function that returns all even numbers from 0 to n, then assert return_even(5)==[0,2,4] and print("no errors") at the end
             gen_code_file = "gen_code_temp.py"
             gen_code_path = gen_code_dir + "/gen_code/"+gen_code_file
-    
+            """
             # apply chat templates and return an answer
             if verbose > 1: print("-------------------------------------- \n## (temp) AI: ")
             response = self.chat_template()
             if verbose > 1: print("--------------------------------------")
 
-            code = extract_code(response) # gives an error for some reason, but I'm too tired
+            code = extract_code(response)
             """
-            code_def = response.find("def ") # if entry_point is unknown
-            if code_def==-1:
-                print("WARNING: function not found")
-                return ""
-            code_start = response.rfind("```", 0, code_def)+3
-            if response.rfind("python", code_start, code_def)>-1:
-                code_start += 6 # remove "python" as well if present
-            code_end = response.find("```", code_start)  # code blocks start and end with ``` (exclude ```)
-            code = response[code_start:code_end].strip()
-            #"""
             print(">> extracting the code:\n", code)
-    
             with open(gen_code_path, "w") as f:
                 print(">> saving the code at", gen_code_path)
                 f.write(code)
                 f.close()
+            self.message_format(recipient="both", role="user", content="Use the following code as a baseline"+code)
     
             # tool_result = dispatch_tool(self.tools, tool_name, tool_args)
-            #megalinter_result = run_megalinter("python")
-            compiler_result = sandboxed_compiler(gen_code_path)
-            #perf_result = run_perf(gen_code_file)
-            tool_message = [{
-            #    "role": "tool",
-            #    "name": "run_megalinter",
-            #    "content": megalinter_result
-            #},{
-                "role": "tool",
-                "name": "sandboxed_compiler",
-                "content": compiler_result
-            #},{
-            #    "role": "tool",
-            #    "name": "run_perf",
-            #    "content": perf_result
-            },{
-                "role": "user",
-                "content": "Use the tools results to improve your previous answer. Treat tool results as correct and final. Always include the full function in your answer."
-            }]
-            self.messages.extend(tool_message)
-            #"""
+            #megalinter_result = run_megalinter("python)         ; self.message_format(recipient="both", role="tool", content=megalinter_result, name="run_megalinter")
+            compiler_result = sandboxed_compiler(gen_code_path) ; self.message_format(recipient="both", role="tool", content=compiler_result, name="sandboxed_compiler")
+            #perf_result = run_perf(gen_code_file)               ; self.message_format(recipient="both", role="tool", content=perf_result, name="run_perf")
+
             #########################################################################################################
             #########################################################################################################
             #########################################################################################################
 
         # apply chat templates and return an answer
-        if verbose > 1: print("-------------------------------------- \n## AI: ")
+        if verbose > 1: print("-------------------------------------- \n## AI (baseline="+str(baseline)+"): ")
         response = self.chat_template()
         if verbose > 1: print("--------------------------------------")
 
-        #if verbose>3 : print("\n\n**************************************************************************** \n## tool_messages history: \n", self.tool_messages, "\n****************************************************************************\n", sep="")
-        #if verbose>3 : print("**************************************************************************** \n## messages history: \n", self.messages, "\n****************************************************************************\n\n", sep="")
+        if False and verbose>3 :
+            print("\n\n**************************************************************************** \n## tool_manager messages history:")
+            pprint.pprint(self.tool_messages)
+            print("****************************************************************************\n")
+            print("\n**************************************************************************** \n## assistant messages history:")
+            pprint.pprint(self.messages)
+            print("****************************************************************************\n")
+            print("****************************************************************************")
 
         self.tool_results = [] # reset tool results
         self.tool_messages = self.tool_messages[:1] # clear all, except the system prompt

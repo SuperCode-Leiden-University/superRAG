@@ -22,6 +22,8 @@ hf_cache/
 # ignore testing material
 test*/
 test*.*
+old*/
+old*.*
 
 #tools-outputs/
 megalinter-reports/
