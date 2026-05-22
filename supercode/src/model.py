@@ -1,9 +1,11 @@
 import json, torch
 import pprint
 import threading
-from transformers import pipeline, AutoModelForCausalLM, AutoTokenizer, TextIteratorStreamer, SinqConfig
+from transformers import pipeline, AutoModelForCausalLM, AutoTokenizer, TextIteratorStreamer
 
 #from awq import AutoAWQForCausalLM
+#from transformers import SinqConfig
+
 """
 - pipeline is for direct inference, with AutoModelForCausalLM, AutoTokenizer you load the raw model
 - BitsAndBytesConfig and awq are for quantization
