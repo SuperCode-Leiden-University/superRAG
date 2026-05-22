@@ -272,7 +272,8 @@ def sandboxed_compiler(code_path):
     # and all paths in the container should be relative to "results/"!
     try:
         docker_code_path = code_path[code_path.find("results/"):]
-        abs_docker_path = "/home/elisa/PycharmProjects/phd-leiden-supercode/supercode/src/docker_env"
+        abs_docker_path = "/home/elisa/superRAG/supercode/src/docker_env" # supercode machine
+        #abs_docker_path = "/home/elisa/PycharmProjects/phd-leiden-supercode/supercode/src/docker_env"
         # abs_docker_path = code_path[:code_path.find("results/")] # RELATIVE PATHS DO NOT WORK
         print(">> run command with docker run")
         subprocess.run("pwd")
