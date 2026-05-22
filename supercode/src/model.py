@@ -325,7 +325,7 @@ class Model():
 
             code = extract_code(response)
             """
-            print(">> extracting the code:\n", code)
+            #print(">> extracting the code:\n", code)
             with open(gen_code_path, "w") as f:
                 print(">> saving the code at", gen_code_path)
                 f.write(code)
@@ -345,6 +345,10 @@ class Model():
         if verbose > 1: print("-------------------------------------- \n## AI (baseline="+str(baseline)+"): ")
         response = self.chat_template()
         if verbose > 1: print("--------------------------------------")
+
+        if extract_code(response)=="":
+            print(">> appending prev code")
+            response = response+"\nprevious code:\n```"+code+"```"
 
         if False and verbose>3 :
             print("\n\n**************************************************************************** \n## tool_manager messages history:")
