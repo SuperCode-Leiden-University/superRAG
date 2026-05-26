@@ -30,3 +30,5 @@ megalinter-reports/
 perf-reports/
 perf.dat*
 docker_env/results/
+
+humaneval*
