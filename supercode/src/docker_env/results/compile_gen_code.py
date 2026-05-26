@@ -92,13 +92,13 @@ for sample in samples:
     # check just the code
     returncode, output = check_unit_tests(function)
     print("compiler: returncode =", returncode, "\n\n", output)
-    if "no errors" in output: comp_pass+=1
+    if returncode==0: comp_pass+=1
     else: comp_fail+=1
 
     # check with test cases
     returncode, output = check_unit_tests(function, test, entry_point)
     print("test: returncode =", returncode, "\n\n", output)
-    if "no errors" in output: test_pass+=1
+    if returncode==0: test_pass+=1
     else: test_fail+=1
 
 # Final summary
