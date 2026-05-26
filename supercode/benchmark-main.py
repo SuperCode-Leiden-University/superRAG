@@ -8,9 +8,10 @@ from human_eval.data import read_problems
 # my packages
 from src.model import Model
 from src.tools.code_processing import *
+from src.tools.tools import *
 
 # importing variables from the config file
-from src.configs.parse_config import verbose, gen_code_dir, model_id
+from src.configs.parse_config import *
 
 """ bash command for lm-eval (python_file=supercode/src/code_processing.py,)
 python -m lm_eval \
@@ -48,6 +49,9 @@ num_samples_per_task = 1 #200
 
 # importing the benchmark from hugging face
 dataset = load_dataset("openai/openai_humaneval"); bench_name = "humaneval"
+# IMPORTANT: some tasks (47, 163) in HumanEval contain mismatches or errors!
+# /47:  2nd example is incorrect and doesn't match the test
+# /163: unclear prompt, should specify to return only digits that are between min(0,a,b) and max(a,b,9)
 # dataset = load_dataset("bigcode/crosscodeeval")["test"]; bench_name = "crosscodeeval"
 
 if baseline:
@@ -112,14 +116,15 @@ try:
 
     for i, task_id in enumerate(problems):
         print(i, task_id)
-        i=47; task_id="HumanEval/47" # for testing
+        #i=47; task_id="HumanEval/47" # for testing
         for j in range(num_samples_per_task):
             sample = problems[task_id]
 
             if baseline: # create the baseline
                 response = model.call(baseline_prompt+"\n\n"+sample["prompt"], reset_memory=True, baseline=True)
                 baseline_code = extract_code(response, sample["entry_point"])
-                baseline_json_sample = convert_to_json(sample["task_id"], response, baseline_code)
+                compiler_output = sandboxed_compiler(gen_code_file)
+                baseline_json_sample = convert_to_json(sample["task_id"], response, baseline_code, compiler_output=compiler_output)
             else:
                 # retrieve the baseline function
                 baseline_code = baseline_codes[i*(j+1)]
@@ -129,7 +134,8 @@ try:
 
             # generate the answer for all task independently
             code = extract_code(response, sample["entry_point"])
-            json_sample = convert_to_json(sample["task_id"], response, code)
+            compiler_output = sandboxed_compiler(gen_code_file)
+            json_sample = convert_to_json(sample["task_id"], response, code, compiler_output=compiler_output)
 
             # save as jsonl (json line: json objects separated by newline characters)
             if baseline:
@@ -141,7 +147,7 @@ try:
                 f.write(str(json_sample) + "\n")
                 f.close()
 
-        break
+        #break
     """
     samples = [
         dict(

@@ -48,10 +48,11 @@ def extract_code(response, entry_point=None):
     return code
 
 
-def convert_to_json(task_id, response, code):
+def convert_to_json(task_id, response, code, **kwargs):
     json_sample = {
         "task_id": task_id,
         "completion": response, # backup the model's answer
-        "code": code
+        "code": code,
+        **kwargs
     }
     return json_sample

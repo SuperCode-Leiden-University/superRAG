@@ -6,7 +6,7 @@ import tempfile
 from human_eval.data import write_jsonl, read_problems
 from datasets import load_dataset # load datasets from Hugging Face
 #from src.tools.tools import check_unit_tests
-#from src.configs.parse_config import model_id, verbose, gen_code_dir
+#from src.configs.parse_config import *
 
 #print("current dir:", os. getcwd())
 

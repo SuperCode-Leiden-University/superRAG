@@ -4,7 +4,7 @@ import numpy as np
 from datetime import datetime
 from langchain_huggingface import HuggingFaceEmbeddings
 
-from src.configs.parse_config import verbose, emb_model_id, tools_dir, docs_dir, db_dir, update_db, gen_code_dir
+from src.configs.parse_config import *
 from src.database.database import Database
 from src.tools.manage_tools import tool
 

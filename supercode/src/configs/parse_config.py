@@ -28,6 +28,7 @@ emb_model_id = vars["emb_model"] # model ID from HuggingFace
 # tools & database (RAG)
 tools_dir = vars["tools_dir"] # where I save the results from the agent's tools
 gen_code_dir = vars["gen_code_dir"]
+gen_code_file = vars["gen_code_file"]
 
 chunk_size = vars["chunk_size"]
 chunk_overlap = vars["chunk_overlap"]

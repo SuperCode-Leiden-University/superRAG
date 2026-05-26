@@ -3,7 +3,7 @@ from langchain_community.document_loaders import DirectoryLoader, TextLoader
 from langchain_community.vectorstores import FAISS
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-from src.configs.parse_config import verbose, chunk_size, chunk_overlap, tools_dir, docs_dir, db_dir, update_db
+from src.configs.parse_config import *
 
 
 class Database():

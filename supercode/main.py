@@ -6,7 +6,7 @@ from datetime import datetime
 from src.model import Model
 
 # importing variables from the config file
-from src.configs.parse_config import verbose
+from src.configs.parse_config import *
 
 
 

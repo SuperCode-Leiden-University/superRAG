@@ -13,7 +13,7 @@ from transformers import pipeline, AutoModelForCausalLM, AutoTokenizer, TextIter
 """
 
 from src.tools.manage_tools import * # import all the tools
-from src.configs.parse_config import model_id, raw_model, quant_type, max_new_tokens, temperature
+from src.configs.parse_config import *
 from src.configs.system_prompts import *
 from src.tools.tools import *
 from src.tools.code_processing import *
@@ -315,8 +315,6 @@ class Model():
             #########################################################################################################
             # TEMPORARY PATCH
             #""" write a python function that returns all even numbers from 0 to n, then assert return_even(5)==[0,2,4] and print("no errors") at the end
-            gen_code_file = "gen_code_temp.py"
-            gen_code_path = gen_code_dir + "/gen_code/"+gen_code_file
             """
             # apply chat templates and return an answer
             if verbose > 1: print("-------------------------------------- \n## (temp) AI: ")
@@ -326,15 +324,15 @@ class Model():
             code = extract_code(response)
             """
             #print(">> extracting the code:\n", code)
-            with open(gen_code_path, "w") as f:
-                print(">> saving the code at", gen_code_path)
+            with open(gen_code_file, "w") as f:
+                print(">> saving the code at", gen_code_file)
                 f.write(code)
                 f.close()
             self.message_format(recipient="both", role="user", content="Use the following code as a baseline"+code)
     
             # tool_result = dispatch_tool(self.tools, tool_name, tool_args)
             #megalinter_result = run_megalinter("python)         ; self.message_format(recipient="both", role="tool", content=megalinter_result, name="run_megalinter")
-            compiler_result = sandboxed_compiler(gen_code_path) ; self.message_format(recipient="both", role="tool", content=compiler_result, name="sandboxed_compiler")
+            compiler_result = sandboxed_compiler(gen_code_file) ; self.message_format(recipient="both", role="tool", content=compiler_result, name="sandboxed_compiler")
             #perf_result = run_perf(gen_code_file)               ; self.message_format(recipient="both", role="tool", content=perf_result, name="run_perf")
 
             #########################################################################################################

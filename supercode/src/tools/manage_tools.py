@@ -3,7 +3,7 @@ import importlib
 import pprint
 from typing import get_type_hints
 
-from src.configs.parse_config import verbose
+from src.configs.parse_config import *
 
 
 ##################################################################################################################
