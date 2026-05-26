@@ -42,7 +42,7 @@ if verbose>1 :
 # ---------------------------------------------------------------------------------------------- #
 ##### BENCHMARK SETTINGS
 baseline = True
-num_samples_per_task = 5 #200
+num_samples_per_task = 1 #200
 # if baseline is true then the model does not use any external info
 # if it is false, it checks first if it can find the baseline solution and then ask the model to improve it
 
@@ -55,8 +55,8 @@ if baseline:
 else:
     print("benchmark model for "+bench_name)
 
-baseline_prompt =     "write a function based on the following description, use assert to check that the function returns the expected results for the examples provided and print('function terminated with no errors') at the end."
-general_prompt = "improve this function based on the following description, use assert to check that the function returns the expected results for the examples provided and print('function terminated with no errors') at the end. You must always write the complete function in your answer, including the assert and print statements."
+baseline_prompt =     "Write a function based on the following description. For each of the examples provided, print the result and then use assert to check that the function returns the expected results, finally print('function terminated with no errors') at the end."
+general_prompt = "Improve this function based on the following description. For each of the examples provided, print the result and then use assert to check that the function returns the expected results, finally print('function terminated with no errors') at the end. You must always write the complete function in your answer, including the assert and print statements."
 
 baseline_file  = gen_code_dir+"/"+bench_name+"_baseline-" +model_id[model_id.find("/")+1:]+"_"+str(num_samples_per_task)+".jsonl"
 benchmark_file = gen_code_dir+"/"+bench_name+"_benchmark-"+model_id[model_id.find("/")+1:]+"_"+str(num_samples_per_task)+".jsonl"
@@ -111,6 +111,7 @@ try:
 
 
     for i, task_id in enumerate(problems):
+        i=47
         for j in range(num_samples_per_task):
             sample = problems[task_id]
 
@@ -138,6 +139,8 @@ try:
             with open(benchmark_file, "a") as f:
                 f.write(str(json_sample) + "\n")
                 f.close()
+
+        break
     """
     samples = [
         dict(
