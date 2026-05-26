@@ -286,7 +286,7 @@ def sandboxed_compiler(code_path):
             timeout=10 # seconds
         )
         if verbose>1 : print(">> command run successfully\n", result)
-        return result.returncode, "previous code returned:\nstdout='"+result.stdout+"'\n"+"stderr='"+result.stderr+"'"
+        return result.returncode, "the compiled code returned:\nstandard output='"+result.stdout+"errors='"+result.stderr+"'"
     except Exception as e:
         print("Error in sandboxed_compiler tool:", e)
         return "Error in sandboxed_compiler tool:"+e
@@ -309,7 +309,7 @@ def check_unit_tests(function, test=None, entry_point=None):
                 timeout=10  # seconds
             )
             if verbose>1 : print(">> command run successfully\n", result)
-            return result.returncode, "stdout=" + result.stdout + "\n" + "stderr=" + result.stderr
+            return result.returncode, "standard output='"+result.stdout+"errors='"+result.stderr+"'"
         except Exception as e:
             print("Error in check_unit_tests tool:", e)
             return "Error in check_unit_tests tool:"+e
@@ -327,7 +327,7 @@ def check_unit_tests(function, test=None, entry_point=None):
                 timeout=10  # seconds
             )
             #print(">> command run successfully\n", result)
-            return result.returncode, "stdout=" + result.stdout + "\n" + "stderr=" + result.stderr
+            return result.returncode, "standard output='"+result.stdout+"errors='"+result.stderr+"'"
         except Exception as e:
             print("Error in check_unit_tests tool:", e)
             return "Error in check_unit_tests tool:"+e
