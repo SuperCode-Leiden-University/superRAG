@@ -111,7 +111,8 @@ try:
 
 
     for i, task_id in enumerate(problems):
-        i=47
+        print(i, task_id)
+        i=47; task_id="HumanEval/47" # for testing
         for j in range(num_samples_per_task):
             sample = problems[task_id]
 
