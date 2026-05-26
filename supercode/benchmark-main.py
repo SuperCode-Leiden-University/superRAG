@@ -59,8 +59,8 @@ if baseline:
 else:
     print("benchmark model for "+bench_name)
 
-baseline_prompt =     "Write a function based on the following description. For each of the examples provided, print the result and then use assert to check that the function returns the expected results, finally print('end of the code') at the end."
-general_prompt = "Improve this function based on the following description. For each of the examples provided, print the result and then use assert to check that the function returns the expected results, finally print('end of the code') at the end. You must always write the complete function in your answer, including the assert and print statements."
+baseline_prompt =     "Write a function based on the following description. For each of the examples provided, use both print and assert to check that the function returns the expected results, finally print('end of the code') at the end."
+general_prompt = "Improve this function based on the following description. For each of the examples provided, use both print and assert to check that the function returns the expected results, finally print('end of the code') at the end. You must always write the complete function in your answer, including the assert and print statements."
 
 baseline_file  = gen_code_dir+"/"+bench_name+"_baseline-" +model_id[model_id.find("/")+1:]+"_"+str(num_samples_per_task)+".jsonl"
 benchmark_file = gen_code_dir+"/"+bench_name+"_benchmark-"+model_id[model_id.find("/")+1:]+"_"+str(num_samples_per_task)+".jsonl"
