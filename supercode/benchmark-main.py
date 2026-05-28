@@ -92,10 +92,6 @@ try:
     problems = read_problems()
     n_tasks = len(problems)
 
-    # create an empty file (or overwrite if the file exists)
-    with open(benchmark_file, "w") as f:
-        f.close()
-
     if not baseline: # load the baseline functions
         baseline_codes = []
         print("reading jsonl for "+baseline_file+"...")
@@ -106,38 +102,51 @@ try:
                 except Exception as e:
                     print("Error on line", i)
                     print("Line content:", repr(line))
-                    raise Exception("jsonl file is not written correctly")
+                    raise Exception("Error in the baseline file!")
         if len(baseline_codes) != num_samples_per_task*n_tasks:
             print("WARNING: baseline file does not match the expected number of samples")
             print("n_baseline:", len(baseline_codes), "\nn_samples:", num_samples_per_task*n_tasks)
             print("Evaluating baseline first")
             baseline=True
 
+    # create an empty file (or overwrite if the file exists)
+    if baseline: # clear the baseline only if
+        with open(baseline_file, "w") as f: f.close()
+    with open(benchmark_file, "w") as f: f.close()
+
 
     for i, task_id in enumerate(problems):
+        # i=47; task_id="HumanEval/47"
         print(i, task_id)
-        #i=47; task_id="HumanEval/47" # for testing
-        for j in range(num_samples_per_task):
-            sample = problems[task_id]
 
+        sample = problems[task_id]
+        entry_point = sample["entry_point"]
+        prompt = sample["prompt"]
+        # task_id="HumanEval/47" has an error in the prompt, it should be:
+        # >>> median([-10, 4, 6, 1000, 10, 20])
+        # 8.0 (instead of 15.0)
+        if task_id == "HumanEval/47" : prompt = prompt.replace("15.0", "8.0") ; print(prompt)
+
+        for j in range(num_samples_per_task):
             if baseline: # create the baseline
-                response = model.call(baseline_prompt+"\n\n"+sample["prompt"], reset_memory=True, baseline=True)
-                baseline_code = extract_code(response, sample["entry_point"])
-                compiler_output = sandboxed_compiler(gen_code_file)
-                baseline_json_sample = convert_to_json(sample["task_id"], response, baseline_code, compiler_output=compiler_output)
+                baseline_response = model.call(baseline_prompt+"\n\n"+prompt, reset_memory=True, baseline=True)
+                baseline_code = extract_code(baseline_response, entry_point)
+                print(">> check compiler output for baseline response")
+                baseline_compiler_output = sandboxed_compiler(baseline_code)
+                baseline_json_sample = convert_to_json(task_id, baseline_response, baseline_code, compiler_output=baseline_compiler_output)
             else:
                 # retrieve the baseline function
                 baseline_code = baseline_codes[i*(j+1)]
 
             # then ask the model to improve the baseline
-            response = model.call(general_prompt+"\n\n"+sample["prompt"], code=baseline_code, reset_memory=True, baseline=False)
-
-            # generate the answer for all task independently
-            code = extract_code(response, sample["entry_point"])
-            compiler_output = sandboxed_compiler(gen_code_file)
-            json_sample = convert_to_json(sample["task_id"], response, code, compiler_output=compiler_output)
+            response = model.call(general_prompt+"\n\n"+prompt, code=baseline_code, reset_memory=True, baseline=False)
+            code = extract_code(response, entry_point)
+            print(">> check compiler output for response")
+            compiler_output = sandboxed_compiler(code)
+            json_sample = convert_to_json(task_id, response, code, compiler_output=compiler_output)
 
             # save as jsonl (json line: json objects separated by newline characters)
+            # except, I'd need to convert to json first, so this is actually a list of python dictionaries...
             if baseline:
                 with open(baseline_file, "a") as f:
                     f.write(str(baseline_json_sample) + "\n")

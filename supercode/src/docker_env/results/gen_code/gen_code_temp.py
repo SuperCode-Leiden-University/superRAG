@@ -1,24 +1,15 @@
-from typing import List
-
-def has_close_elements(numbers: List[float], threshold: float) -> bool:
-    """ Check if in given list of numbers, are any two numbers closer to each other than
-    given threshold.
-    >>> has_close_elements([1.0, 2.0, 3.0], 0.5)
-    False
-    >>> has_close_elements([1.0, 2.8, 3.0, 4.0, 5.0, 2.0], 0.3)
-    True
-    """
-    # Sort the list to make it easier to find close elements
-    sorted_numbers = sorted(numbers)
+def median(l: list):
+    """Return median of elements in the list l."""
+    sorted_l = sorted(l)
+    n = len(sorted_l)
+    mid = n // 2
     
-    # Iterate through the sorted list and check for close elements
-    for i in range(len(sorted_numbers) - 1):
-        if abs(sorted_numbers[i] - sorted_numbers[i + 1]) < threshold:
-            return True
-    
-    return False
+    if n % 2 == 0:
+        return (sorted_l[mid - 1] + sorted_l[mid]) / 2
+    else:
+        return sorted_l[mid]
 
 # Test cases
-assert has_close_elements([1.0, 2.0, 3.0], 0.5) == False
-assert has_close_elements([1.0, 2.8, 3.0, 4.0, 5.0, 2.0], 0.3) == True
-print('end of the function')
+assert median([3, 1, 2, 4, 5]) == 3, f'expected 3, but got {median([3, 1, 2, 4, 5])} instead'
+assert median([-10, 4, 6, 1000, 10, 20]) == 8.0, f'expected 8.0, but got {median([-10, 4, 6, 1000, 10, 20])} instead'
+print('end of the code')

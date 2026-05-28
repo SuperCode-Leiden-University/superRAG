@@ -27,6 +27,7 @@ emb_model_id = vars["emb_model"] # model ID from HuggingFace
 # ----------------------------------------------------------------------------------------------
 # tools & database (RAG)
 tools_dir = vars["tools_dir"] # where I save the results from the agent's tools
+docker_dir = vars["docker_dir"]
 gen_code_dir = vars["gen_code_dir"]
 gen_code_file = vars["gen_code_file"]
 

@@ -323,16 +323,11 @@ class Model():
 
             code = extract_code(response)
             """
-            #print(">> extracting the code:\n", code)
-            with open(gen_code_file, "w") as f:
-                print(">> saving the code at", gen_code_file)
-                f.write(code)
-                f.close()
             self.message_format(recipient="both", role="user", content="Use the following code as a baseline"+code)
     
             # tool_result = dispatch_tool(self.tools, tool_name, tool_args)
             #megalinter_result = run_megalinter("python)         ; self.message_format(recipient="both", role="tool", content=megalinter_result, name="run_megalinter")
-            compiler_result = sandboxed_compiler(gen_code_file) ; self.message_format(recipient="both", role="tool", content=compiler_result, name="sandboxed_compiler")
+            compiler_result = sandboxed_compiler(code) ; self.message_format(recipient="both", role="tool", content=compiler_result, name="sandboxed_compiler")
             #perf_result = run_perf(gen_code_file)               ; self.message_format(recipient="both", role="tool", content=perf_result, name="run_perf")
 
             #########################################################################################################

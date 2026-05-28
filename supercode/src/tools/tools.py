@@ -259,7 +259,7 @@ run_perf._tool_metadata = {
 
 
 @tool
-def sandboxed_compiler(code_path):
+def sandboxed_compiler(code):
     if verbose>0 : print(">> using the sandboxed_compiler")
     # this only checks if the code compiles (semantic correctness)
     """
@@ -270,13 +270,20 @@ def sandboxed_compiler(code_path):
     """
     # IMPORTANT: the docker image can see ONLY files inside "results/"
     # and all paths in the container should be relative to "results/"!
+
+    cwd = os.getcwd() #; print(cwd)
+    abs_docker_path = cwd+"/"+docker_dir
+    #tmp_dir = abs_docker_path+"/results/gen_code"
+
+    with open(gen_code_file, "w") as f:
+        print(">> saving the code at", gen_code_file)
+        f.write(code)
+        f.close()
     try:
-        docker_code_path = code_path[code_path.find("results/"):]
-        abs_docker_path = "/home/elisa/superRAG/supercode/src/docker_env" # supercode machine
-        #abs_docker_path = "/home/elisa/PycharmProjects/phd-leiden-supercode/supercode/src/docker_env"
-        # abs_docker_path = code_path[:code_path.find("results/")] # RELATIVE PATHS DO NOT WORK
+        docker_code_path = gen_code_file[gen_code_file.find("results/"):]
+        print(">> docker_code_path", docker_code_path)
         print(">> run command with docker run")
-        subprocess.run("pwd")
+        #subprocess.run("pwd")
         # docker run --rm sandbox_code python3 results/gen_code/gen_code_temp.py
         # docker run --mount type=bind,src=/home/elisa/PycharmProjects/phd-leiden-supercode/supercode/src/docker_env/results,dst=/workspace --rm sandbox_code
         result = subprocess.run( # run a program from inside the container (and remove the container afterwards)
@@ -296,29 +303,12 @@ def check_unit_tests(function, test=None, entry_point=None):
     if verbose>0 : print(">> using the check_unit_tests")
     # this checks if the unit tests return the expected result (functional correctness)
 
-    if test == None:
-        #print(">> compilation check")
-        with tempfile.NamedTemporaryFile("w", suffix=".py", delete=False) as tmp:
-            tmp.write(function)
-            tmp_path = tmp.name
-        try:
-            result = subprocess.run(  # run a program from inside the container (and remove the container afterwards)
-                ["python3", tmp_path],
-                capture_output=True,
-                text=True,
-                timeout=10  # seconds
-            )
-            if verbose>1 : print(">> command run successfully\n", result)
-            return result.returncode, "standard output='"+result.stdout+"errors='"+result.stderr+"'"
-        except Exception as e:
-            print("Error in check_unit_tests tool:", e)
-            return "Error in check_unit_tests tool:"+e
+    if test == None: code = function
+    else: code = function+"\n\n"+test+"\n\ncheck("+entry_point+")" # issue: this would work only for HumanEval!
 
-    else:
-        #print(">> test check")
-        with tempfile.NamedTemporaryFile("w", suffix=".py", delete=False) as tmp:
-            tmp.write(function+"\n\n"+test+"\n\ncheck("+entry_point+")")
-            tmp_path = tmp.name
+    with tempfile.NamedTemporaryFile("w", suffix=".py", delete=True) as tmp:
+        tmp.write(code)
+        tmp_path = tmp.name
         try:
             result = subprocess.run(  # run a program from inside the container (and remove the container afterwards)
                 ["python3", tmp_path],
@@ -326,7 +316,7 @@ def check_unit_tests(function, test=None, entry_point=None):
                 text=True,
                 timeout=10  # seconds
             )
-            #print(">> command run successfully\n", result)
+            # print(">> command run successfully\n", result)
             return result.returncode, "standard output='"+result.stdout+"errors='"+result.stderr+"'"
         except Exception as e:
             print("Error in check_unit_tests tool:", e)
