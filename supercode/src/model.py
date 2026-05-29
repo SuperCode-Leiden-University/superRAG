@@ -349,6 +349,7 @@ class Model():
                 break
             else:
                 code = extract_code(response)
+            if baseline: break
 
         if False:
             print("\n\n**************************************************************************** \n## tool_manager messages history:")
