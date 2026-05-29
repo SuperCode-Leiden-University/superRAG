@@ -115,6 +115,7 @@ try:
 
     for i, task_id in enumerate(problems):
         # i=47; task_id="HumanEval/47"
+        print("\n======================================")
         print(i, task_id)
 
         sample = problems[task_id]
@@ -129,7 +130,7 @@ try:
             if baseline: # create the baseline
                 baseline_response = model.call(baseline_prompt+"\n\n"+prompt, reset_memory=True, baseline=True)
                 baseline_code = extract_code(baseline_response, entry_point)
-                print(">> check compiler output for baseline response")
+                print("\n>> checking compiler output for baseline response")
                 baseline_compiler_output = sandboxed_compiler(baseline_code)
                 baseline_json_sample = convert_to_json(task_id, baseline_response, baseline_code, compiler_output=baseline_compiler_output)
             else:
@@ -139,7 +140,7 @@ try:
             # then ask the model to improve the baseline
             response = model.call(benchmark_prompt+"\n\n"+prompt, code=baseline_code, reset_memory=True, baseline=False)
             code = extract_code(response, entry_point)
-            print(">> check compiler output for response")
+            print("\n>> checking compiler output for response")
             compiler_output = sandboxed_compiler(code)
             json_sample = convert_to_json(task_id, response, code, compiler_output=compiler_output)
 

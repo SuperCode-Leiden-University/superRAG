@@ -330,6 +330,7 @@ class Model():
             code = extract_code(response)
             """
             if not baseline and code is not None: # test the code on compiler
+                if verbose > 1: print("\n>> evaluating baseline code")
                 # tool_result = dispatch_tool(self.tools, tool_name, tool_args)
                 #megalinter_result = run_megalinter("python) ; self.message_format(recipient="both", role="tool", content=megalinter_result, name="run_megalinter")
                 compiler_result = sandboxed_compiler(code) ; self.message_format(recipient="both", role="tool", content=compiler_result, name="sandboxed_compiler")
