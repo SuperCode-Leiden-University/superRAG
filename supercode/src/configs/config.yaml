@@ -14,7 +14,7 @@ model:
     raw_model: true # True if the model is loaded directly, False if loaded through pipeline
     quant_type: full # valid values: ("full", "sinq", "AWQ", "GPTQ", "bits") --> check file formats!!!
     temperature: 0.2 # 0 = always select the most likely word, 1 = random
-    max_new_tokens: 500 # max number of tokens that can be generated
+    max_new_tokens: 800 # max number of tokens that can be generated
 
     # NOTE: the model can be loaded as quantized only if someone published the quantized version (see file's extensions):
     # --> full precision, based on:

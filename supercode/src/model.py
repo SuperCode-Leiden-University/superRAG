@@ -279,7 +279,8 @@ class Model():
 
         self.message_format(recipient="both", role="user", content=user_prompt) # save the user_prompt in the message history
 
-        if not baseline:
+
+        """ 
             n_revise = -1#3
             revise = False  # most often the model calls the tools for the requirements by the second try
             self.tool_selection = True
@@ -309,41 +310,47 @@ class Model():
 
             # include the retrieved docs as context and feed it to the model
             self.tool_selection = False
+            """
 
-            #########################################################################################################
-            #########################################################################################################
-            #########################################################################################################
-            # TEMPORARY PATCH
+        #########################################################################################################
+        #########################################################################################################
+        #########################################################################################################
+
+        if code is not None:  # initial code from baseline or codebase
+            self.message_format(recipient="both", role="user", content="Use the following code as a baseline:\n"+code)
+
+        for i in range(3):
             #""" write a python function that returns all even numbers from 0 to n, then assert return_even(5)==[0,2,4] and print("no errors") at the end
             """
             # apply chat templates and return an answer
             if verbose > 1: print("-------------------------------------- \n## (temp) AI: ")
             response = self.chat_template()
             if verbose > 1: print("--------------------------------------")
-
+    
             code = extract_code(response)
             """
-            self.message_format(recipient="both", role="user", content="Use the following code as a baseline"+code)
-    
-            # tool_result = dispatch_tool(self.tools, tool_name, tool_args)
-            #megalinter_result = run_megalinter("python)         ; self.message_format(recipient="both", role="tool", content=megalinter_result, name="run_megalinter")
-            compiler_result = sandboxed_compiler(code) ; self.message_format(recipient="both", role="tool", content=compiler_result, name="sandboxed_compiler")
-            #perf_result = run_perf(gen_code_file)               ; self.message_format(recipient="both", role="tool", content=perf_result, name="run_perf")
+            if not baseline and code is not None: # test the code on compiler
+                # tool_result = dispatch_tool(self.tools, tool_name, tool_args)
+                #megalinter_result = run_megalinter("python) ; self.message_format(recipient="both", role="tool", content=megalinter_result, name="run_megalinter")
+                compiler_result = sandboxed_compiler(code) ; self.message_format(recipient="both", role="tool", content=compiler_result, name="sandboxed_compiler")
+                #perf_result = run_perf(gen_code_file) ; self.message_format(recipient="both", role="tool", content=perf_result, name="run_perf")
+                if compiler_result[0] == 0:
+                    response = "There is nothing to improve."+"\nPrevious code:\n```"+code+"```"
+                    break
 
-            #########################################################################################################
-            #########################################################################################################
-            #########################################################################################################
+            # apply chat templates and return an answer
+            if verbose > 1: print("-------------------------------------- \n## AI (i="+str(i)+", baseline="+str(baseline)+"): ")
+            response = self.chat_template()
+            if verbose > 1: print("--------------------------------------")
 
-        # apply chat templates and return an answer
-        if verbose > 1: print("-------------------------------------- \n## AI (baseline="+str(baseline)+"): ")
-        response = self.chat_template()
-        if verbose > 1: print("--------------------------------------")
+            if extract_code(response)=="":
+                print(">> appending prev code")
+                response = response+"\nPrevious code:\n```"+code+"```"
+                break
+            else:
+                code = extract_code(response)
 
-        if extract_code(response)=="":
-            print(">> appending prev code")
-            response = response+"\nprevious code:\n```"+code+"```"
-
-        if False and verbose>3 :
+        if False:
             print("\n\n**************************************************************************** \n## tool_manager messages history:")
             pprint.pprint(self.tool_messages)
             print("****************************************************************************\n")

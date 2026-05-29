@@ -12,6 +12,7 @@ from src.tools.tools import *
 
 # importing variables from the config file
 from src.configs.parse_config import *
+from src.configs.system_prompts import baseline_prompt, benchmark_prompt
 
 """ bash command for lm-eval (python_file=supercode/src/code_processing.py,)
 python -m lm_eval \
@@ -58,9 +59,6 @@ if baseline:
     print("benchmark baseline and model for "+bench_name)
 else:
     print("benchmark model for "+bench_name)
-
-baseline_prompt =     "Write a function based on the following description. For each of the examples provided, check that the function returns the expected results with a statement like `assert function_name(example_i)==result_i, f'expected result_i, but got {function_name(example_i)} instead'`, finally print('end of the code') at the end."
-general_prompt = "Improve this function based on the following description. For each of the examples provided, check that the function returns the expected results with a statement like `assert function_name(example_i)==result_i, f'expected result_i, but got {function_name(example_i)} instead'`, finally print('end of the code') at the end. You must always write the complete function in your answer, including the assert and print statements."
 
 baseline_file  = gen_code_dir+"/"+bench_name+"_baseline-" +model_id[model_id.find("/")+1:]+"_"+str(num_samples_per_task)+".jsonl"
 benchmark_file = gen_code_dir+"/"+bench_name+"_benchmark-"+model_id[model_id.find("/")+1:]+"_"+str(num_samples_per_task)+".jsonl"
@@ -139,7 +137,7 @@ try:
                 baseline_code = baseline_codes[i*(j+1)]
 
             # then ask the model to improve the baseline
-            response = model.call(general_prompt+"\n\n"+prompt, code=baseline_code, reset_memory=True, baseline=False)
+            response = model.call(benchmark_prompt+"\n\n"+prompt, code=baseline_code, reset_memory=True, baseline=False)
             code = extract_code(response, entry_point)
             print(">> check compiler output for response")
             compiler_output = sandboxed_compiler(code)

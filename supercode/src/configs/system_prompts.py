@@ -41,3 +41,17 @@ In this case the json object will include the 'search_database' tool before the 
 tool_manager_prequery = "Based on the following question decide if there is a tool you can use.\n\n### Question:\n"
 # prompt to revise previous answers to check dependencies
 tool_manager_revise = "Use the tools results to improve your previous answer and check the schema to make your answer compliant with the tools requirements. Treat tool results as correct and final."
+
+
+########################################################################################################################
+baseline_prompt = """
+Write a function based on the following description. 
+For the examples provided, check that the function returns the expected results with a statement like `assert function_name(example_i)==result_i, f'expected result_i, but got {function_name(example_i)} instead'`, finally print('end of the code') at the end.
+"""
+benchmark_prompt = """
+Improve this function based on the following description. 
+For the examples provided, check that the function returns the expected results with a statement like `assert function_name(example_i)==result_i, f'expected result_i, but got {function_name(example_i)} instead'`, finally print('end of the code') at the end. 
+Always include the final code in your answer.
+"""
+
+
