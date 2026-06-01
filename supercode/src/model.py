@@ -317,10 +317,9 @@ class Model():
         #########################################################################################################
 
         if code is not None:  # initial code from baseline or codebase
-            self.message_format(recipient="both", role="user", content="Use the following code as a baseline:\n"+code)
+            self.message_format(recipient="both", role="user", content="Use the following code as a starting point:\n"+code)
 
         for i in range(3):
-            #""" write a python function that returns all even numbers from 0 to n, then assert return_even(5)==[0,2,4] and print("no errors") at the end
             """
             # apply chat templates and return an answer
             if verbose > 1: print("-------------------------------------- \n## (temp) AI: ")
@@ -335,9 +334,11 @@ class Model():
                 #megalinter_result = run_megalinter("python) ; self.message_format(recipient="both", role="tool", content=megalinter_result, name="run_megalinter")
                 compiler_result = sandboxed_compiler(code) ; self.message_format(recipient="both", role="tool", content=compiler_result, name="sandboxed_compiler")
                 #perf_result = run_perf(gen_code_file) ; self.message_format(recipient="both", role="tool", content=perf_result, name="run_perf")
-                if compiler_result[0] == 0:
+
+                if compiler_result[0] == 0: # check if the code compiled correctly
                     response = "There is nothing to improve."+"\nPrevious code:\n```"+code+"```"
                     break
+                self.message_format(recipient="both", role="user", content=compiler_prompt)
 
             # apply chat templates and return an answer
             if verbose > 1: print("-------------------------------------- \n## AI (i="+str(i)+", baseline="+str(baseline)+"): ")
@@ -356,10 +357,10 @@ class Model():
             print("\n\n**************************************************************************** \n## tool_manager messages history:")
             pprint.pprint(self.tool_messages)
             print("****************************************************************************\n")
+        if True:
             print("\n**************************************************************************** \n## assistant messages history:")
             pprint.pprint(self.messages)
             print("****************************************************************************\n")
-            print("****************************************************************************")
 
         self.tool_results = [] # reset tool results
         self.tool_messages = self.tool_messages[:1] # clear all, except the system prompt

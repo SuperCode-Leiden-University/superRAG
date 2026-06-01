@@ -42,6 +42,7 @@ tool_manager_prequery = "Based on the following question decide if there is a to
 # prompt to revise previous answers to check dependencies
 tool_manager_revise = "Use the tools results to improve your previous answer and check the schema to make your answer compliant with the tools requirements. Treat tool results as correct and final."
 
+compiler_prompt = "The code contains an error. Analyze the code, compare what the code is doing versus what is it supposed to do and fix the issue."
 
 ########################################################################################################################
 baseline_prompt = """
@@ -49,7 +50,7 @@ Write a function based on the following description.
 For the given examples, check that the function returns the expected results with a statement like: 
 `assert function_name(example_i)==result_i, f'the correct result is result_i, but the function returned {function_name(example_i)} instead'`, 
 finally print('end of the code') at the end. 
-Do not include extra examples besides those given in the description.
+Do not include extra examples besides those given in the description and no more than 5 examples in total.
 """
 benchmark_prompt = """
 Improve this function based on the following description. 
@@ -57,7 +58,7 @@ For the given examples, check that the function returns the expected results wit
 `assert function_name(example_i)==result_i, f'the correct result is result_i, but the function returned {function_name(example_i)} instead'`, 
 finally print('end of the code') at the end. 
 Always include the final code in your answer. 
-Do not include extra examples besides those given in the description.
+Do not include extra examples besides those given in the description and no more than 5 examples in total.
 """
 
 

@@ -43,7 +43,10 @@ if verbose>1 :
 # ---------------------------------------------------------------------------------------------- #
 # ---------------------------------------------------------------------------------------------- #
 ##### BENCHMARK SETTINGS
-baseline = True
+baseline = False
+check_task = True ; i_task = 26
+print("baseline =", baseline, "; check_task =", check_task, "; i_task =", i_task)
+
 num_samples_per_task = 1 #200
 # if baseline is true then the model does not use any external info
 # if it is false, it checks first if it can find the baseline solution and then ask the model to improve it
@@ -93,7 +96,7 @@ try:
     if not baseline: # load the baseline functions
         baseline_codes = []
         print("reading jsonl for "+baseline_file+"...")
-        with open(gen_code_dir + "/" + baseline_file + ".jsonl") as f:
+        with open(baseline_file) as f:
             for i, line in enumerate(f, start=1):
                 try:
                     baseline_codes.append(ast.literal_eval(line))
@@ -114,7 +117,7 @@ try:
 
 
     for i, task_id in enumerate(problems):
-        # i=47; task_id="HumanEval/47"
+        if check_task: i=i_task; task_id="HumanEval/"+str(i)
         print("\n======================================")
         print(i, task_id)
 
@@ -133,6 +136,10 @@ try:
                 print("\n>> checking compiler output for baseline response")
                 baseline_compiler_output = sandboxed_compiler(baseline_code)
                 baseline_json_sample = convert_to_json(task_id, baseline_response, baseline_code, compiler_output=baseline_compiler_output)
+
+                with open(baseline_file, "a") as f:
+                    f.write(str(baseline_json_sample) + "\n")
+                    f.close()
             else:
                 # retrieve the baseline function
                 baseline_code = baseline_codes[i*(j+1)]
@@ -146,16 +153,11 @@ try:
 
             # save as jsonl (json line: json objects separated by newline characters)
             # except, I'd need to convert to json first, so this is actually a list of python dictionaries...
-            if baseline:
-                with open(baseline_file, "a") as f:
-                    f.write(str(baseline_json_sample) + "\n")
-                    f.close()
-            
             with open(benchmark_file, "a") as f:
                 f.write(str(json_sample) + "\n")
                 f.close()
 
-        #break
+        if check_task: break
     """
     samples = [
         dict(
