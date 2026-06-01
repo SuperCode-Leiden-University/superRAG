@@ -95,14 +95,15 @@ n_tasks = len(problems)
 if not baseline: # load the baseline functions
     baseline_samples = []
     print("reading jsonl for "+baseline_file+"...")
-    with open(baseline_file) as f:
-        for i, line in enumerate(f, start=1):
-            try:
+    try:
+        with open(baseline_file) as f:
+            for i, line in enumerate(f, start=1):
                 baseline_samples.append(ast.literal_eval(line))
-            except Exception as e:
-                print("Error on line", i)
-                print("Line content:", repr(line))
-                raise Exception("Error in the baseline file!")
+    except Exception as e:
+        print("Error in the baseline file on line", i)
+        print("Line content:", repr(line))
+        baseline=True
+        #raise Exception("Error in the baseline file!")
     if len(baseline_samples) != num_samples_per_task*n_tasks:
         print("WARNING: baseline file does not match the expected number of samples")
         print("n_baseline:", len(baseline_samples), "\nn_samples:", num_samples_per_task*n_tasks)
