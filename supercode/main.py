@@ -44,13 +44,10 @@ while True:
         print("Goodbye!")
         break
 
-    try:
-        start = datetime.now()
-        if verbose>0 : print(">> processing the query")
-        model.call(user_prompt)
+    start = datetime.now()
+    if verbose>0 : print(">> processing the query")
+    model.call(user_prompt)
 
-        end = datetime.now()
-        if verbose>0 : print(">> Time to Answer =", end-start)
+    end = datetime.now()
+    if verbose>0 : print(">> Time to Answer =", end-start)
 
-    except Exception as e:
-        print(f"\nAn error occurred:\n{e}\n")

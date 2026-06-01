@@ -15,29 +15,12 @@ def check_unit_tests(function, test=None, entry_point=None):
     if verbose>0 : print(">> using the check_unit_tests")
     # this checks if the unit tests return the expected result (functional correctness)
 
-    if test == None:
-        #print(">> compilation check")
-        with tempfile.NamedTemporaryFile("w", suffix=".py", delete=False) as tmp:
-            tmp.write(function)
-            tmp_path = tmp.name
-        try:
-            result = subprocess.run(  # run a program from inside the container (and remove the container afterwards)
-                ["python3", tmp_path],
-                capture_output=True,
-                text=True,
-                timeout=10  # seconds
-            )
-            if verbose>1 : print(">> command run successfully\n", result)
-            return result.returncode, "stdout=" + result.stdout + "\n" + "stderr=" + result.stderr
-        except Exception as e:
-            print("Error in check_unit_tests tool:", e)
-            return "Error in check_unit_tests tool:"+e
+    if test == None: code = function
+    else: code = function+"\n\n"+test+"\n\ncheck("+entry_point+")" # issue: this would work only for HumanEval!
 
-    else:
-        #print(">> test check")
-        with tempfile.NamedTemporaryFile("w", suffix=".py", delete=False) as tmp:
-            tmp.write(function+"\n\n"+test+"\n\ncheck("+entry_point+")")
-            tmp_path = tmp.name
+    with tempfile.NamedTemporaryFile("w", suffix=".py", delete=True) as tmp:
+        tmp.write(code)
+        tmp_path = tmp.name
         try:
             result = subprocess.run(  # run a program from inside the container (and remove the container afterwards)
                 ["python3", tmp_path],
@@ -45,8 +28,8 @@ def check_unit_tests(function, test=None, entry_point=None):
                 text=True,
                 timeout=10  # seconds
             )
-            #print(">> command run successfully\n", result)
-            return result.returncode, "stdout=" + result.stdout + "\n" + "stderr=" + result.stderr
+            # print(">> command run successfully\n", result)
+            return result.returncode, "standard output='"+result.stdout+"errors='"+result.stderr+"'"
         except Exception as e:
             print("Error in check_unit_tests tool:", e)
             return "Error in check_unit_tests tool:"+e
