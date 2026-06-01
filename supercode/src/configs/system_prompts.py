@@ -42,7 +42,7 @@ tool_manager_prequery = "Based on the following question decide if there is a to
 # prompt to revise previous answers to check dependencies
 tool_manager_revise = "Use the tools results to improve your previous answer and check the schema to make your answer compliant with the tools requirements. Treat tool results as correct and final."
 
-compiler_prompt = "The code contains an error. Analyze the code, compare what the code is doing versus what is it supposed to do and fix the issue."
+compiler_prompt = ("The code is not correct. Analyze the code step-by-step to understand why the code failed. Then compare what the code is doing versus what is it supposed to do and fix the issue.")
 
 ########################################################################################################################
 baseline_prompt = """
