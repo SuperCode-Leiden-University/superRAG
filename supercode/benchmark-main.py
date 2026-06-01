@@ -44,7 +44,17 @@ if verbose>1 :
 # ---------------------------------------------------------------------------------------------- #
 ##### BENCHMARK SETTINGS
 baseline = False
-check_task = True ; i_task = 26
+check_task = True ; i_task = 64
+"""
+Analysis of errors:
+    #2  due to numerical fluctuations: (2, 32) 
+   #17  due to faulty logic: (26, 64, 75, 81, 91, 102, 116, 120, 123, 127, 129, 130, 134, 139, 145, 162, 163) 
+    #4  due to incorrect syntax: (77, 93, 111, 125) 
+    #4  mysterious: (85, 122, 148, 160) should be correct but it not considered so???
+    #1  silent: (50), only part of the code was saved for some reasons???
+
+Actually fixed: (38)
+"""
 print("baseline =", baseline, "; check_task =", check_task, "; i_task =", i_task)
 
 num_samples_per_task = 1 #200
