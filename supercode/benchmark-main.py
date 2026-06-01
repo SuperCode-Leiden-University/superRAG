@@ -93,19 +93,19 @@ problems = read_problems()
 n_tasks = len(problems)
 
 if not baseline: # load the baseline functions
-    baseline_codes = []
+    baseline_samples = []
     print("reading jsonl for "+baseline_file+"...")
     with open(baseline_file) as f:
         for i, line in enumerate(f, start=1):
             try:
-                baseline_codes.append(ast.literal_eval(line))
+                baseline_samples.append(ast.literal_eval(line))
             except Exception as e:
                 print("Error on line", i)
                 print("Line content:", repr(line))
                 raise Exception("Error in the baseline file!")
-    if len(baseline_codes) != num_samples_per_task*n_tasks:
+    if len(baseline_samples) != num_samples_per_task*n_tasks:
         print("WARNING: baseline file does not match the expected number of samples")
-        print("n_baseline:", len(baseline_codes), "\nn_samples:", num_samples_per_task*n_tasks)
+        print("n_baseline:", len(baseline_samples), "\nn_samples:", num_samples_per_task*n_tasks)
         print("Evaluating baseline first")
         baseline=True
 
@@ -141,7 +141,7 @@ for i, task_id in enumerate(problems):
                 f.close()
         else:
             # retrieve the baseline function
-            baseline_code = baseline_codes[i*(j+1)]
+            baseline_code = baseline_samples[i*(j+1)]["code"]
 
         # then ask the model to improve the baseline
         response = model.call(benchmark_prompt+"\n\n"+prompt, code=baseline_code, reset_memory=True, baseline=False)
