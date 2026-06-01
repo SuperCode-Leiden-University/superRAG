@@ -46,16 +46,18 @@ tool_manager_revise = "Use the tools results to improve your previous answer and
 ########################################################################################################################
 baseline_prompt = """
 Write a function based on the following description. 
-For the examples provided, check that the function returns the expected results with a statement like: 
+For the given examples, check that the function returns the expected results with a statement like: 
 `assert function_name(example_i)==result_i, f'the correct result is result_i, but the function returned {function_name(example_i)} instead'`, 
-finally print('end of the code') at the end.
+finally print('end of the code') at the end. 
+Do not include extra examples besides those given in the description.
 """
 benchmark_prompt = """
 Improve this function based on the following description. 
-For the examples provided, check that the function returns the expected results with a statement like: 
+For the given examples, check that the function returns the expected results with a statement like: 
 `assert function_name(example_i)==result_i, f'the correct result is result_i, but the function returned {function_name(example_i)} instead'`, 
 finally print('end of the code') at the end. 
-Always include the final code in your answer.
+Always include the final code in your answer. 
+Do not include extra examples besides those given in the description.
 """
 
 
