@@ -5,35 +5,56 @@ import tempfile
 
 from human_eval.data import write_jsonl, read_problems
 from datasets import load_dataset # load datasets from Hugging Face
-#from src.tools.tools import check_unit_tests
 #from src.configs.parse_config import *
 
 #print("current dir:", os. getcwd())
 
 verbose = 0
-def check_unit_tests(function, test=None, entry_point=None):
-    if verbose>0 : print(">> using the check_unit_tests")
-    # this checks if the unit tests return the expected result (functional correctness)
+
+def sandboxed_compiler(function, test=None, entry_point=None):
+    if verbose>0 : print(">> using the sandboxed_compiler")
+    # this only checks if the code compiles (semantic correctness)
+    """
+    with tempfile.NamedTemporaryFile("w", suffix=".py", delete=False) as tmp:
+        print("create temp file")
+        tmp.write(function)
+        tmp_path = tmp.name
+    """
+    # IMPORTANT: the docker image can see ONLY files inside "results/"
+    # and all paths in the container should be relative to "results/"!
+
+    docker_dir = "src/docker_env"  # where I save the dockerfile and docker_compose.yml
+    gen_code_file = docker_dir+"/results/gen_code/gen_code_temp.py"  # where I mount with the docker container
+
+    cwd = os.getcwd() #; print(cwd)
+    abs_docker_path = cwd+"/"+docker_dir
+    #tmp_dir = abs_docker_path+"/results/gen_code"
 
     if test == None: code = function
     else: code = function+"\n\n"+test+"\n\ncheck("+entry_point+")" # issue: this would work only for HumanEval!
 
-    with tempfile.NamedTemporaryFile("w", suffix=".py", delete=True) as tmp:
-        tmp.write(code)
-        tmp_path = tmp.name
-        try:
-            result = subprocess.run(  # run a program from inside the container (and remove the container afterwards)
-                ["python3", tmp_path],
-                capture_output=True,
-                text=True,
-                timeout=10  # seconds
-            )
-            # print(">> command run successfully\n", result)
-            return result.returncode, "standard output='"+result.stdout+"errors='"+result.stderr+"'"
-        except Exception as e:
-            print("Error in check_unit_tests tool:", e)
-            return "Error in check_unit_tests tool:"+e
-
+    with open(gen_code_file, "w") as f:
+        if verbose>1 : print(">> saving the code at", gen_code_file)
+        f.write(code)
+        f.close()
+    try:
+        docker_code_path = gen_code_file[gen_code_file.find("results/"):]
+        if verbose>1 : print(">> docker_code_path", docker_code_path)
+        if verbose>1 : print(">> run command with docker run")
+        #subprocess.run("pwd")
+        # docker run --rm sandbox_code python3 results/gen_code/gen_code_temp.py
+        # docker run --mount type=bind,src=/home/elisa/PycharmProjects/phd-leiden-supercode/supercode/src/docker_env/results,dst=/workspace --rm sandbox_code
+        result = subprocess.run( # run a program from inside the container (and remove the container afterwards)
+            ["docker", "run", "--mount", "type=bind,src="+abs_docker_path+",dst=/workspace", "--rm", "sandbox_code", "python3", docker_code_path],
+            capture_output=True,
+            text=True,
+            timeout=10 # seconds
+        )
+        if verbose>1 : print(">> command run successfully\n", result)
+        return result.returncode, "printed_output='" + result.stdout + "'\nerrors='" + result.stderr + "'"
+    except Exception as e:
+        print("Error in sandboxed_compiler tool:", e)
+        return "Error in sandboxed_compiler tool:"+e
 
 # paths
 num_samples_per_task=1
@@ -44,11 +65,10 @@ base_file_name = "humaneval_baseline-Qwen2.5-Coder-3B-Instruct_"+str(num_samples
 #benchmark_file = gen_code_dir+"/"+file_name+"_results.txt"
 
 # importing the benchmark from hugging face
-print("loading benchmark...")
+if verbose>0 : print("loading benchmark...")
 dataset = load_dataset("openai/openai_humaneval")
-print("reading the problems...")
+if verbose>0 : print("reading the problems...")
 problems = read_problems()
-#problems = {row["task_id"]: row for row in dataset["test"]}
 
 for file_name in [base_file_name, bench_file_name]:
     # initializing vars
@@ -69,21 +89,21 @@ for file_name in [base_file_name, bench_file_name]:
                 raise
 
     for sample in samples:
-        #print("\n------------------------------------------------------\n### sample:", sample["task_id"])
+        if verbose>1 : print("\n------------------------------------------------------\n### sample:", sample["task_id"])
         task_id = sample["task_id"]
-        function = sample["code"]
+        function = sample["code"] #; print("code: \n```\n", function, "\n```\n", sep='')
         entry_point = problems[task_id]["entry_point"] # name of the function
         test = problems[task_id]["test"]
 
         # check just the code
-        returncode, output = check_unit_tests(function)
-        #print("compiler: returncode =", returncode, "\n\n", output)
+        returncode, output = sandboxed_compiler(function)
+        if verbose>2 : print("compiler: returncode = ", returncode, "\n", output, sep='')
         if returncode==0: comp_pass+=1
         else: comp_fail+=1
 
         # check with test cases
-        returncode, output = check_unit_tests(function, test, entry_point)
-        #print("test: returncode =", returncode, "\n\n", output)
+        returncode, output = sandboxed_compiler(function, test, entry_point)
+        if verbose>2 : print("test: returncode = ", returncode, "\n", output, sep='')
         if returncode==0: test_pass+=1
         else: test_fail+=1
 

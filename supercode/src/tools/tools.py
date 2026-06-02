@@ -259,7 +259,8 @@ run_perf._tool_metadata = {
 
 
 @tool
-def sandboxed_compiler(code):
+
+def sandboxed_compiler(function, test=None, entry_point=None):
     if verbose>0 : print(">> using the sandboxed_compiler")
     # this only checks if the code compiles (semantic correctness)
     """
@@ -275,14 +276,17 @@ def sandboxed_compiler(code):
     abs_docker_path = cwd+"/"+docker_dir
     #tmp_dir = abs_docker_path+"/results/gen_code"
 
+    if test == None: code = function
+    else: code = function+"\n\n"+test+"\n\ncheck("+entry_point+")" # issue: this would work only for HumanEval!
+
     with open(gen_code_file, "w") as f:
-        print(">> saving the code at", gen_code_file)
+        if verbose>1 : print(">> saving the code at", gen_code_file)
         f.write(code)
         f.close()
     try:
         docker_code_path = gen_code_file[gen_code_file.find("results/"):]
-        print(">> docker_code_path", docker_code_path)
-        print(">> run command with docker run")
+        if verbose>1 : print(">> docker_code_path", docker_code_path)
+        if verbose>1 : print(">> run command with docker run")
         #subprocess.run("pwd")
         # docker run --rm sandbox_code python3 results/gen_code/gen_code_temp.py
         # docker run --mount type=bind,src=/home/elisa/PycharmProjects/phd-leiden-supercode/supercode/src/docker_env/results,dst=/workspace --rm sandbox_code
@@ -293,31 +297,8 @@ def sandboxed_compiler(code):
             timeout=10 # seconds
         )
         if verbose>1 : print(">> command run successfully\n", result)
-        return result.returncode, "the compiled code returned:\nstandard output='"+result.stdout+"errors='"+result.stderr+"'"
+        return result.returncode, "printed_output='" + result.stdout + "'\nerrors='" + result.stderr + "'"
     except Exception as e:
         print("Error in sandboxed_compiler tool:", e)
         return "Error in sandboxed_compiler tool:"+e
 
-@tool
-def check_unit_tests(function, test=None, entry_point=None):
-    if verbose>0 : print(">> using the check_unit_tests")
-    # this checks if the unit tests return the expected result (functional correctness)
-
-    if test == None: code = function
-    else: code = function+"\n\n"+test+"\n\ncheck("+entry_point+")" # issue: this would work only for HumanEval!
-
-    with tempfile.NamedTemporaryFile("w", suffix=".py", delete=True) as tmp:
-        tmp.write(code)
-        tmp_path = tmp.name
-        try:
-            result = subprocess.run(  # run a program from inside the container (and remove the container afterwards)
-                ["python3", tmp_path],
-                capture_output=True,
-                text=True,
-                timeout=10  # seconds
-            )
-            # print(">> command run successfully\n", result)
-            return result.returncode, "standard output='"+result.stdout+"errors='"+result.stderr+"'"
-        except Exception as e:
-            print("Error in check_unit_tests tool:", e)
-            return "Error in check_unit_tests tool:"+e

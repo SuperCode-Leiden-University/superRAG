@@ -16,6 +16,7 @@ chat_assistant_prequery = "Use the following information to answer the question 
 
 ########################################################################################################################
 # partial prompt for the tool manager
+# f"You are a tool manager, tools at your disposal are described in:\n\n{self.schemas}\n"
 tool_manager_prompt = """
 Your job is to return a list of JSON objects with tools are relevant to the user's request in the order they must be called.
 You must only choose the tools, you must NEVER try to solve the problem directly.
@@ -42,7 +43,17 @@ tool_manager_prequery = "Based on the following question decide if there is a to
 # prompt to revise previous answers to check dependencies
 tool_manager_revise = "Use the tools results to improve your previous answer and check the schema to make your answer compliant with the tools requirements. Treat tool results as correct and final."
 
+
+########################################################################################################################
+# complete prompt for the planner model
+planner_prompt = """
+You are a debugger assistant.
+Your job is to understand how the code can be improved and layout the logic of the code.
+Keep your answer shot and avoid repeating the same concept multiple times.
+"""
+planner_prequery = ""
 compiler_prompt = "The code is incorrect. Follow the logic of the code step-by-step to understand where and why the code didn't produce the correct result, then change the code to fix the issue."
+
 
 ########################################################################################################################
 baseline_prompt = """
