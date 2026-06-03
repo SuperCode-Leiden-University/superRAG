@@ -15,7 +15,7 @@ verbose = vars["verbose"] # how much info is printed: 0=none, 1=little, 2=all
 # ----------------------------------------------------------------------------------------------
 # chat assistant model
 model_args     = vars["model"]
-model_id       = vars["model"]["ID"] # model ID from HuggingFace
+model_id       = vars["model"]["model_id"] # model ID from HuggingFace
 raw_model      = vars["model"]["raw_model"]   # True if the model is loaded directly, False if loaded through pipeline
 quant_type     = vars["model"]["quant_type"] # valid values: ("full", "bits", "GPTQ") --> check file formats!!!
 temperature    = vars["model"]["gen_args"]["temperature"] # 0 = always select the most likely word, 1 = random
@@ -25,7 +25,7 @@ max_new_tokens = vars["model"]["gen_args"]["max_new_tokens"] # max number of tok
 # ----------------------------------------------------------------------------------------------
 # thinking model for planning
 plan_model_args     = vars["plan_model"]
-plan_model_id       = vars["plan_model"]["ID"] # model ID from HuggingFace
+plan_model_id       = vars["plan_model"]["model_id"] # model ID from HuggingFace
 plan_raw_model      = vars["plan_model"]["raw_model"]   # True if the model is loaded directly, False if loaded through pipeline
 plan_quant_type     = vars["plan_model"]["quant_type"] # valid values: ("full", "bits", "GPTQ") --> check file formats!!!
 plan_temperature    = vars["plan_model"]["gen_args"]["temperature"] # 0 = always select the most likely word, 1 = random

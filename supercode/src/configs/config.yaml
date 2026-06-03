@@ -4,7 +4,7 @@ verbose: 10 # how much info is printed: 0=none, 1=little, 2=lots, 3=all
 
 # chat model
 model:
-    ID: # model ID from HuggingFace, size for Qwen: 32B, 14B, 7B, 3B, 1.5B, 0.5B,
+    model_id: # model ID from HuggingFace, size for Qwen: 32B, 14B, 7B, 3B, 1.5B, 0.5B,
         # file size (for 1.5B) is: GPTQ-Int4 (1.16 GB) ~ AWQ (1.63 GB) < full (3.1 GB) < GGUF (9.76 GB)
         #Qwen/Qwen3-Coder-Next # MoE, 3B active and 80B total
         #Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF
