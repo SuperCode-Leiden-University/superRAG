@@ -115,7 +115,7 @@ class Model():
 
     # ----------------------------------------------------------------------------------------------
     # format the messages to be able to include tools and RAG
-    def message_format(self, role, content, **kwargs):
+    def add_message(self, role, content, **kwargs):
         # add message for the model
         if role=="user" : content=self.prequery_prompt+content
         self.messages.append({
@@ -124,9 +124,12 @@ class Model():
             **kwargs # add optional extra arguments (ex: tool's name)
         })
 
+    def get_messages(self):
+        return self.messages
+
     # ----------------------------------------------------------------------------------------------
     # apply chat templates, generate and return an answer
-    def chat_template(self):
+    def call(self):
         """ Note: the chat history (messages) is structured like this:
         chat_history = [ {'generated_text': [
                             {'role': 'user',       'content': '...'},
@@ -167,6 +170,6 @@ class Model():
             outputs = self.model(self.messages)
             response = outputs[0]['generated_text'][-1]["content"]
 
-        self.message_format(role="model", content=response)
+        self.add_message(role="model", content=response)
 
         return response

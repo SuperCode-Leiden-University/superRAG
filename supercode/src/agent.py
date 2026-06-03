@@ -20,74 +20,39 @@ from src.tools.tools import *
 from src.tools.code_processing import *
 
 
-
 class Agent():
     # define variables and import the model
     def __init__(self):
-        ##### extract model's name and parameters
-
         # reasoning model for planning
         self.planning = False
         self.plan_model_id = plan_model_id
 
+        # tools related parameters
         self.tool_results = []
         self.tool_selection = False # use the same model either to choose which tool to use or to generate an answer
         self.tools = get_tools() # tools for the agent
         self.schemas = [build_tool_schema(f) for f in self.tools.values()]
         self.details = [f._tool_metadata for f in self.tools.values()] # info about requirements
 
+        # ----------------------------------------------------------------------------------------------
+        ##### IMPORTING THE MODELS
+        # coding assistant (expert model)
+        self.assistant = Model(model_args, system_prompt=assistant_prompt, prequery_prompt=assistant_prequery, tools_schemas=None)
+
+        # tool manager (expert model) # Is this the best choice? Maybe the thinking model would be better?
+        tool_manager_prompt = manager_prompt_1+f"{self.schemas}"+manager_prompt_2
+        self.tool_manager = Model(model_args, system_prompt=tool_manager_prompt, prequery_prompt=tool_manager_prequery, tools_schemas=self.schemas)
+
+        # planner/debugger (thinking model), better at finding logic-based errors
+        self.planner = Model(plan_model_args, system_prompt=planner_prompt, prequery_prompt=planner_prequery, tools_schemas=None)
+
         if verbose > 1: print(">> defining system prompt")
         self.reset_memory() # keep only the system prompts
 
-        ##### IMPORTING THE MODELS
-        self.assistant = Model(model_args, system_prompt=chat_assistant_prompt, prequery_prompt=chat_assistant_prequery, tools_schemas=None)
-
-        tool_manager_prompt = f"You are a tool manager, tools at your disposal are described in:\n\n{self.schemas}\n"+tool_manager_prompt
-        self.tool_manager = Model(model_args, system_prompt=tool_manager_prompt, prequery_prompt=tool_manager_prequery, tools_schemas=self.schemas)
-
-        self.planner = Model(plan_model_args, system_prompt=planner_prompt, prequery_prompt=planner_prequery, tools_schemas=None)
-
     def reset_memory(self):
-        self.messages = [{
-            "role": "system",
-            "content": chat_assistant_prompt
-        }] # history of the chat
-        self.tool_messages = [{
-            "role": "system",
-            "content": f"You are a tool manager, tools at your disposal are described in:\n\n{self.schemas}\n" + tool_manager_prompt
-        }] # messages for tool selection
-
-    # ----------------------------------------------------------------------------------------------
-    # format the messages to be able to include tools and RAG
-    def message_format(self, recipient, role, content, **kwargs):
-        # recipient can be: assistant, tool_manager, planner or all
-
-        # add message for the chat assistant
-        if recipient!="tool_manager": # messages for the assistant
-            if role=="user" : content=chat_assistant_prequery+content
-            self.messages.append({
-                "role": role,
-                "content": content,
-                **kwargs # add optional extra arguments (ex: tool's name)
-            })
-
-        # add message for the tool manager
-        if recipient!="assistant": # messages for the tool_manager
-            if role=="user" : content=tool_manager_prequery+content
-            self.tool_messages.append({
-                "role": role,
-                "content": content,
-                **kwargs # add optional extra arguments (ex: tool's name)
-            })
-
-        # add message for the tool manager
-        if recipient!="planner": # messages for the tool_manager
-            #if role=="user" : content=planner_prequery+content
-            self.plan_messages.append({
-                "role": role,
-                "content": content,
-                **kwargs # add optional extra arguments (ex: tool's name)
-            })
+        self.assistant.reset_memory()
+        self.tool_manager.reset_memory()
+        self.planner.reset_memory()
 
     # ----------------------------------------------------------------------------------------------
     def parse_tools(self, response, revise=False):
@@ -162,8 +127,9 @@ class Agent():
         # decide if it needs to retrieve context and/or to use tools
         if reset_memory: self.reset_memory() # forget previous answers and keep only the system prompts, useful for benchmarks
 
-        self.message_format(recipient="both", role="user", content=user_prompt) # save the user_prompt in the message history
-
+        for m in [self.assistant, self.tool_manager, self.planner]:
+            # save the user_prompt in the message history of all models
+            m.add_message(role="user", content=user_prompt)
 
         """ 
             n_revise = -1#3
@@ -173,7 +139,7 @@ class Agent():
             for r in range(n_revise+1): # refinement loop, by the 3rd iteration it should have the correct tools selected
                 # apply chat templates and return an answer
                 if verbose > 1: print(f"-------------------------------------- \n## tool manager {r+1}: ")
-                response = self.chat_template()
+                response = self.tool_manager.call()
                 if verbose>1 : print("--------------------------------------")
 
                 if "```json\n[]\n```" in response :
@@ -186,10 +152,12 @@ class Agent():
                 print(">> TOOL RESULTS: \n", self.tool_results, "\n", sep="")
 
                 for tool in self.tool_results[tool_index:]: # add new tool results to the chat history
-                    self.message_format(recipient="both", role="tool", content=tool["result"], name=tool["name"])
+                    for m in [self.assistant, self.tool_manager, self.planner]:
+                        # save the tool results in the message history of all models
+                        m.add_message(role="tool", content=tool["result"], name=tool["name"])
 
                 if r<n_revise: # revise the answer to implement the correct dependencies
-                    self.message_format(recipient="tool_manager", role="user", content=tool_manager_revise)
+                    self.tool_manager.add_message(role="user", content=tool_manager_revise)
 
                 revise = True  # then it can call the tools that need the requirements
 
@@ -202,33 +170,41 @@ class Agent():
         #########################################################################################################
 
         if code is not None:  # initial code from baseline or codebase
-            self.message_format(recipient="both", role="user", content="Use the following code as a starting point:\n"+code)
+            for m in [self.assistant, self.planner]:
+                # save the starting code in the message history of the assistant and planner models
+                m.add_message(role="user", content="Use the following code as a starting point:\n"+code)
 
         for i in range(3):
-            """
-            # apply chat templates and return an answer
-            if verbose > 1: print("-------------------------------------- \n## (temp) AI: ")
-            response = self.chat_template()
-            if verbose > 1: print("--------------------------------------")
-    
-            code = extract_code(response)
-            """
             if not baseline and code is not None: # test the code on compiler
                 if verbose > 1: print("\n>> evaluating baseline code")
                 # tool_result = dispatch_tool(self.tools, tool_name, tool_args)
-                #megalinter_result = run_megalinter("python) ; self.message_format(recipient="both", role="tool", content=megalinter_result, name="run_megalinter")
-                compiler_result = sandboxed_compiler(code) ; self.message_format(recipient="both", role="tool", content=compiler_result, name="sandboxed_compiler")
-                #perf_result = run_perf(gen_code_file) ; self.message_format(recipient="both", role="tool", content=perf_result, name="run_perf")
+                compiler_result = sandboxed_compiler(code)
+                #perf_result = run_perf(gen_code_file)
+
+                for m in [self.assistant, self.tool_manager, self.planner]:
+                    # save the tool results in the message history of all models
+                    m.add_message(role="tool", content=compiler_result, name="sandboxed_compiler")
+                    #m.add_message(role="tool", content=perf_result, name="run_perf")
 
                 if compiler_result[0] == 0: # check if the code compiled correctly
                     response = "There is nothing to improve."+"\nPrevious code:\n```"+code+"```"
                     break
-                self.message_format(recipient="both", role="user", content=compiler_prompt)
+
+                for m in [self.assistant, self.tool_manager, self.planner]:
+                    # save the tool results in the message history of all models
+                    m.add_message(role="user", content=compiler_prompt)
 
             # apply chat templates and return an answer
-            if verbose > 1: print("-------------------------------------- \n## AI (i="+str(i)+", baseline="+str(baseline)+"): ")
-            response = self.chat_template()
+            if verbose > 1: print("-------------------------------------- \n## planner (i="+str(i)+", baseline="+str(baseline)+"): ")
+            response = self.planner.call()
             if verbose > 1: print("--------------------------------------")
+            self.assistant.add_message(role="planner", content=response)
+
+            # apply chat templates and return an answer
+            if verbose > 1: print("-------------------------------------- \n## assistant (i="+str(i)+", baseline="+str(baseline)+"): ")
+            response = self.assistant.call()
+            if verbose > 1: print("--------------------------------------")
+            self.planner.add_message(role="assistant", content=response)
 
             if extract_code(response)=="":
                 print(">> appending prev code")
@@ -240,11 +216,11 @@ class Agent():
 
         if False:
             print("\n\n**************************************************************************** \n## tool_manager messages history:")
-            pprint.pprint(self.tool_messages)
+            pprint.pprint(self.tool_manager.get_messages())
             print("****************************************************************************\n")
         if True:
             print("\n**************************************************************************** \n## assistant messages history:")
-            pprint.pprint(self.messages)
+            pprint.pprint(self.assistant.get_messages())
             print("****************************************************************************\n")
 
         self.tool_results = [] # reset tool results

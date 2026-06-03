@@ -1,6 +1,6 @@
 ########################################################################################################################
 # complete prompt for the chat assistant
-chat_assistant_prompt = """You are a helpful AI assistant with access to a database and external tools. 
+assistant_prompt = """You are a helpful AI assistant with access to a database and external tools. 
 When tool results are provided, treat them as authoritative facts. 
 Your job is to:
 - Use the tool outputs as the primary source of truth.
@@ -12,12 +12,12 @@ You may summarize the results if the result is very long,
 but you must not add unsupported details. """
 
 # prompt to add before the user_prompt
-chat_assistant_prequery = "Use the following information to answer the question in natural language.\n\n### Question:\n"
+assistant_prequery = "Use the following information to answer the question in natural language.\n\n### Question:\n"
 
 ########################################################################################################################
 # partial prompt for the tool manager
-# f"You are a tool manager, tools at your disposal are described in:\n\n{self.schemas}\n"
-tool_manager_prompt = """
+manager_prompt_1 = "You are a tool manager, tools at your disposal are described in:\n\n"
+manager_prompt_2 = """
 Your job is to return a list of JSON objects with tools are relevant to the user's request in the order they must be called.
 You must only choose the tools, you must NEVER try to solve the problem directly.
 
