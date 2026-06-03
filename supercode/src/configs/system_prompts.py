@@ -61,12 +61,14 @@ Consider that test cases that don't appear in the description of the function ma
 debugger_revise = "Use the following reasoning steps to improve your previous answer.\n"
 
 ########################################################################################################################
+########################################################################################################################
+########################################################################################################################
 baseline_prompt = """
 Write a function based on the following description. 
 For the given examples, check that the function returns the expected results with a statement like: 
 `assert function_name(example_i)==result_i, f'the correct result is result_i, but the function returned {function_name(example_i)} instead'`, 
 finally print('end of the code') at the end. 
-Do not include extra examples besides those given in the description and no more than 5 examples in total.
+You must never include extra examples besides those given in the description and no more than 5 examples in total.
 """
 benchmark_prompt = """
 Improve this function based on the following description. 
