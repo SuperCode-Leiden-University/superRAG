@@ -3,7 +3,7 @@ import torch
 from datetime import datetime
 
 # my packages
-from src.model import Model
+from src.agent import Agent
 
 # importing variables from the config file
 from src.configs.parse_config import *
@@ -23,7 +23,7 @@ if verbose>1 :
 ##### IMPORTING THE MODEL
 
 # "model" is for processing text and generating an answer
-model = Model()
+model = Agent()
 
 
 # ---------------------------------------------------------------------------------------------- #

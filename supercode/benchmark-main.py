@@ -6,7 +6,7 @@ from datasets import load_dataset # load datasets from Hugging Face
 from human_eval.data import read_problems
 
 # my packages
-from src.model import Model
+from src.agent import Agent
 from src.tools.code_processing import *
 from src.tools.tools import *
 
@@ -79,7 +79,7 @@ benchmark_file = gen_code_dir+"/"+bench_name+"_benchmark-"+model_id[model_id.fin
 
 # ----------------------------------------------------------------------------------------------
 # "model" is for processing text and generating an answer
-model = Model()
+model = Agent()
 
 print("Dataset structure:\n", dataset, sep="")
 """ dataset looks like this:
