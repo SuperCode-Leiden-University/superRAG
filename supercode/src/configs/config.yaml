@@ -16,7 +16,7 @@ model:
     gen_args:
         temperature: 0.4 # 0 = always select the most likely word, 1 = random
         max_new_tokens: 1500 # max number of tokens that can be generated
-        presence_penalty: 0.3 # positive values penalize repeating sentences and words (range [-2,+2], advisable to keep in [-1,+1] for good performances)
+        presence_penalty: 0.2 # positive values penalize repeating sentences and words (range [-2,+2], advisable to keep in [-1,+1] for good performances)
         # NOTE: code from LLMs has been shown to be more repetitive than human's!
 
     # NOTE: the model can be loaded as quantized only if someone published the quantized version (see file's extensions):
@@ -38,8 +38,8 @@ thinking_model:
     quant_type: full # valid values: ("full", "sinq", "AWQ", "GPTQ", "bits") --> check file formats!!!
     gen_args:
         temperature: 0.4 # 0 = always select the most likely word, 1 = random
-        max_new_tokens: 600 # max number of tokens that can be generated
-        presence_penalty: 0.9 # positive values penalize repeating sentences and words (range [-2,+2], advisable to keep in [-1,+1] for good performances)
+        max_new_tokens: 1500 # max number of tokens that can be generated
+        presence_penalty: 1.0 # positive values penalize repeating sentences and words (range [-2,+2], advisable to keep in [-1,+1] for good performances)
 
 # embedding model for building the database (for RAG)
 emb_model_id: sentence-transformers/msmarco-bert-base-dot-v5  # model ID from HuggingFace
