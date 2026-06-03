@@ -45,14 +45,18 @@ tool_manager_revise = "Use the tools results to improve your previous answer and
 
 
 ########################################################################################################################
-# complete prompt for the planner model
-planner_prompt = """
+# complete prompt for the debugger model
+debugger_prompt = """
 You are a debugger assistant.
 Your job is to understand how the code can be improved and layout the logic of the code.
 Keep your answer shot and avoid repeating the same concept multiple times.
 """
-planner_prequery = ""
-compiler_prompt = "The code is incorrect. Follow the logic of the code step-by-step to understand where and why the code didn't produce the correct result, then change the code to fix the issue."
+debugger_prequery = ""
+compiler_prompt = """The code is incorrect. 
+Follow the logic of the code step-by-step to understand where and why the code didn't produce the correct result, then change the code to fix the issue.
+Note that if there are test cases that are not included in the original user description, those could be wrong and should be removed.
+The test case in the original description should be always be included as they were.
+"""
 
 
 ########################################################################################################################

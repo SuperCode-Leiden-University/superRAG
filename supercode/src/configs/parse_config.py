@@ -23,13 +23,13 @@ max_new_tokens = vars["model"]["gen_args"]["max_new_tokens"] # max number of tok
 
 
 # ----------------------------------------------------------------------------------------------
-# thinking model for planning
-plan_model_args     = vars["plan_model"]
-plan_model_id       = vars["plan_model"]["model_id"] # model ID from HuggingFace
-plan_raw_model      = vars["plan_model"]["raw_model"]   # True if the model is loaded directly, False if loaded through pipeline
-plan_quant_type     = vars["plan_model"]["quant_type"] # valid values: ("full", "bits", "GPTQ") --> check file formats!!!
-plan_temperature    = vars["plan_model"]["gen_args"]["temperature"] # 0 = always select the most likely word, 1 = random
-plan_max_new_tokens = vars["plan_model"]["gen_args"]["max_new_tokens"] # max number of tokens that can be generated
+# thinking model for planning/debugging
+debug_model_args     = vars["thinking_model"]
+debug_model_id       = vars["thinking_model"]["model_id"] # model ID from HuggingFace
+debug_raw_model      = vars["thinking_model"]["raw_model"]   # True if the model is loaded directly, False if loaded through pipeline
+debug_quant_type     = vars["thinking_model"]["quant_type"] # valid values: ("full", "bits", "GPTQ") --> check file formats!!!
+debug_temperature    = vars["thinking_model"]["gen_args"]["temperature"] # 0 = always select the most likely word, 1 = random
+debug_max_new_tokens = vars["thinking_model"]["gen_args"]["max_new_tokens"] # max number of tokens that can be generated
 
 # ----------------------------------------------------------------------------------------------
 # embedding model for building the database (for RAG)
