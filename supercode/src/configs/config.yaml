@@ -16,7 +16,7 @@ model:
     quant_type: full # valid values: ("full", "sinq", "AWQ", "GPTQ", "bits") --> check file formats!!!
     gen_args:
         temperature: 0.4 # 0 = always select the most likely word, 1 = random
-        max_new_tokens: 1500 # max number of tokens that can be generated
+        max_new_tokens: 4000 # max number of tokens that can be generated
         presence_penalty: 0.2 # positive values penalize repeating sentences and words (range [-2,+2], advisable to keep in [-1,+1] for good performances)
         frequency_penalty: 0.2 # high to avoid repetition of specific words (presence is more about having new topics)
         # Reminder that code from LLMs has been shown to be more repetitive than human's, so it makes sense to penalize it a bit!
