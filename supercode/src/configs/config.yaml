@@ -31,7 +31,7 @@ model:
 
 # thinking model for planning (for extrapolating logic issues)
 plan_model:
-    ID: Qwen/Qwen3-4B-Thinking-2507 # model ID from HuggingFace
+    model_id: Qwen/Qwen3-4B-Thinking-2507 # model ID from HuggingFace
     raw_model: true # True if the model is loaded directly, False if loaded through pipeline
     quant_type: full # valid values: ("full", "sinq", "AWQ", "GPTQ", "bits") --> check file formats!!!
     gen_args:
