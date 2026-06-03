@@ -223,7 +223,9 @@ class Agent():
             pprint.pprint(self.assistant.get_messages())
             print("****************************************************************************\n")
 
-        self.tool_results = [] # reset tool results
-        self.tool_messages = self.tool_messages[:1] # clear all, except the system prompt
+        # reset tool results, tool_manager and planner
+        self.tool_results = []
+        self.tool_manager.reset_memory()
+        self.planner.reset_memory()
 
         return response
