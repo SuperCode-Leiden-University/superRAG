@@ -127,7 +127,7 @@ class Agent():
         # decide if it needs to retrieve context and/or to use tools
         if reset_memory: self.reset_memory() # forget previous answers and keep only the system prompts, useful for benchmarks
 
-        for m in [self.assistant, self.tool_manager, self.debugger]:
+        for m in [self.assistant, self.tool_manager]:#, self.debugger]:
             # save the user_prompt in the message history of all models
             m.add_message(role="user", content=user_prompt)
 
