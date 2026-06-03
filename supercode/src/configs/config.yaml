@@ -35,7 +35,8 @@ model:
 # thinking model for planning/debugging (good at extrapolating logic issues)
 thinking_model:
     model_id: # model ID from HuggingFace
-        Qwen/Qwen3.5-4B # includes thinking mode by default
+        #Qwen/Qwen3.5-4B # includes thinking mode by default (DOESN'T WORK???)
+        Qwen/Qwen3-4B # includes thinking mode by default
         #Qwen/Qwen3-4B-Thinking-2507
     raw_model: true # True if the model is loaded directly, False if loaded through pipeline
     quant_type: full # valid values: ("full", "sinq", "AWQ", "GPTQ", "bits") --> check file formats!!!
