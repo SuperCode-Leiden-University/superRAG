@@ -191,7 +191,7 @@ class Agent():
 
                 for m in [self.assistant, self.tool_manager, self.debugger]:
                     # save the tool results in the message history of all models
-                    m.add_message(role="user", content=compiler_prompt)
+                    m.add_message(role="system", content=compiler_prompt)
 
                 # debug incorrect code
                 if verbose > 1: print("-------------------------------------- \n## debugger (i="+str(i)+", baseline="+str(baseline)+"): ")
