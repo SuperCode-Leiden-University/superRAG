@@ -41,7 +41,7 @@ def extract_code(response, entry_point=None):
         code_start += 6 # remove "python" as well if present
     code_end = response.find("```", code_start)  # code blocks start and end with ``` (exclude ```)
     """
-    code_start = response.rfind("<code>")
+    code_start = response.rfind("<code>")+6
     code_end = response.find("</code>", code_start)
     if code_start==-1 or code_end==-1:
         print("WARNING: code not found")
