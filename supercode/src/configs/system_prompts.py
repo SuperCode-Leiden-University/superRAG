@@ -8,8 +8,9 @@ Your job is to:
 - Keep all names, numbers, and factual details exactly as returned.
 - Never describe the tool‑use process, reasoning steps, or how results were obtained.
 - Never invent alternative answers when tool results are available. 
-You may summarize the results if the result is very long, 
-but you must not add unsupported details. """
+- Code must always start with ``` and end with ```.
+You may summarize the results if the result is very long, but you must not add unsupported details. 
+"""
 
 # prompt to add before the user_prompt
 assistant_prequery = "Use the following information to answer the question in natural language.\n\n### Question:\n"
@@ -68,7 +69,7 @@ Write a function based on the following description.
 For the given examples, check that the function returns the expected results with a statement like: 
 `assert function_name(example_i)==result_i, f'the correct result is result_i, but the function returned {function_name(example_i)} instead'`, 
 finally print('end of the code') at the end. 
-You must never include extra examples besides those given in the description and no more than 5 examples in total.
+You must never include extra examples besides those given in the description.
 """
 benchmark_prompt = """
 Improve this function based on the following description. 
@@ -76,7 +77,7 @@ For the given examples, check that the function returns the expected results wit
 `assert function_name(example_i)==result_i, f'the correct result is result_i, but the function returned {function_name(example_i)} instead'`, 
 finally print('end of the code') at the end. 
 Always include the final code in your answer. 
-Do not include extra examples besides those given in the description and no more than 5 examples in total.
+You must never include extra examples besides those given in the description.
 """
 
 
