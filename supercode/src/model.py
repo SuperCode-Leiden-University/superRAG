@@ -22,7 +22,7 @@ from src.tools.code_processing import *
 
 class Model():
     # define variables and import the model
-    def __init__(self, model_args, system_prompt=None, prequery_prompt=None, tools_schemas=None):
+    def __init__(self, model_args, system_prompt=None, prequery_prompt=None, tool_schemas=None):
         ##### extract model's name and parameters
         self.model_id   = model_args["model_id"]   # name of the model from Hugging Face
         self.raw_model  = model_args["raw_model"]  # True if the model is loaded directly, False if loaded through pipeline
@@ -37,7 +37,7 @@ class Model():
         self.messages = []
         self.reset_memory() # initialize messages with only the system prompt
 
-        self.tools_schemas = tools_schemas # for calling tools
+        self.tool_schemas = tool_schemas # for calling tools
 
         ##### IMPORTING THE MODEL
         if self.raw_model:

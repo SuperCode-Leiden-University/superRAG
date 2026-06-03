@@ -37,14 +37,14 @@ class Agent():
         # ----------------------------------------------------------------------------------------------
         ##### IMPORTING THE MODELS
         # coding assistant (expert model)
-        self.assistant = Model(model_args, system_prompt=assistant_prompt, prequery_prompt=assistant_prequery, tools_schemas=None)
+        self.assistant = Model(model_args, system_prompt=assistant_prompt, prequery_prompt=assistant_prequery, tool_schemas=None)
 
         # tool manager (expert model) # Is this the best choice? Maybe the thinking model would be better?
         tool_manager_prompt = manager_prompt_1+f"{self.schemas}"+manager_prompt_2
-        self.tool_manager = Model(model_args, system_prompt=tool_manager_prompt, prequery_prompt=tool_manager_prequery, tools_schemas=self.schemas)
+        self.tool_manager = Model(model_args, system_prompt=tool_manager_prompt, prequery_prompt=tool_manager_prequery, tool_schemas=self.schemas)
 
         # planner/debugger (thinking model), better at finding logic-based errors
-        self.planner = Model(plan_model_args, system_prompt=planner_prompt, prequery_prompt=planner_prequery, tools_schemas=None)
+        self.planner = Model(plan_model_args, system_prompt=planner_prompt, prequery_prompt=planner_prequery, tool_schemas=None)
 
         if verbose > 1: print(">> defining system prompt")
         self.reset_memory() # keep only the system prompts
