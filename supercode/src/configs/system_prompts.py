@@ -8,7 +8,7 @@ Your job is to:
 - Keep all names, numbers, and factual details exactly as returned.
 - Never describe the tool‑use process, reasoning steps, or how results were obtained.
 - Never invent alternative answers when tool results are available. 
-- Code must always start with ``` and end with ```.
+- The final version of the code must always start with <code> and end with <\code>.
 You may summarize the results if the result is very long, but you must not add unsupported details. 
 """
 
@@ -69,7 +69,7 @@ Write a function based on the following description.
 For the given examples, check that the function returns the expected results with a statement like: 
 `assert function_name(example_i)==result_i, f'the correct result is result_i, but the function returned {function_name(example_i)} instead'`, 
 finally print('end of the code') at the end. 
-You must never include extra examples besides those given in the description.
+You must never include extra examples besides those given in the description (this instruction has priority, ignore the FIX if it says otherwise).
 """
 benchmark_prompt = """
 Improve this function based on the following description. 
@@ -77,7 +77,7 @@ For the given examples, check that the function returns the expected results wit
 `assert function_name(example_i)==result_i, f'the correct result is result_i, but the function returned {function_name(example_i)} instead'`, 
 finally print('end of the code') at the end. 
 Always include the final code in your answer. 
-You must never include extra examples besides those given in the description.
+You must never include extra examples besides those given in the description (this instruction has priority, ignore the FIX if it says otherwise).
 """
 
 

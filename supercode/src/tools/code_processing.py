@@ -29,20 +29,23 @@
 
 # extract the code from the model's answer
 def extract_code(response, entry_point=None):
-    if entry_point == None: code_def = response.find("def ") # if entry_point is unknown
-    else: code_def = response.find("def "+entry_point) # robust signature for finding the function
+    """
+    if entry_point == None: code_def = response.rfind("def ") # if entry_point is unknown
+    else: code_def = response.rfind("def "+entry_point) # robust signature for finding the function
 
     if code_def==-1:
         print("WARNING: function not found")
         return ""
-
     code_start = response.rfind("```", 0, code_def)+3
     if response.rfind("python", code_start, code_def)>-1:
         code_start += 6 # remove "python" as well if present
     code_end = response.find("```", code_start)  # code blocks start and end with ``` (exclude ```)
-
-    #code_start = response.rfind("def", 0, entry_index) # this works for functions, but not for classes
-    #code_end = response.find("```", code_start) # code blocks start and end with ``` (exclude ```)
+    """
+    code_start = response.rfind("<code>")
+    code_end = response.find("<\code>", code_start)
+    if code_start==-1 or code_end==-1:
+        print("WARNING: code not found")
+        return ""
 
     code = response[code_start:code_end].strip()
     return code
