@@ -57,7 +57,8 @@ Start by analyzing the error message, find the line that generated the error and
 Finally summarize why the code failed and change the code to fix the issue.
 Consider that test cases that don't appear in the description of the function may be wrong and should be removed.
 """
-
+# this is a bit different: it is added before the debugger answer is given to the assistant
+debugger_revise = "Use the following reasoning steps to improve your previous answer.\n"
 
 ########################################################################################################################
 baseline_prompt = """
