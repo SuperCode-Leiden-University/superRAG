@@ -1,4 +1,4 @@
-import json, torch
+import json, torch, sys
 import pprint
 import threading
 from transformers import pipeline, AutoModelForCausalLM, AutoTokenizer, TextIteratorStreamer
@@ -196,6 +196,18 @@ class Agent():
 
                 # debug incorrect code
                 if verbose > 1: print("-------------------------------------- \n## debugger (i="+str(i)+", baseline="+str(baseline)+"): ")
+
+
+                pprint.pprint(self.debugger.get_messages())
+
+                for i, m in enumerate(self.debugger.get_messages()):
+                    for k, v in m.items():
+                        if isinstance(v, (int, float, bool)):
+                            print(f"Offending message index {i}, key '{k}', type {type(v).__name__}, value: {v}",
+                                  file=sys.stderr)
+                            raise TypeError(f"Message[{i}].{k} is {type(v).__name__}; expected str or list")
+
+
                 response = self.debugger.call()
                 if verbose > 1: print("--------------------------------------")
                 self.assistant.add_message(role="debugger", content=debugger_revise+response)
