@@ -8,7 +8,7 @@ Your job is to:
 - Keep all names, numbers, and factual details exactly as returned.
 - Never describe the tool‑use process, reasoning steps, or how results were obtained.
 - Never invent alternative answers when tool results are available. 
-- The final version of the code must always start with <code> and end with <\code>.
+- The final version of the code must always start with <code> and end with </code>.
 You may summarize the results if the result is very long, but you must not add unsupported details. 
 """
 
