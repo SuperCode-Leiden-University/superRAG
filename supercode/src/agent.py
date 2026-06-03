@@ -170,7 +170,7 @@ class Agent():
         #########################################################################################################
 
         if code is not None:  # initial code from baseline or codebase
-            for m in [self.assistant, self.debugger]:
+            for m in [self.assistant]:#, self.debugger]:
                 # save the starting code in the message history of the assistant and debugger models
                 m.add_message(role="user", content="Use the following code as a starting point:\n"+code)
 
