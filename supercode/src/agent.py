@@ -207,9 +207,14 @@ class Agent():
             #self.debugger.add_message(role="assistant", content=response)
 
             if extract_code(response)=="":
-                print(">> appending prev code")
-                response = response+"\nPrevious code:\n<code>"+code+"</code>"
-                break
+                if code is not None:
+                    print(">> appending prev code")
+                    response = response+"\nPrevious code:\n<code>"+code+"</code>"
+                    break
+                else:
+                    print("WARNING: failed to extract code and no previous code to fall back to")
+                    response = response+"\nNo code:\n<code>raise Exception('NO CODE')</code>"
+                    continue # failed to extract code and no previous code to fall back to
             else:
                 code = extract_code(response)
             if baseline: break
