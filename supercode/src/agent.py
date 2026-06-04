@@ -218,7 +218,7 @@ class Agent():
             print("\n\n**************************************************************************** \n## tool_manager messages history:")
             pprint.pprint(self.tool_manager.get_messages())
             print("****************************************************************************\n")
-        if True:
+        if False:
             print("\n**************************************************************************** \n## assistant messages history:")
             pprint.pprint(self.assistant.get_messages())
             print("****************************************************************************\n")
