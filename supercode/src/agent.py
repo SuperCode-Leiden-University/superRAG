@@ -201,9 +201,9 @@ class Agent():
                 #self.assistant.add_message(role="debugger", content=debugger_revise+response)
 
             # apply chat templates and return an answer
-            if verbose > 1: print("-------------------------------------- \n## assistant (i="+str(i)+", baseline="+str(baseline)+"): ")
+            print("-------------------------------------- \n## assistant (i="+str(i)+", baseline="+str(baseline)+"): ")
             response = self.assistant.call()
-            if verbose > 1: print("--------------------------------------")
+            print("--------------------------------------")
             #self.debugger.add_message(role="assistant", content=response)
 
             if extract_code(response)=="":
