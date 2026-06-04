@@ -176,7 +176,7 @@ class Agent():
 
         for i in range(self.n_debug):
             if not baseline and code is not None: # test the code on compiler
-                if verbose > 1: print("\n>> evaluating baseline code")
+                if verbose > 1: print("\n>> evaluating code")
                 # tool_result = dispatch_tool(self.tools, tool_name, tool_args)
                 compiler_result = sandboxed_compiler(code)
                 #perf_result = run_perf(gen_code_file)
@@ -218,7 +218,7 @@ class Agent():
             print("\n\n**************************************************************************** \n## tool_manager messages history:")
             pprint.pprint(self.tool_manager.get_messages())
             print("****************************************************************************\n")
-        if False:
+        if True:
             print("\n**************************************************************************** \n## assistant messages history:")
             pprint.pprint(self.assistant.get_messages())
             print("****************************************************************************\n")

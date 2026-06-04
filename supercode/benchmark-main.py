@@ -43,8 +43,8 @@ if verbose>1 :
 # ---------------------------------------------------------------------------------------------- #
 # ---------------------------------------------------------------------------------------------- #
 ##### BENCHMARK SETTINGS
-baseline = True
-check_task = False ; i_task = 64
+baseline = True # True or False
+check_task = True ; i_task = 75
 """
 Analysis of errors:
    #22  due to faulty logic: (26, 64, 75, 81, 91, 102, 108, 116, 120, 123, 126, 127, 129, 130, 132, 134, 139, 145, 147, 157, 162, 163) 
@@ -145,6 +145,7 @@ for i, task_id in enumerate(problems):
     for j in range(num_samples_per_task):
         if baseline: # create the baseline
             baseline_response = model.call(baseline_prompt+"\n\n"+prompt, reset_memory=True, baseline=True)
+            print("\n>> extracting code from baseline response")
             baseline_code = extract_code(baseline_response, entry_point)
             print("\n>> checking compiler output for baseline response")
             baseline_compiler_output = sandboxed_compiler(baseline_code)
@@ -159,6 +160,7 @@ for i, task_id in enumerate(problems):
 
         # then ask the model to improve the baseline
         response = model.call(benchmark_prompt+"\n\n"+prompt, code=baseline_code, reset_memory=True, baseline=False)
+        print("\n>> extracting code from response")
         code = extract_code(response, entry_point)
         print("\n>> checking compiler output for response")
         compiler_output = sandboxed_compiler(code)

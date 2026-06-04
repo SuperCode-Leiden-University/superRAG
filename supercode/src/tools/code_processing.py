@@ -41,12 +41,19 @@ def extract_code(response, entry_point=None):
         code_start += 6 # remove "python" as well if present
     code_end = response.find("```", code_start)  # code blocks start and end with ``` (exclude ```)
     """
+    # sanity check
+    if entry_point is not None:
+        entry_index = response.find(entry_point)
+        if entry_index == -1:
+            print("WARNING: entry_point not found")
+            return ""
+
     code_start = response.rfind("<code>")+6
     code_end = response.rfind("</code>")
     if code_start==-1 or code_end==-1:
         print("WARNING: code not found")
         return ""
-
+    print(">> code extracted successfully")
     code = response[code_start:code_end].strip()
     return code
 
