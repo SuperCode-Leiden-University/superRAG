@@ -187,7 +187,7 @@ class Agent():
                     #m.add_message(role="tool", content=perf_result, name="run_perf")
 
                 if compiler_result[0] == 0: # check if the code compiled correctly
-                    response = "There is nothing to improve."+"\nPrevious code:\n```"+code+"```"
+                    response = "There is nothing to improve."+"\nPrevious code:\n<code>"+code+"</code>"
                     break
 
                 for m in [self.assistant, self.tool_manager]:#, self.debugger]:
@@ -208,7 +208,7 @@ class Agent():
 
             if extract_code(response)=="":
                 print(">> appending prev code")
-                response = response+"\nPrevious code:\n```"+code+"```"
+                response = response+"\nPrevious code:\n<code>"+code+"</code>"
                 break
             else:
                 code = extract_code(response)
