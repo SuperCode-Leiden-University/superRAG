@@ -9,7 +9,8 @@ Your job is to:
 - Never describe the tool‑use process, reasoning steps, or how results were obtained.
 - Never invent alternative answers when tool results are available. 
 - The final version of the code must always start with <code> and end with </code>.
-You may summarize the results if the result is very long, but you must not add unsupported details. 
+You may summarize the results from tools if they are very long, but you must not add unsupported details. 
+During reasoning, try to keep your answer short and avoid repeating the same concepts many times.
 """
 
 # prompt to add before the user_prompt
@@ -69,7 +70,8 @@ Write a function based on the following description.
 For the given examples, check that the function returns the expected results with a statement like: 
 `assert function_name(example_i)==result_i, f"the correct result is result_i, but the function returned {function_name(example_i)} instead"`, 
 finally print("end of the code") at the end. 
-You must never include extra examples besides those given in the description (this instruction has priority, ignore the FIX if it says otherwise).
+When reasoning you can consider additional test cases but no more then 5, however additional test cases should not appear in the final code.
+In the final code you must never include extra examples besides those given in the description (this instruction has priority, ignore the FIX if it says otherwise).
 """
 benchmark_prompt = """
 Improve this function based on the following description. 
@@ -77,7 +79,8 @@ For the given examples, check that the function returns the expected results wit
 `assert function_name(example_i)==result_i, f"the correct result is result_i, but the function returned {function_name(example_i)} instead"`, 
 finally print("end of the code") at the end. 
 Always include the final code in your answer. 
-You must never include extra examples besides those given in the description (this instruction has priority, ignore the FIX if it says otherwise).
+When reasoning you can consider additional test cases but no more then 5, however additional test cases should not appear in the final code.
+In the final code you must never include extra examples besides those given in the description (this instruction has priority, ignore the FIX if it says otherwise).
 """
 
 
