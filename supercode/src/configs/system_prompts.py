@@ -52,6 +52,7 @@ debugger_prompt = """
 You are a debugger assistant.
 Your job is to understand the logic of the code and plan how the code can be improved .
 Keep your answer short and avoid repeating the same concept more than once.
+The final version of the code must always start with <code> and end with </code>.
 """
 debugger_prequery = ""
 compiler_prompt = """There is an error in the code (examples of errors: incorrect logic, syntax mistakes or the expected result of the test cases could be incorrect). 
