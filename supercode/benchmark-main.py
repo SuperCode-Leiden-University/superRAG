@@ -74,8 +74,8 @@ if baseline:
 else:
     print("benchmark model for "+bench_name)
 
-baseline_file  = gen_code_dir+"/"+bench_name+"_baseline-" +model_id[model_id.find("/")+1:]+"_"+str(num_samples_per_task)+".jsonl"
-benchmark_file = gen_code_dir+"/"+bench_name+"_benchmark-"+model_id[model_id.find("/")+1:]+"_"+str(num_samples_per_task)+".jsonl"
+baseline_file  = gen_code_dir+"/"+bench_name+"_baseline-" +model_id[model_id.find("/")+1:]+"+Qwen3-4B_"+str(num_samples_per_task)+".jsonl"
+benchmark_file = gen_code_dir+"/"+bench_name+"_benchmark-"+model_id[model_id.find("/")+1:]+"+Qwen3-4B_"+str(num_samples_per_task)+".jsonl"
 
 # ----------------------------------------------------------------------------------------------
 # "model" is for processing text and generating an answer
