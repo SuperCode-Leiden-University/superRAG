@@ -205,7 +205,7 @@ class Agent():
                     print("--------------------------------------")
                     self.assistant.add_message(role="debugger", content=debugger_revise+response)
 
-            if code is None and not self.debugging:
+            if code is None or not self.debugging:
                 # apply chat templates and return an answer
                 print("-------------------------------------- \n## assistant (i="+str(i)+", baseline="+str(baseline)+"): ")
                 response = self.assistant.call()
