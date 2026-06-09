@@ -42,7 +42,7 @@ class Agent():
 
         # tool manager (expert model) # Is this the best choice? Maybe the thinking model would be better?
         tool_manager_prompt = manager_prompt_1+f"{self.schemas}"+manager_prompt_2
-        self.tool_manager = Model(model_args, system_prompt=tool_manager_prompt, prequery_prompt=tool_manager_prequery, tool_schemas=self.schemas)
+        if self.tool_selection: self.tool_manager = Model(model_args, system_prompt=tool_manager_prompt, prequery_prompt=tool_manager_prequery, tool_schemas=self.schemas)
 
         # planner/debugger (thinking model), better at finding logic-based errors
         if self.debugging: self.debugger = Model(debug_model_args, system_prompt=debugger_prompt, prequery_prompt=debugger_prequery, tool_schemas=None)
@@ -56,7 +56,7 @@ class Agent():
 
     def reset_memory(self):
         self.assistant.reset_memory()
-        self.tool_manager.reset_memory()
+        if self.tool_selection: self.tool_manager.reset_memory()
         if self.debugging: self.debugger.reset_memory()
 
     # ----------------------------------------------------------------------------------------------
@@ -139,35 +139,32 @@ class Agent():
         """ 
             n_revise = -1#3
             revise = False  # most often the model calls the tools for the requirements by the second try
-            self.tool_selection = True
+            if if self.tool_selection: 
+                for r in range(n_revise+1): # refinement loop, by the 3rd iteration it should have the correct tools selected
+                    # apply chat templates and return an answer
+                    if verbose > 1: print(f"-------------------------------------- \n## tool manager {r+1}: ")
+                    response = self.tool_manager.call()
+                    if verbose>1 : print("--------------------------------------")
+    
+                    if "```json\n[]\n```" in response :
+                        print(">> NO NEW TOOLS INCLUDED")
+                        break # no new tools were added
+    
+                    tool_index = len(self.tool_results) # backup the tool results in case the last tool manager returns an empty list
+    
+                    self.parse_tools(response, revise)
+                    print(">> TOOL RESULTS: \n", self.tool_results, "\n", sep="")
+    
+                    for tool in self.tool_results[tool_index:]: # add new tool results to the chat history
+                        for m in self.models_list:
+                            # save the tool results in the message history of all models
+                            m.add_message(role="tool", content=tool["result"], name=tool["name"])
+    
+                    if r<n_revise: # revise the answer to implement the correct dependencies
+                        self.tool_manager.add_message(role="user", content=tool_manager_revise)
+    
+                    revise = True  # then it can call the tools that need the requirements
 
-            for r in range(n_revise+1): # refinement loop, by the 3rd iteration it should have the correct tools selected
-                # apply chat templates and return an answer
-                if verbose > 1: print(f"-------------------------------------- \n## tool manager {r+1}: ")
-                response = self.tool_manager.call()
-                if verbose>1 : print("--------------------------------------")
-
-                if "```json\n[]\n```" in response :
-                    print(">> NO NEW TOOLS INCLUDED")
-                    break # no new tools were added
-
-                tool_index = len(self.tool_results) # backup the tool results in case the last tool manager returns an empty list
-
-                self.parse_tools(response, revise)
-                print(">> TOOL RESULTS: \n", self.tool_results, "\n", sep="")
-
-                for tool in self.tool_results[tool_index:]: # add new tool results to the chat history
-                    for m in self.models_list:
-                        # save the tool results in the message history of all models
-                        m.add_message(role="tool", content=tool["result"], name=tool["name"])
-
-                if r<n_revise: # revise the answer to implement the correct dependencies
-                    self.tool_manager.add_message(role="user", content=tool_manager_revise)
-
-                revise = True  # then it can call the tools that need the requirements
-
-            # include the retrieved docs as context and feed it to the model
-            self.tool_selection = False
             """
 
         #########################################################################################################
@@ -176,7 +173,8 @@ class Agent():
 
         if code is not None:  # initial code from baseline or codebase
             for m in self.models_list:
-                if m == self.tool_manager : continue
+                if self.tool_selection: # tool selection may be enabled but the tool manager doesn't need to see the code
+                    if m == self.tool_manager : continue
                 # save the starting code in the message history of the assistant and debugger models
                 m.add_message(role="user", content="Use the following code as a starting point:\n"+code)
 
@@ -228,13 +226,14 @@ class Agent():
             if baseline: break
 
         if False:
-            print("\n\n**************************************************************************** \n## tool_manager messages history:")
-            pprint.pprint(self.tool_manager.get_messages())
-            print("****************************************************************************\n")
-        if False:
             print("\n**************************************************************************** \n## assistant messages history:")
             pprint.pprint(self.assistant.get_messages())
             print("****************************************************************************\n")
+        if False and self.tool_selection:
+            print("\n\n**************************************************************************** \n## tool_manager messages history:")
+            pprint.pprint(self.tool_manager.get_messages())
+            print("****************************************************************************\n")
+
 
         # reset tool results, tool_manager and debugger
         self.tool_results = []
