@@ -44,7 +44,7 @@ if verbose>1 :
 # ---------------------------------------------------------------------------------------------- #
 ##### BENCHMARK SETTINGS
 baseline = True # True or False
-check_task = False ; i_task = 101
+check_task = True ; i_task = 101
 """
 Analysis of errors:
    #22  due to faulty logic: (26, 64, 75, 81, 91, 102, 108, 116, 120, 123, 126, 127, 129, 130, 132, 134, 139, 145, 147, 157, 162, 163) 
