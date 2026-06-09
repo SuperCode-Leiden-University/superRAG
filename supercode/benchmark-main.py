@@ -44,7 +44,7 @@ if verbose>1 :
 # ---------------------------------------------------------------------------------------------- #
 ##### BENCHMARK SETTINGS
 baseline = True # True or False
-check_task = True ; i_task = 101
+check_single_task = False ; i_task = 101
 """
 Analysis of errors:
    #22  due to faulty logic: (26, 64, 75, 81, 91, 102, 108, 116, 120, 123, 126, 127, 129, 130, 132, 134, 139, 145, 147, 157, 162, 163) 
@@ -56,7 +56,7 @@ Analysis of errors:
 
 Actually fixed: (38)
 """
-print("baseline =", baseline, "; check_task =", check_task, "; i_task =", i_task)
+print("baseline =", baseline, "; check_single_task =", check_single_task, "; i_task =", i_task)
 
 num_samples_per_task = 1 #200
 # if baseline is true then the model does not use any external info
@@ -131,7 +131,7 @@ with open(benchmark_file, "w") as f: f.close()
 
 
 for i, task_id in enumerate(problems):
-    if check_task: i=i_task; task_id="HumanEval/"+str(i)
+    if check_single_task: i=i_task; task_id="HumanEval/"+str(i)
     print("\n======================================")
     print(i, task_id)
 
@@ -173,7 +173,7 @@ for i, task_id in enumerate(problems):
             f.write(str(json_sample) + "\n")
             f.close()
 
-    if check_task: break
+    if check_single_task: break
 """
 samples = [
     dict(

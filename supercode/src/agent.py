@@ -193,7 +193,7 @@ class Agent():
                 if compiler_result[0] == 0: # check if the code compiled correctly
                     response = "There is nothing to improve."+"\nPrevious code:\n<code>"+code+"</code>"
 
-                    print("-------------------------------------- \n## assistant (i=" + str(i) + ", baseline=" + str(baseline) + "): ")
+                    print("\n-------------------------------------- \n## assistant (i=" + str(i) + ", baseline=" + str(baseline) + "): ")
                     print(response, "\n--------------------------------------")
                     break
 
@@ -203,14 +203,14 @@ class Agent():
 
                 # debug incorrect code
                 if self.debugging :
-                    print("-------------------------------------- \n## debugger (i="+str(i)+", baseline="+str(baseline)+"): ")
+                    print("\n-------------------------------------- \n## debugger (i="+str(i)+", baseline="+str(baseline)+"): ")
                     response = self.debugger.call()
                     print("--------------------------------------")
                     self.assistant.add_message(role="debugger", content=debugger_revise+response)
 
             if code is None or not self.debugging:
                 # apply chat templates and return an answer
-                print("-------------------------------------- \n## assistant (i="+str(i)+", baseline="+str(baseline)+"): ")
+                print("\n-------------------------------------- \n## assistant (i="+str(i)+", baseline="+str(baseline)+"): ")
                 response = self.assistant.call()
                 print("--------------------------------------")
                 if self.debugging: self.debugger.add_message(role="assistant", content=response)
