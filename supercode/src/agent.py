@@ -192,6 +192,9 @@ class Agent():
 
                 if compiler_result[0] == 0: # check if the code compiled correctly
                     response = "There is nothing to improve."+"\nPrevious code:\n<code>"+code+"</code>"
+
+                    print("-------------------------------------- \n## assistant (i=" + str(i) + ", baseline=" + str(baseline) + "): ")
+                    print(response, "\n--------------------------------------")
                     break
 
                 for m in self.models_list:
