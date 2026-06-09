@@ -44,7 +44,7 @@ if verbose>1 :
 # ---------------------------------------------------------------------------------------------- #
 ##### BENCHMARK SETTINGS
 baseline = True # True or False
-check_task = False ; i_task = 75
+check_task = False ; i_task = 101
 """
 Analysis of errors:
    #22  due to faulty logic: (26, 64, 75, 81, 91, 102, 108, 116, 120, 123, 126, 127, 129, 130, 132, 134, 139, 145, 147, 157, 162, 163) 
@@ -74,8 +74,9 @@ if baseline:
 else:
     print("benchmark model for "+bench_name)
 
-baseline_file  = gen_code_dir+"/"+bench_name+"_baseline-" +model_id[model_id.find("/")+1:]+"+Qwen3-4B_"+str(num_samples_per_task)+".jsonl"
-benchmark_file = gen_code_dir+"/"+bench_name+"_benchmark-"+model_id[model_id.find("/")+1:]+"+Qwen3-4B_"+str(num_samples_per_task)+".jsonl"
+extra_note = "" #"+Qwen3-4B"
+baseline_file  = gen_code_dir+"/"+bench_name+"_baseline-" +model_id[model_id.find("/")+1:]+extra_note+"_"+str(num_samples_per_task)+".jsonl"
+benchmark_file = gen_code_dir+"/"+bench_name+"_benchmark-"+model_id[model_id.find("/")+1:]+extra_note+"_"+str(num_samples_per_task)+".jsonl"
 
 # ----------------------------------------------------------------------------------------------
 # "model" is for processing text and generating an answer

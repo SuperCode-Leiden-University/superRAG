@@ -71,6 +71,7 @@ Write a function based on the following description.
 For the given examples, check that the function returns the expected results with a statement like: 
 `assert function_name(example_i)==result_i, f"the correct result is result_i, but the function returned {function_name(example_i)} instead"`, 
 finally print("end of the code") at the end. 
+To avoid errors in the assert statements, if result_i includes " you must use \" inside the error message instead, similarly use \' instead of '.
 When reasoning you can consider additional test cases but no more then 5, however additional test cases should not appear in the final code.
 In the final code you must never include extra examples besides those given in the description (this instruction has priority, ignore the FIX if it says otherwise).
 """

@@ -24,6 +24,7 @@ class Agent():
     # define variables and import the model
     def __init__(self):
         # reasoning model for planning/debugging
+        self.debugging = False # use thinking model for debugging
         self.debug_model_id = debug_model_id
         self.n_debug = 1
 
@@ -44,15 +45,19 @@ class Agent():
         self.tool_manager = Model(model_args, system_prompt=tool_manager_prompt, prequery_prompt=tool_manager_prequery, tool_schemas=self.schemas)
 
         # planner/debugger (thinking model), better at finding logic-based errors
-        self.debugger = Model(debug_model_args, system_prompt=debugger_prompt, prequery_prompt=debugger_prequery, tool_schemas=None)
+        if self.debugging: self.debugger = Model(debug_model_args, system_prompt=debugger_prompt, prequery_prompt=debugger_prequery, tool_schemas=None)
 
         if verbose > 1: print(">> defining system prompt")
         self.reset_memory() # keep only the system prompts
 
+        self.models_list = [self.assistant ]
+        if self.debugging: self.models_list.append(self.debugger)
+        if self.tool_selection: self.models_list.append(self.tool_manager)
+
     def reset_memory(self):
         self.assistant.reset_memory()
         self.tool_manager.reset_memory()
-        self.debugger.reset_memory()
+        if self.debugging: self.debugger.reset_memory()
 
     # ----------------------------------------------------------------------------------------------
     def parse_tools(self, response, revise=False):
@@ -127,7 +132,7 @@ class Agent():
         # decide if it needs to retrieve context and/or to use tools
         if reset_memory: self.reset_memory() # forget previous answers and keep only the system prompts, useful for benchmarks
 
-        for m in [self.assistant, self.tool_manager, self.debugger]:
+        for m in self.models_list:
             # save the user_prompt in the message history of all models
             m.add_message(role="user", content=user_prompt)
 
@@ -152,7 +157,7 @@ class Agent():
                 print(">> TOOL RESULTS: \n", self.tool_results, "\n", sep="")
 
                 for tool in self.tool_results[tool_index:]: # add new tool results to the chat history
-                    for m in [self.assistant, self.tool_manager, self.debugger]:
+                    for m in self.models_list:
                         # save the tool results in the message history of all models
                         m.add_message(role="tool", content=tool["result"], name=tool["name"])
 
@@ -170,7 +175,8 @@ class Agent():
         #########################################################################################################
 
         if code is not None:  # initial code from baseline or codebase
-            for m in [self.assistant, self.debugger]:
+            for m in self.models_list:
+                if m == self.tool_manager : continue
                 # save the starting code in the message history of the assistant and debugger models
                 m.add_message(role="user", content="Use the following code as a starting point:\n"+code)
 
@@ -181,7 +187,7 @@ class Agent():
                 compiler_result = sandboxed_compiler(code)
                 #perf_result = run_perf(gen_code_file)
 
-                for m in [self.assistant, self.tool_manager, self.debugger]:
+                for m in self.models_list:
                     # save the tool results in the message history of all models
                     m.add_message(role="tool", content=compiler_result, name="sandboxed_compiler")
                     #m.add_message(role="tool", content=perf_result, name="run_perf")
@@ -190,22 +196,23 @@ class Agent():
                     response = "There is nothing to improve."+"\nPrevious code:\n<code>"+code+"</code>"
                     break
 
-                for m in [self.assistant, self.tool_manager, self.debugger]:
+                for m in self.models_list:
                     # save the tool results in the message history of all models
                     m.add_message(role="system", content=compiler_prompt)
 
                 # debug incorrect code
-                if verbose > 1: print("-------------------------------------- \n## debugger (i="+str(i)+", baseline="+str(baseline)+"): ")
-                response = self.debugger.call()
-                if verbose > 1: print("--------------------------------------")
-                self.assistant.add_message(role="debugger", content=debugger_revise+response)
+                if self.debugging :
+                    print("-------------------------------------- \n## debugger (i="+str(i)+", baseline="+str(baseline)+"): ")
+                    response = self.debugger.call()
+                    print("--------------------------------------")
+                    self.assistant.add_message(role="debugger", content=debugger_revise+response)
 
             if code is None:
                 # apply chat templates and return an answer
                 print("-------------------------------------- \n## assistant (i="+str(i)+", baseline="+str(baseline)+"): ")
                 response = self.assistant.call()
                 print("--------------------------------------")
-                self.debugger.add_message(role="assistant", content=response)
+                if self.debugging: self.debugger.add_message(role="assistant", content=response)
 
             if extract_code(response)=="":
                 if code is not None:
@@ -231,7 +238,7 @@ class Agent():
 
         # reset tool results, tool_manager and debugger
         self.tool_results = []
-        self.tool_manager.reset_memory()
-        self.debugger.reset_memory()
+        if self.tool_selection: self.tool_manager.reset_memory()
+        if self.debugging: self.debugger.reset_memory()
 
         return response
