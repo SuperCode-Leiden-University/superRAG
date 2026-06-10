@@ -143,11 +143,11 @@ for i, task_id in enumerate(problems):
     # 8.0 (instead of 15.0)
     if task_id == "HumanEval/47" : prompt = prompt.replace("15.0", "8.0") ; print(prompt)
 
-    test_code = extract_test_code(prompt, test, entry_point)
+    test_units = extract_test_code(prompt, test, entry_point)
 
     for j in range(num_samples_per_task):
         if baseline: # create the baseline
-            baseline_response = model.call(baseline_prompt+"\n\n"+prompt, test_units=test_code, reset_memory=True, baseline=True)
+            baseline_response = model.call(baseline_prompt+"\n\n"+prompt, test_units=test_units, reset_memory=True, baseline=True)
             print("\n>> extracting code from baseline response")
             baseline_code = extract_code(baseline_response, entry_point)
             print("\n>> checking compiler output for baseline response")
@@ -162,7 +162,7 @@ for i, task_id in enumerate(problems):
             baseline_code = baseline_samples[i*(j+1)]["code"]
 
         # then ask the model to improve the baseline
-        response = model.call(benchmark_prompt+"\n\n"+prompt, code=baseline_code, test_units=test_code, reset_memory=True, baseline=False)
+        response = model.call(benchmark_prompt+"\n\n"+prompt, code=baseline_code, test_units=test_units, reset_memory=True, baseline=False)
         print("\n>> extracting code from response")
         code = extract_code(response, entry_point)
         print("\n>> checking compiler output for response")

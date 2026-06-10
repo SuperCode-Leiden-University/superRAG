@@ -76,7 +76,6 @@ def extract_test_code(prompt, test, entry_point):
     test_code = ""
 
     start = 0
-    end = -1
     failsafe = 0
 
     keyword_start = "assert candidate("
@@ -91,17 +90,17 @@ def extract_test_code(prompt, test, entry_point):
         end = test.find(keyword_end, start)
         next_start = test.find(keyword_start, start)
 
-        print("start", start, "\nend", end, "\nnext_start", next_start)
+        #print("start", start, "\nend", end, "\nnext_start", next_start)
 
         test_case = test[start: end]
-        print("test_case:", test_case)
+        print(">> test_case:", test_case)
 
         test_sol = test[end + len(keyword_end): next_start]
-        print("test_sol:", test_sol)
+        print(">> test_sol:", test_sol)
 
         if test_case in prompt:
             assertion = f"\nassert " + entry_point + "(" + test_case + ") == " + test_sol + ", f'the correct result is {" + test_sol + "} but the function output is {" + entry_point + "(" + test_case + ")}' "
-            print("\nassertion:\n", assertion)
+            #print("\nassertion:", assertion)
             test_code += assertion
         if failsafe > 50:
             print("WARNING: extract_test_code failsafe activated!")
