@@ -191,7 +191,7 @@ class Agent():
                     #m.add_message(role="tool", content=perf_result, name="run_perf")
 
                 if compiler_result[0] == 0: # check if the code compiled correctly
-                    response = "There is nothing to improve."+"\nPrevious code:\n<code>"+code+"</code>"
+                    response = "There is nothing to improve."+"\nPrevious code:\n<code>\n"+code+"\n</code>"
 
                     print("\n-------------------------------------- \n## assistant (i=" + str(i) + ", baseline=" + str(baseline) + "): ")
                     print(response, "\n--------------------------------------")

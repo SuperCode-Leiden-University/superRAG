@@ -96,17 +96,22 @@ def extract_test_code(prompt, test, entry_point):
 
         test_sol = test[end + len(keyword_end): next_start].strip()
         #print(">> test_sol:", test_sol)
+        assertion = f"\nassert " + entry_point + "(" + test_case + ") == " + test_sol + ", f'the correct result is {" + test_sol + "} but the function output is {" + entry_point + "(" + test_case + ")}' "
+        # print("\nassertion:", assertion)
+        if failsafe == 0 : failsafe_assertion = assertion
 
         if test_case in prompt:
             #print(">> found test case, i =", failsafe)
-            assertion = f"\nassert " + entry_point + "(" + test_case + ") == " + test_sol + ", f'the correct result is {" + test_sol + "} but the function output is {" + entry_point + "(" + test_case + ")}' "
-            # print("\nassertion:", assertion)
             test_code += assertion
         #else: print(">> no test case, i =", failsafe)
 
         if failsafe > 50:
             print("WARNING: extract_test_code failsafe activated!")
             break
+
+    # in some cases the examples in the prompt are not in the test
+    # to avoid an empty test, I'll add the first assertion
+    if test_code == "": test_code = failsafe_assertion
 
     print(">>test_code:", test_code)
 
