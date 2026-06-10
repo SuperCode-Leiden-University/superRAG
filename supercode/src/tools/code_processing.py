@@ -87,14 +87,14 @@ def extract_test_code(prompt, test, entry_point):
 
         start = test.find(keyword_start, start) + len(keyword_start)
         end = test.find(keyword_end, start)
-        next_start = test.find("\n" + keyword_start, start)
+        next_start = test.find(keyword_start, start)
 
         print("start", start, "\nend", end, "\nnext_start", next_start)
 
-        test_case = test[start: end]
+        test_case = test[start: end].strip()
         print(">> test_case:", test_case)
 
-        test_sol = test[end + len(keyword_end): next_start]  # the -1 is to account for the "\n" I would get otherwise
+        test_sol = test[end + len(keyword_end): next_start].strip()
         print(">> test_sol:", test_sol)
 
         if test_case in prompt:
