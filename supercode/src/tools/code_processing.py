@@ -88,7 +88,7 @@ def extract_test_code(prompt, test, entry_point):
 
         start = test.find(keyword_start, start) + len(keyword_start)
         end = test.find(keyword_end, start)
-        next_start = test.find(keyword_start, start)
+        next_start = test.find("\n"+keyword_start, start)
 
         #print("start", start, "\nend", end, "\nnext_start", next_start)
 
