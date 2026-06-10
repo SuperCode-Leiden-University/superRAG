@@ -231,14 +231,15 @@ class Agent():
 
             if baseline: break
 
-        if False:
+        if True:
             print("\n**************************************************************************** \n## assistant messages history:")
             pprint.pprint(self.assistant.get_messages())
             print("****************************************************************************\n")
-        if False and self.tool_selection:
-            print("\n\n**************************************************************************** \n## tool_manager messages history:")
-            pprint.pprint(self.tool_manager.get_messages())
-            print("****************************************************************************\n")
+
+            if self.tool_selection:
+                print("\n\n**************************************************************************** \n## tool_manager messages history:")
+                pprint.pprint(self.tool_manager.get_messages())
+                print("****************************************************************************\n")
 
 
         # reset tool results, tool_manager and debugger

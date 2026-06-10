@@ -151,6 +151,7 @@ for i, task_id in enumerate(problems):
             print("\n>> extracting code from baseline response")
             baseline_code = extract_code(baseline_response, entry_point)
             print("\n>> checking compiler output for baseline response")
+            print("**************************\nbaseline_code+test_units", baseline_code+"\n"+test_units, "\n**************************")
             baseline_compiler_output = sandboxed_compiler(baseline_code+"\n"+test_units)
             baseline_json_sample = convert_to_json(task_id, baseline_response, baseline_code, compiler_output=baseline_compiler_output)
 

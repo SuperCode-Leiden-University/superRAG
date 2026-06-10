@@ -106,6 +106,8 @@ def extract_test_code(prompt, test, entry_point):
             print("WARNING: extract_test_code failsafe activated!")
             break
 
+        print("test_code:\n", test_code)
+
         return test_code
 
 
