@@ -231,7 +231,7 @@ class Agent():
 
             if baseline: break
 
-        if True:
+        if False:
             print("\n**************************************************************************** \n## assistant messages history:")
             pprint.pprint(self.assistant.get_messages())
             print("****************************************************************************\n")
