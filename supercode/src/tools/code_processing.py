@@ -83,7 +83,6 @@ def extract_test_code(prompt, test, entry_point):
     next_start = test.find(keyword_start, start)
 
     while next_start > -1:
-        failsafe += 1
         #print("\n--------\n>> looping", failsafe)
 
         start = test.find(keyword_start, start) + len(keyword_start)
@@ -109,10 +108,13 @@ def extract_test_code(prompt, test, entry_point):
         if failsafe > 50:
             print("WARNING: extract_test_code failsafe activated!")
             break
+        failsafe += 1
 
     # in some cases the examples in the prompt are not in the test
     # to avoid an empty test, I'll add the first assertion
-    if test_code == "": test_code = failsafe_assertion
+    if test_code == "":
+        print("WARNING: failsafe due to empty test_code")
+        test_code = failsafe_assertion
 
     print(">>test_code:", test_code)
 
