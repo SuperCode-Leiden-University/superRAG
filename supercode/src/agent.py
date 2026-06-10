@@ -120,7 +120,7 @@ class Agent():
     # ----------------------------------------------------------------------------------------------
     # ----------------------------------------------------------------------------------------------
     # ----------------------------------------------------------------------------------------------
-    def call(self, user_prompt, code=None, reset_memory=False, baseline=False, **kwargs):
+    def call(self, user_prompt, code=None, test_units=None, reset_memory=False, baseline=False, **kwargs):
         """
         WORKFLOW:
             1) the model checks if it needs to call a tool or retrieve docs
@@ -226,6 +226,9 @@ class Agent():
                     continue # failed to extract code and no previous code to fall back to
             else:
                 code = extract_code(response)
+
+
+
             if baseline: break
 
         if False:

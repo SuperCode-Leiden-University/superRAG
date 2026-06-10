@@ -71,6 +71,45 @@ def extract_code(response, entry_point=None):
     return code
 
 
+
+def extract_test_code(prompt, test, entry_point):
+    test_code = ""
+
+    start = 0
+    end = -1
+    failsafe = 0
+
+    keyword_start = "assert candidate("
+    keyword_end = ") =="
+    next_start = test.find(keyword_start, start)
+
+    while next_start > -1:
+        failsafe += 1
+        print("\n--------\n>> looping", failsafe)
+
+        start = test.find(keyword_start, start) + len(keyword_start)
+        end = test.find(keyword_end, start)
+        next_start = test.find(keyword_start, start)
+
+        print("start", start, "\nend", end, "\nnext_start", next_start)
+
+        test_case = test[start: end]
+        print("test_case:", test_case)
+
+        test_sol = test[end + len(keyword_end): next_start]
+        print("test_sol:", test_sol)
+
+        if test_case in prompt:
+            assertion = f"\nassert " + entry_point + "(" + test_case + ") == " + test_sol + ", f'the correct result is {" + test_sol + "} but the function output is {" + entry_point + "(" + test_case + ")}' "
+            print("\nassertion:\n", assertion)
+            test_code += assertion
+        if failsafe > 50:
+            print("WARNING: extract_test_code failsafe activated!")
+            break
+
+        return test_code
+
+
 def convert_to_json(task_id, response, code, **kwargs):
     json_sample = {
         "task_id": task_id,

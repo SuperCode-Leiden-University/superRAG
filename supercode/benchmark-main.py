@@ -32,7 +32,6 @@ Note: this assumes that results are saved in src/docker_env/results/samples_huma
 
 
 
-
 # ---------------------------------------------------------------------------------------------- #
 # check if I have an Nvidia GPU on the machine
 if verbose>1 :
@@ -44,7 +43,7 @@ if verbose>1 :
 # ---------------------------------------------------------------------------------------------- #
 ##### BENCHMARK SETTINGS
 baseline = True # True or False
-check_single_task = False ; i_task = 101
+check_single_task = True ; i_task = 102
 """
 Analysis of errors:
    #22  due to faulty logic: (26, 64, 75, 81, 91, 102, 108, 116, 120, 123, 126, 127, 129, 130, 132, 134, 139, 145, 147, 157, 162, 163) 
@@ -138,14 +137,17 @@ for i, task_id in enumerate(problems):
     sample = problems[task_id]
     entry_point = sample["entry_point"]
     prompt = sample["prompt"]
+    test = sample["test"]
     # task_id="HumanEval/47" has an error in the prompt, it should be:
     # >>> median([-10, 4, 6, 1000, 10, 20])
     # 8.0 (instead of 15.0)
     if task_id == "HumanEval/47" : prompt = prompt.replace("15.0", "8.0") ; print(prompt)
 
+    test_code = extract_test_code(prompt, test, entry_point)
+
     for j in range(num_samples_per_task):
         if baseline: # create the baseline
-            baseline_response = model.call(baseline_prompt+"\n\n"+prompt, reset_memory=True, baseline=True)
+            baseline_response = model.call(baseline_prompt+"\n\n"+prompt, test_units=test_code, reset_memory=True, baseline=True)
             print("\n>> extracting code from baseline response")
             baseline_code = extract_code(baseline_response, entry_point)
             print("\n>> checking compiler output for baseline response")
@@ -160,7 +162,7 @@ for i, task_id in enumerate(problems):
             baseline_code = baseline_samples[i*(j+1)]["code"]
 
         # then ask the model to improve the baseline
-        response = model.call(benchmark_prompt+"\n\n"+prompt, code=baseline_code, reset_memory=True, baseline=False)
+        response = model.call(benchmark_prompt+"\n\n"+prompt, code=baseline_code, test_units=test_code, reset_memory=True, baseline=False)
         print("\n>> extracting code from response")
         code = extract_code(response, entry_point)
         print("\n>> checking compiler output for response")
