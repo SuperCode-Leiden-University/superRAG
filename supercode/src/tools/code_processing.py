@@ -73,6 +73,7 @@ def extract_code(response, entry_point=None):
 
 def extract_test_code(prompt, test, entry_point):
     test_code = ""
+    failsafe_assertion = ""
 
     start = 0
     failsafe = 0
