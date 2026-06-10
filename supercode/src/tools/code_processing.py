@@ -71,7 +71,6 @@ def extract_code(response, entry_point=None):
     return code
 
 
-
 def extract_test_code(prompt, test, entry_point):
     test_code = ""
 
@@ -88,27 +87,31 @@ def extract_test_code(prompt, test, entry_point):
 
         start = test.find(keyword_start, start) + len(keyword_start)
         end = test.find(keyword_end, start)
-        next_start = test.find("\n"+keyword_start, start)
+        next_start = test.find("\n" + keyword_start, start)
 
-        #print("start", start, "\nend", end, "\nnext_start", next_start)
+        print("start", start, "\nend", end, "\nnext_start", next_start)
 
         test_case = test[start: end]
         print(">> test_case:", test_case)
 
-        test_sol = test[end + len(keyword_end): next_start-1] # the -1 is to account for the "\n" I would get otherwise
+        test_sol = test[end + len(keyword_end): next_start]  # the -1 is to account for the "\n" I would get otherwise
         print(">> test_sol:", test_sol)
 
         if test_case in prompt:
+            print(">> found test case, i =", failsafe)
             assertion = f"\nassert " + entry_point + "(" + test_case + ") == " + test_sol + ", f'the correct result is {" + test_sol + "} but the function output is {" + entry_point + "(" + test_case + ")}' "
-            #print("\nassertion:", assertion)
+            # print("\nassertion:", assertion)
             test_code += assertion
+        else:
+            print(">> no test case, i =", failsafe)
+
         if failsafe > 50:
             print("WARNING: extract_test_code failsafe activated!")
             break
 
-        print("test_code:\n", test_code)
+    print("\ntest_code:", test_code)
 
-        return test_code
+    return test_code
 
 
 def convert_to_json(task_id, response, code, **kwargs):
