@@ -102,8 +102,7 @@ def extract_test_code(prompt, test, entry_point):
             assertion = f"\nassert " + entry_point + "(" + test_case + ") == " + test_sol + ", f'the correct result is {" + test_sol + "} but the function output is {" + entry_point + "(" + test_case + ")}' "
             # print("\nassertion:", assertion)
             test_code += assertion
-        else:
-            #print(">> no test case, i =", failsafe)
+        #else: print(">> no test case, i =", failsafe)
 
         if failsafe > 50:
             print("WARNING: extract_test_code failsafe activated!")
