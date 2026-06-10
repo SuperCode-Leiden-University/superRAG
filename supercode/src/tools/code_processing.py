@@ -95,7 +95,7 @@ def extract_test_code(prompt, test, entry_point):
         test_case = test[start: end]
         print(">> test_case:", test_case)
 
-        test_sol = test[end + len(keyword_end): next_start]
+        test_sol = test[end + len(keyword_end): next_start-1] # the -1 is to account for the "\n" I would get otherwise
         print(">> test_sol:", test_sol)
 
         if test_case in prompt:
