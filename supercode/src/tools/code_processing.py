@@ -77,35 +77,53 @@ def extract_test_code(prompt, test, entry_point):
 
     start = 0
     failsafe = 0
+    verbose = 2
 
-    keyword_start = "assert candidate("
-    keyword_end = ") =="
-    next_start = test.find(keyword_start, start)
+    keyword_start = "assert"    ; len_start = len(keyword_start)
+    keyword_func = "candidate(" ; len_func = len(keyword_func)
+    keyword_end_line = "\n"     #; len_end = len(keyword_end_line)
+    next_start = test.find(keyword_start, start+len_start)
 
     while next_start > -1:
-        #print("\n--------\n>> looping", failsafe)
+        if verbose > 1: print("\n--------\n>> looping", failsafe)
 
-        start = test.find(keyword_start, start) + len(keyword_start)
-        end = test.find(keyword_end, start)
-        next_start = test.find(keyword_start, start)
+        func = test.find(keyword_func, next_start) #+ len_func
+        start = test.rfind(keyword_start, next_start, func) #+ len_start
+        end_line = test.find(keyword_end_line, start)
+        next_start = test.find(keyword_start, start+len_start)
 
-        #print("start", start, "\nend", end, "\nnext_start", next_start)
+        if verbose > 1: print(">> start =", start, "; func =", func, "; end_line =", end_line, "; next_start =", next_start)
 
-        test_case = test[start: end].strip()
-        #print(">> test_case:", test_case)
+        assert_line = test[start:end_line]
+        if verbose > 0: print(">> assert_line:", assert_line)
 
-        test_sol = test[end + len(keyword_end): next_start].strip()
-        #print(">> test_sol:", test_sol)
-        assertion = f"\nassert " + entry_point + "(" + test_case + ") == " + test_sol + ", f'the correct result is {" + test_sol + "} but the function output is {" + entry_point + "(" + test_case + ")}' "
-        # print("\nassertion:", assertion)
+        test_case = assert_line[
+            assert_line.find(keyword_func)+len_func :
+            assert_line.find(")")
+        ]
+        if verbose > 0: print(">> test_case:", test_case)
+
+        test_sol = assert_line[
+            max(
+                assert_line.rfind("= ")+2,
+                assert_line.rfind("> ")+2,
+                assert_line.rfind("< ")+2,
+            ):
+        ]
+        if verbose > 0: print(">> test_sol:", test_sol)
+
+        assert_line = assert_line.replace(keyword_func, entry_point+"(")
+
+        assertion = f"\n" + assert_line + ", f'the correct result is {" + test_sol + "} but the function output is {" + entry_point + "(" + test_case + ")}' "
+        if verbose > 0: print("\nassertion:", assertion)
         if failsafe == 0 : failsafe_assertion = assertion
 
         if test_case in prompt:
-            #print(">> found test case, i =", failsafe)
+            print(">> found test case, i =", failsafe)
             test_code += assertion
         #else: print(">> no test case, i =", failsafe)
 
-        if failsafe > 50:
+        if failsafe >= 3:
             print("WARNING: extract_test_code failsafe activated!")
             break
         failsafe += 1
@@ -116,7 +134,7 @@ def extract_test_code(prompt, test, entry_point):
         print("WARNING: failsafe due to empty test_code")
         test_code = failsafe_assertion
 
-    print(">>test_code:", test_code)
+    print("\n--------\n--------\n>>test_code:", test_code)
 
     return test_code
 
