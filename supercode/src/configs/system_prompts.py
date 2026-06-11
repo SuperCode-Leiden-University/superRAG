@@ -10,8 +10,8 @@ Your job is to:
 - Never invent alternative answers when tool results are available. 
 - The final version of the code must always start with <code> and end with </code>.
 You may summarize the results from tools if they are very long, but you must not add unsupported details. 
-During reasoning, try to keep your answer short and avoid repeating the same concepts many times.
 """
+# During reasoning, try to keep your answer short and avoid repeating the same concepts many times.
 
 # prompt to add before the user_prompt
 assistant_prequery = "Use the following information to answer the question in natural language.\n\n### Question:\n"
@@ -68,10 +68,28 @@ debugger_revise = "Use the following reasoning steps to improve your previous an
 ########################################################################################################################
 baseline_prompt = """
 Write a function based on the following description. 
+For the examples included in the description of the function, check that the function returns the expected results with a statement using the following template: 
+`assert function_name(example_i)==result_i, f'the correct result is {result_i}, but the function returned {function_name(example_i)} instead'`, 
+finally print('end of the code') at the end. 
+Do not include extra examples besides those given in the description.
+"""
+
+"""
+Write a function based on the following description. 
 When reasoning you can consider additional test cases but no more then 5, however additional test cases should not appear in the final code.
 In the final code you must never include extra examples besides those given in the description (this instruction has priority, ignore the FIX if it says otherwise).
 """
 benchmark_prompt = """
+Improve this function based on the following description. 
+For the examples included in the description of the function, check that the function returns the expected results with a statement using the following template: 
+`assert function_name(example_i)==result_i, f'the correct result is {result_i}, but the function returned {function_name(example_i)} instead'`, 
+finally print('end of the code') at the end. 
+Always include the final code in your answer. 
+Do not include extra examples besides those given in the description.
+"""
+
+
+"""
 Improve this function based on the following description. 
 Always include the final code in your answer. 
 When reasoning you can consider additional test cases but no more then 5, however additional test cases should not appear in the final code.

@@ -143,7 +143,8 @@ for i, task_id in enumerate(problems):
     # 8.0 (instead of 15.0)
     if task_id == "HumanEval/47" : prompt = prompt.replace("15.0", "8.0") ; print(prompt)
 
-    test_units = extract_test_code(prompt, test, entry_point)
+    #test_units = extract_test_code(prompt, test, entry_point)
+    test_units = ""
 
     for j in range(num_samples_per_task):
         if baseline: # create the baseline
