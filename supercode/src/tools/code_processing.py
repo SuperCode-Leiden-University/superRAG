@@ -77,7 +77,7 @@ def extract_test_code(prompt, test, entry_point):
 
     start = 0
     failsafe = 0
-    verbose = 2
+    verbose = 1
 
     keyword_start = "assert"    ; len_start = len(keyword_start)
     keyword_func = "candidate(" ; len_func = len(keyword_func)
@@ -97,41 +97,42 @@ def extract_test_code(prompt, test, entry_point):
         assert_line = test[start:end_line]
         if verbose > 0: print(">> assert_line:", assert_line)
 
+        end_assert = max(
+            assert_line.rfind("= ")+2,
+            assert_line.rfind("> ")+2,
+            assert_line.rfind("< ")+2,
+        )
+
         test_case = assert_line[
             assert_line.find(keyword_func)+len_func :
-            assert_line.find(")")
+            assert_line.rfind(")", 0, end_assert)
         ]
-        if verbose > 0: print(">> test_case:", test_case)
+        if verbose > 1: print(">> test_case:", test_case)
 
-        test_sol = assert_line[
-            max(
-                assert_line.rfind("= ")+2,
-                assert_line.rfind("> ")+2,
-                assert_line.rfind("< ")+2,
-            ):
-        ]
-        if verbose > 0: print(">> test_sol:", test_sol)
+        test_sol = assert_line[end_assert:]
+        if verbose > 1: print(">> test_sol:", test_sol)
 
         assert_line = assert_line.replace(keyword_func, entry_point+"(")
 
         assertion = f"\n" + assert_line + ", f'the correct result is {" + test_sol + "} but the function output is {" + entry_point + "(" + test_case + ")}' "
-        if verbose > 0: print("\nassertion:", assertion)
-        if failsafe == 0 : failsafe_assertion = assertion
+        if verbose > 2: print("assertion:", assertion)
+        if failsafe == 1 : failsafe_assertion = assertion
+        # I'm using the second test case bc the first is often the null example
 
-        if test_case in prompt:
-            print(">> found test case, i =", failsafe)
+        if entry_point+"("+test_case+")" in prompt:
+            if verbose > 0: print("\n>> FOUND test case, i =", failsafe,"\n")
             test_code += assertion
         #else: print(">> no test case, i =", failsafe)
 
-        if failsafe >= 3:
-            print("WARNING: extract_test_code failsafe activated!")
+        if failsafe >= 50:
+            print("\nWARNING: exit loop failsafe activated!")
             break
         failsafe += 1
 
     # in some cases the examples in the prompt are not in the test
     # to avoid an empty test, I'll add the first assertion
     if test_code == "":
-        print("WARNING: failsafe due to empty test_code")
+        print("\nWARNING: failsafe due to empty test_code")
         test_code = failsafe_assertion
 
     print("\n--------\n--------\n>>test_code:", test_code)
