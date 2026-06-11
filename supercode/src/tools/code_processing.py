@@ -135,6 +135,7 @@ def extract_test_code(prompt, test, entry_point):
         print("\nWARNING: failsafe due to empty test_code")
         test_code = failsafe_assertion
 
+    test_code += '\nprint("end of the code")'
     print("\n--------\n--------\n>>test_code:", test_code)
 
     return test_code
