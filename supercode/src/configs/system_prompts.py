@@ -69,9 +69,10 @@ debugger_revise = "Use the following reasoning steps to improve your previous an
 baseline_prompt = """
 Write a function based on the following description. 
 For the examples included in the description of the function, check that the function returns the expected results with a statement using the following template: 
-`assert function_name(example_i)==result_i, f'the correct result is {result_i}, but the function returned {function_name(example_i)} instead'`, 
-finally print('end of the code') at the end. 
-Do not include extra examples besides those given in the description.
+`assert function_name(example_i)==result_i, f'the correct result is {result_i}, but the function returned {function_name(example_i)} instead'`. 
+If result_i is only a number (with no parenthesis, no letters and no special characters), then consider using `abs(function_name(example_i) - result_i) < 1e-6` in the assert statement to avoid errors due to numerical fluctuations.
+Finally print('end of the code') at the end. 
+Do not include extra examples besides those given in the description of the function.
 """
 
 """
@@ -82,10 +83,11 @@ In the final code you must never include extra examples besides those given in t
 benchmark_prompt = """
 Improve this function based on the following description. 
 For the examples included in the description of the function, check that the function returns the expected results with a statement using the following template: 
-`assert function_name(example_i)==result_i, f'the correct result is {result_i}, but the function returned {function_name(example_i)} instead'`, 
-finally print('end of the code') at the end. 
+`assert function_name(example_i)==result_i, f'the correct result is {result_i}, but the function returned {function_name(example_i)} instead'`. 
+If result_i is only a number (with no parenthesis, no letters and no special characters), then consider using `abs(function_name(example_i) - result_i) < 1e-6` in the assert statement to avoid errors due to numerical fluctuations.
+Finally print('end of the code') at the end. 
 Always include the final code in your answer. 
-Do not include extra examples besides those given in the description.
+Do not include extra examples besides those given in the description of the function.
 """
 
 
