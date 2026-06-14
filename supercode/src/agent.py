@@ -182,8 +182,8 @@ class Agent():
             if not baseline and code is not None: # test the code on compiler
                 if verbose > 1: print("\n>> evaluating code")
                 # tool_result = dispatch_tool(self.tools, tool_name, tool_args)
-                code = extract_test_code(user_prompt, code)
-                print("**************************\ncode+test_units:\n", code, "\n**************************")
+                #code = extract_test_code(user_prompt, code)
+                #print("**************************\ncode+test_units:\n", code, "\n**************************")
 
                 compiler_result = sandboxed_compiler(code)
                 #perf_result = run_perf(gen_code_file)
