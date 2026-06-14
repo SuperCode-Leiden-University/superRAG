@@ -71,7 +71,7 @@ def extract_code(response, entry_point=None):
     return code
 
 
-def extract_test_code(prompt, test, entry_point):
+def extract_test_code(prompt, code):
     test_code = ""
     failsafe_assertion = ""
 
@@ -80,9 +80,18 @@ def extract_test_code(prompt, test, entry_point):
     verbose = 1
 
     keyword_start = "assert"    ; len_start = len(keyword_start)
-    keyword_func = "candidate(" ; len_func = len(keyword_func)
     keyword_end_line = "\n"     #; len_end = len(keyword_end_line)
+
+    next_start = code.find(keyword_start)
+    test = code[next_start:]
+
+    func_name_start = code.find("def ") + 4
+    func_name_end = code.find("(", func_name_start)
+    entry_point = code[func_name_start:func_name_end]
+    keyword_func = entry_point+"(" ; len_func = len(keyword_func)
+
     next_start = test.find(keyword_start, start+len_start)
+
 
     while next_start > -1:
         if verbose > 1: print("\n--------\n>> looping", failsafe)
