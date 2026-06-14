@@ -82,8 +82,9 @@ def extract_test_code(prompt, code):
     keyword_start = "assert"    ; len_start = len(keyword_start)
     keyword_end_line = "\n"     #; len_end = len(keyword_end_line)
 
-    next_start = code.find(keyword_start)
-    test = code[next_start:]
+    test_start = code.find(keyword_start)
+    func_code = code[:test_start]
+    test = code[test_start:]
 
     func_name_start = code.find("def ") + 4
     func_name_end = code.find("(", func_name_start)
@@ -147,7 +148,7 @@ def extract_test_code(prompt, code):
     test_code += '\nprint("end of the code")'
     print("\n--------\n--------\n>>test_code:", test_code)
 
-    return test_code
+    return func_code+"\n"+test_code
 
 
 def convert_to_json(task_id, response, code, **kwargs):

@@ -120,7 +120,7 @@ class Agent():
     # ----------------------------------------------------------------------------------------------
     # ----------------------------------------------------------------------------------------------
     # ----------------------------------------------------------------------------------------------
-    def call(self, user_prompt, code=None, test_units=None, reset_memory=False, baseline=False, **kwargs):
+    def call(self, user_prompt, code=None, reset_memory=False, baseline=False, **kwargs):
         """
         WORKFLOW:
             1) the model checks if it needs to call a tool or retrieve docs
@@ -182,8 +182,10 @@ class Agent():
             if not baseline and code is not None: # test the code on compiler
                 if verbose > 1: print("\n>> evaluating code")
                 # tool_result = dispatch_tool(self.tools, tool_name, tool_args)
-                test_units = extract_test_code(user_prompt, code)
-                compiler_result = sandboxed_compiler(code+"\n"+test_units)
+                code = extract_test_code(user_prompt, code)
+                print("**************************\ncode+test_units", code+"\n"+test_units, "\n**************************")
+
+                compiler_result = sandboxed_compiler(code)
                 #perf_result = run_perf(gen_code_file)
 
                 for m in self.models_list:
