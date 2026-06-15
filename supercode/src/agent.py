@@ -24,7 +24,7 @@ class Agent():
     # define variables and import the model
     def __init__(self):
         # reasoning model for planning/debugging
-        self.debugging = False # use thinking model for debugging
+        self.debugging = True # use thinking model for debugging
         self.debug_model_id = debug_model_id
         self.n_debug = 1
 
