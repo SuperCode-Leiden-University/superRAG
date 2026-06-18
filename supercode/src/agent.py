@@ -23,10 +23,11 @@ from src.tools.code_processing import *
 class Agent():
     # define variables and import the model
     def __init__(self):
+        self.n_iterations = 3 # n of times the model is called
+
         # reasoning model for planning/debugging
         self.debugging = True # use thinking model for debugging
         self.debug_model_id = debug_model_id
-        self.n_debug = 1
 
         # tools related parameters
         self.tool_results = []
@@ -178,7 +179,7 @@ class Agent():
                 # save the starting code in the message history of the assistant and debugger models
                 m.add_message(role="user", content="Use the following code as a starting point:\n"+code)
 
-        for i in range(self.n_debug):
+        for i in range(self.n_iterations):
             if not baseline and code is not None: # test the code on compiler
                 if verbose > 1: print("\n>> evaluating code")
                 # tool_result = dispatch_tool(self.tools, tool_name, tool_args)

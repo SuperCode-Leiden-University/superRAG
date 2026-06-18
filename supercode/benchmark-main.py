@@ -57,7 +57,7 @@ Actually fixed: (38)
 """
 print("baseline =", baseline, "; check_single_task =", check_single_task, "; i_task =", i_task)
 
-num_samples_per_task = 1 #200
+num_samples_per_task = 5 #200
 # if baseline is true then the model does not use any external info
 # if it is false, it checks first if it can find the baseline solution and then ask the model to improve it
 
