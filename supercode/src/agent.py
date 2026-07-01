@@ -23,10 +23,10 @@ from src.tools.code_processing import *
 class Agent():
     # define variables and import the model
     def __init__(self):
-        self.n_iterations = 3 # n of times the model is called
+        self.n_iterations = 1 # n of times the model is called
 
         # reasoning model for planning/debugging
-        self.debugging = True # use thinking model for debugging
+        self.debugging = False # use thinking model for debugging
         self.debug_model_id = debug_model_id
 
         # tools related parameters
