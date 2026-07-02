@@ -1,4 +1,5 @@
 print("start...")
+import numpy as np
 import subprocess, os
 import ast
 import tempfile
@@ -54,7 +55,7 @@ def sandboxed_compiler(function, test=None, entry_point=None):
         return result.returncode, "printed_output='" + result.stdout + "'\nerrors='" + result.stderr + "'"
     except Exception as e:
         print("Error in sandboxed_compiler tool:", e)
-        return "Error in sandboxed_compiler tool:"+e
+        return 1, "Error in sandboxed_compiler tool:"+str(e)
 
 # paths
 bench_name = "humaneval"
@@ -79,13 +80,13 @@ problems = read_problems()
 
 for file_name in [base_file_name, bench_file_name]:
     # initializing vars
-    comp_pass = 0
-    comp_fail = 0
-    test_pass = 0
-    test_fail = 0
+    comp_pass = [ 0 for i in range(num_samples_per_task) ]
+    comp_fail = [ 0 for i in range(num_samples_per_task) ]
+    test_pass = [ 0 for i in range(num_samples_per_task) ]
+    test_fail = [ 0 for i in range(num_samples_per_task) ]
     samples = []
 
-    print("\n-----------------------------------------------------------\nEvaluating: "+file_name)
+    print("\n-----------------------------------------------------------------\nEvaluating: "+file_name)
     with open(gen_code_dir+"/"+file_name+".jsonl") as f:
         for i, line in enumerate(f, start=1):
             try:
@@ -95,35 +96,41 @@ for file_name in [base_file_name, bench_file_name]:
                 print("Line content:", repr(line))
                 raise
 
-    for sample in samples:
-        if verbose>1 : print("\n------------------------------------------------------\n### sample:", sample["task_id"])
+    for i, sample in enumerate(samples):
+        if verbose>1 : print("\n------------------------------------------------------------\n### sample:", sample["task_id"])
         task_id = sample["task_id"]
         function = sample["code"] #; print("code: \n```\n", function, "\n```\n", sep='')
         entry_point = problems[task_id]["entry_point"] # name of the function
         test = problems[task_id]["test"]
+        j = i % num_samples_per_task # for calculating the variance
 
         # check just the code
         returncode, output = sandboxed_compiler(function)
         if verbose>2 : print("compiler: returncode = ", returncode, "\n", output, sep='')
-        if returncode==0: comp_pass+=1
-        else: comp_fail+=1
+        if returncode==0: comp_pass[j]+=1
+        else: comp_fail[j]+=1
 
         # check with test cases
         returncode, output = sandboxed_compiler(function, test, entry_point)
         if verbose>2 : print("test: returncode = ", returncode, "\n", output, sep='')
-        if returncode==0: test_pass+=1
-        else: test_fail+=1
+        if returncode==0: test_pass[j]+=1
+        else: test_fail[j]+=1
+
+    comp_pass_tot = sum(comp_pass) ; comp_pass_std = np.var(comp_pass)
+    comp_fail_tot = sum(comp_fail) ; comp_fail_std = np.var(comp_fail)
+    test_pass_tot = sum(test_pass) ; test_pass_std = np.var(test_pass)
+    test_fail_tot = sum(test_fail) ; test_fail_std = np.var(test_fail)
 
     # final summary
-    print("================================")
-    print(f"compiler pass:\t{comp_pass}\t({comp_pass/len(samples)*100:.2f}%)")
-    print(f"compiler fail:\t{comp_fail}\t({comp_fail/len(samples)*100:.2f}%)")
-    print("--------------------------------")
-    print(f"test pass:   \t{test_pass}\t({test_pass/len(samples)*100:.2f}%)")
-    print(f"test fail:   \t{test_fail}\t({test_fail/len(samples)*100:.2f}%)")
-    print("--------------------------------")
+    print("===========================================")
+    print(f"compiler pass:\t{comp_pass_tot}\t({comp_pass_tot/len(samples)*100:.2f}% +/- {comp_pass_std/len(samples)*100:.2f}%)")
+    print(f"compiler fail:\t{comp_fail_tot}\t({comp_fail_tot/len(samples)*100:.2f}% +/- {comp_fail_std/len(samples)*100:.2f}%)")
+    print("-------------------------------------------")
+    print(f"test pass:   \t{test_pass_tot}\t({test_pass_tot/len(samples)*100:.2f}% +/- {test_pass_std/len(samples)*100:.2f}%)")
+    print(f"test fail:   \t{test_fail_tot}\t({test_fail_tot/len(samples)*100:.2f}% +/- {test_fail_std/len(samples)*100:.2f}%)")
+    print("-------------------------------------------")
     print(f"Total samples:\t{len(samples)}")
-    print("================================")
+    print("===========================================")
 
 """
 import json

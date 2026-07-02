@@ -57,7 +57,7 @@ Actually fixed: (38)
 """
 print("baseline =", baseline, "; check_single_task =", check_single_task, "; i_task =", i_task)
 
-num_samples_per_task = 5 #200
+num_samples_per_task = 4 #200
 # if baseline is true then the model does not use any external info
 # if it is false, it checks first if it can find the baseline solution and then ask the model to improve it
 
@@ -73,7 +73,7 @@ if baseline:
 else:
     print("benchmark model for "+bench_name)
 
-extra_note = "+Qwen3-4B" #"" #
+extra_note = "" #"+Qwen3-4B" #
 baseline_file  = gen_code_dir+"/"+bench_name+"_baseline-" +model_id[model_id.find("/")+1:]+extra_note+"_"+str(num_samples_per_task)+".jsonl"
 benchmark_file = gen_code_dir+"/"+bench_name+"_benchmark-"+model_id[model_id.find("/")+1:]+extra_note+"_"+str(num_samples_per_task)+".jsonl"
 

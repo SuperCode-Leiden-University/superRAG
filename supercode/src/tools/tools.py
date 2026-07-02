@@ -300,5 +300,5 @@ def sandboxed_compiler(function, test=None, entry_point=None):
         return result.returncode, "printed_output='" + result.stdout + "'\nerrors='" + result.stderr + "'"
     except Exception as e:
         print("Error in sandboxed_compiler tool:", e)
-        return "Error in sandboxed_compiler tool:"+str(e)
+        return 1, "Error in sandboxed_compiler tool:"+str(e)
 
