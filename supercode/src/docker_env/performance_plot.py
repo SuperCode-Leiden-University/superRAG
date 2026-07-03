@@ -15,6 +15,9 @@ performance_values = [
     ], ["Qwen2.5-Coder-3B-Instruct\n+Qwen3-4B\n(5 samples, 3 iterations)",
         [78.90, 75.37, 90.73, 84.63],
         [0.91, 1.69, 0.95, 2.31]
+    ], ["Qwen3-Coder-Next\n(5 samples, 1 iteration)",
+        [93.66, 92.68, 98.41, 96.34],
+        [0.08, 0.15, 0.22, 0.24]
     ],
 ] # this format is good for checking the values, but it's inconvenient for the plot
 
