@@ -131,6 +131,7 @@ for file_name in [base_file_name, bench_file_name]:
     print("-------------------------------------------")
     print(f"Total samples:\t{len(samples)}")
     print("===========================================")
+    print("comp_pass:", comp_pass, "\ncomp_fail:", comp_fail, "\ntest_pass:", test_pass, "\ntest_fail:", test_fail)
 
 """
 import json

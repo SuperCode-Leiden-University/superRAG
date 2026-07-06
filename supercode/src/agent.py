@@ -26,7 +26,7 @@ class Agent():
         self.n_iterations = 1 # n of times the model is called
 
         # reasoning model for planning/debugging
-        self.debugging = False # use thinking model for debugging
+        self.debugging = True # use thinking model for debugging
         self.debug_model_id = debug_model_id
 
         # tools related parameters
