@@ -12,6 +12,10 @@ vars = load(open("src/configs/config.yaml", 'r'), Loader=Loader)
 # general
 verbose = vars["verbose"] # how much info is printed: 0=none, 1=little, 2=all
 
+n_iterations = vars["n_iterations"]
+debugging = vars["debugging"]
+tool_selection = vars["tool_selection"]
+
 # ----------------------------------------------------------------------------------------------
 # chat assistant model
 model_args     = vars["model"]

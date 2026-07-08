@@ -6,7 +6,7 @@ performance_values = [
     # model, values: baseline (ex, test) + bench (ex, test), variance
     [   r'\textbf{\begin{flushright} Qwen2.5-Coder-3B-Instruct \end{flushright}}',
         [76.59, 73.78, 80.12, 76.46],
-        [0.86, 0.83, 14.47, 8.91]
+        [1.34, 1.14, 1.26, 1.76]
     ], [r'\textbf{\begin{flushright} Qwen3-4B (with thinking) \end{flushright}}',
         [86.59, 84.76, 90.24, 88.41],
         [0,0,0,0]
@@ -47,7 +47,7 @@ data_std = [comp_pass_bench_std, test_pass_bench_std, comp_pass_base_std, test_p
 
 width = 0.22 # width of the bars in the plot
 x = np.arange(len(performance_values))
-dx = [ width*i for i in [-1.15, 0.65, -0.65, 1.15]] # relative positions of the bars in the plot (for each model)
+dx = [ width*i for i in [-0.65, 1.15, -1.15, 0.65]] # relative positions of the bars in the plot (for each model)
 hatches = ['\\\\\\', '///', '\\', '/']
 
 plt.rc('font', family='serif')

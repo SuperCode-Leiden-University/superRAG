@@ -19,19 +19,27 @@ from src.configs.system_prompts import *
 from src.tools.tools import *
 from src.tools.code_processing import *
 
+"""
+Roles:
+- system: general instructions
+- user: the user
+- assistent: the model
+- tool: feedback from tools
+- thinking/reasoning: thimking mode or reasoning schemas (ex: CoT)
+"""
 
 class Agent():
     # define variables and import the model
     def __init__(self):
-        self.n_iterations = 1 # n of times the model is called
+        self.n_iterations = n_iterations # n of times the model is called
 
         # reasoning model for planning/debugging
-        self.debugging = True # use thinking model for debugging
+        self.debugging = debugging # use thinking model for debugging
         self.debug_model_id = debug_model_id
 
         # tools related parameters
         self.tool_results = []
-        self.tool_selection = False # use the same model either to choose which tool to use or to generate an answer
+        self.tool_selection = tool_selection # use the same model either to choose which tool to use or to generate an answer
         self.tools = get_tools() # tools for the agent
         self.schemas = [build_tool_schema(f) for f in self.tools.values()]
         self.details = [f._tool_metadata for f in self.tools.values()] # info about requirements

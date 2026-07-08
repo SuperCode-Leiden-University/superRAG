@@ -57,7 +57,7 @@ Actually fixed: (38)
 """
 print("baseline =", baseline, "; check_single_task =", check_single_task, "; i_task =", i_task)
 
-num_samples_per_task = 4 #200
+num_samples_per_task = 5 #200
 # if baseline is true then the model does not use any external info
 # if it is false, it checks first if it can find the baseline solution and then ask the model to improve it
 
@@ -68,14 +68,17 @@ dataset = load_dataset("openai/openai_humaneval"); bench_name = "humaneval"
 # /163: unclear prompt, should specify to return only digits that are between min(0,a,b) and max(a,b,9)
 # dataset = load_dataset("bigcode/crosscodeeval")["test"]; bench_name = "crosscodeeval"
 
-if baseline:
-    print("benchmark baseline and model for "+bench_name)
-else:
-    print("benchmark model for "+bench_name)
+if baseline: print("benchmark baseline and model for "+bench_name)
+else: print("benchmark model for "+bench_name)
 
-extra_note = "" #"+Qwen3-4B" #
-baseline_file  = gen_code_dir+"/"+bench_name+"_baseline-" +model_id[model_id.find("/")+1:]+extra_note+"_"+str(num_samples_per_task)+".jsonl"
-benchmark_file = gen_code_dir+"/"+bench_name+"_benchmark-"+model_id[model_id.find("/")+1:]+extra_note+"_"+str(num_samples_per_task)+".jsonl"
+if debugging: debug_model = "+"+debug_model_id
+else: debug_model = ""
+
+if n_iterations>1 : iter="_x"+n_iterations
+else: iter=""
+
+baseline_file  = gen_code_dir+"/"+bench_name+"_"+model_id[model_id.find("/")+1:]+debug_model+"_baseline_" +str(num_samples_per_task)+iter+".jsonl"
+benchmark_file = gen_code_dir+"/"+bench_name+"_"+model_id[model_id.find("/")+1:]+debug_model+"_benchmark_"+str(num_samples_per_task)+iter+".jsonl"
 
 # ----------------------------------------------------------------------------------------------
 # "model" is for processing text and generating an answer
