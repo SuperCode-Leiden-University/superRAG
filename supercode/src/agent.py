@@ -36,7 +36,7 @@ class Agent():
         # roles:
         #self.system_role = "system"
         #self.user_role = "user"
-        self.tool_role = "user"#"tool"
+        self.tool_role = "assistant"#"tool"
         self.assistant_role = "assistant"
         self.debugger_role = "assistant"#"debugger"
 
@@ -198,6 +198,8 @@ class Agent():
         #########################################################################################################
         #########################################################################################################
 
+        print("### dubug: adding the user prompt...")
+
         for m in self.models_list:
             if code is None:  # initial code from baseline or codebase
                 # save the user_prompt in the message history of all models
@@ -218,6 +220,8 @@ class Agent():
                 compiler_result = sandboxed_compiler(code)
                 #perf_result = run_perf(gen_code_file)
 
+                print("### dubug: adding the compiler output...")
+
                 for m in self.models_list:
                     # save the tool results in the message history of all models
                     m.add_message(role=self.tool_role, content=str(compiler_result), name="sandboxed_compiler")
@@ -230,11 +234,13 @@ class Agent():
                     print(response, "\n--------------------------------------")
                     break
 
+                print("### dubug: adding the copiler prompt...")
                 for m in self.models_list:
                     # save the tool results in the message history of all models
                     m.add_message(role="user", content=compiler_prompt)
 
                 # debug incorrect code
+                print("### dubug: adding the debugger response...")
                 if self.debugging :
                     print("\n-------------------------------------- \n## debugger (i="+str(i)+", baseline="+str(baseline)+"): ")
                     response = self.debugger.call()
@@ -242,6 +248,7 @@ class Agent():
                     self.assistant.add_message(role=self.debugger_role, content=debugger_revise+response)
 
             if code is None or not self.debugging:
+                print("### dubug: adding the assistant response...")
                 # apply chat templates and return an answer
                 print("\n-------------------------------------- \n## assistant (i="+str(i)+", baseline="+str(baseline)+"): ")
                 response = self.assistant.call()
