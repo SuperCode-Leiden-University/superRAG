@@ -163,10 +163,6 @@ class Agent():
         # decide if it needs to retrieve context and/or to use tools
         if reset_memory: self.reset_memory() # forget previous answers and keep only the system prompts, useful for benchmarks
 
-        for m in self.models_list:
-            # save the user_prompt in the message history of all models
-            m.add_message(role="user", content=user_prompt)
-
         """ 
             n_revise = -1#3
             revise = False  # most often the model calls the tools for the requirements by the second try
@@ -202,12 +198,15 @@ class Agent():
         #########################################################################################################
         #########################################################################################################
 
-        if code is not None:  # initial code from baseline or codebase
-            for m in self.models_list:
-                if self.tool_selection: # tool selection may be enabled but the tool manager doesn't need to see the code
+        for m in self.models_list:
+            if code is None:  # initial code from baseline or codebase
+                # save the user_prompt in the message history of all models
+                m.add_message(role="user", content=user_prompt)
+            else:
+                if self.tool_selection:  # tool selection may be enabled but the tool manager doesn't need to see the code
                     if m == self.tool_manager : continue
                 # save the starting code in the message history of the assistant and debugger models
-                m.add_message(role="user", content="Use the following code as a starting point:\n"+code)
+                m.add_message(role="user", content=user_prompt+"\nUse the following code as a starting point:\n"+code)
 
         for i in range(self.n_iterations):
             if not baseline and code is not None: # test the code on compiler
