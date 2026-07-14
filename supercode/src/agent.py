@@ -25,13 +25,20 @@ Roles:
 - user: the user
 - assistent: the model
 - tool: feedback from tools
-- thinking/reasoning: thimking mode or reasoning schemas (ex: CoT)
+- thinking/reasoning: thinking mode or reasoning schemas (ex: CoT)
 """
 
 class Agent():
     # define variables and import the model
     def __init__(self):
         self.n_iterations = n_iterations # n of times the model is called
+
+        # roles:
+        #self.system_role = "system"
+        #self.user_role = "user"
+        self.tool_role = "user"#"tool"
+        self.assistant_role = "assistant"
+        self.debugger_role = "assistant"#"debugger"
 
         # reasoning model for planning/debugging
         self.debugging = debugging # use thinking model for debugging
@@ -47,14 +54,29 @@ class Agent():
         # ----------------------------------------------------------------------------------------------
         ##### IMPORTING THE MODELS
         # coding assistant (expert model)
-        self.assistant = Model(model_args, system_prompt=assistant_prompt, prequery_prompt=assistant_prequery, tool_schemas=None)
+        self.assistant = Model(
+            model_args,
+            system_prompt=assistant_prompt,
+            prequery_prompt=assistant_prequery,
+            tool_schemas=None
+        )
 
         # tool manager (expert model) # Is this the best choice? Maybe the thinking model would be better?
         tool_manager_prompt = manager_prompt_1+f"{self.schemas}"+manager_prompt_2
-        if self.tool_selection: self.tool_manager = Model(model_args, system_prompt=tool_manager_prompt, prequery_prompt=tool_manager_prequery, tool_schemas=self.schemas)
+        if self.tool_selection: self.tool_manager = Model(
+            model_args,
+            system_prompt=tool_manager_prompt,
+            prequery_prompt=tool_manager_prequery,
+            tool_schemas=self
+            .schemas)
 
         # planner/debugger (thinking model), better at finding logic-based errors
-        if self.debugging: self.debugger = Model(debug_model_args, system_prompt=debugger_prompt, prequery_prompt=debugger_prequery, tool_schemas=None)
+        if self.debugging: self.debugger = Model(
+            debug_model_args,
+            system_prompt=debugger_prompt,
+            prequery_prompt=debugger_prequery,
+            tool_schemas=None
+        )
 
         if verbose > 1: print(">> defining system prompt")
         self.reset_memory() # keep only the system prompts
@@ -167,7 +189,7 @@ class Agent():
                     for tool in self.tool_results[tool_index:]: # add new tool results to the chat history
                         for m in self.models_list:
                             # save the tool results in the message history of all models
-                            m.add_message(role="tool", content=tool["result"], name=tool["name"])
+                            m.add_message(role=self.tool_role, content=tool["result"], name=tool["name"])
     
                     if r<n_revise: # revise the answer to implement the correct dependencies
                         self.tool_manager.add_message(role="user", content=tool_manager_revise)
@@ -199,8 +221,8 @@ class Agent():
 
                 for m in self.models_list:
                     # save the tool results in the message history of all models
-                    m.add_message(role="tool", content=compiler_result, name="sandboxed_compiler")
-                    #m.add_message(role="tool", content=perf_result, name="run_perf")
+                    m.add_message(role=self.tool_role, content=compiler_result, name="sandboxed_compiler")
+                    #m.add_message(role=self.tool_role, content=perf_result, name="run_perf")
 
                 if compiler_result[0] == 0: # check if the code compiled correctly
                     response = "There is nothing to improve."+"\nPrevious code:\n<code>\n"+code+"\n</code>"
@@ -211,21 +233,21 @@ class Agent():
 
                 for m in self.models_list:
                     # save the tool results in the message history of all models
-                    m.add_message(role="system", content=compiler_prompt)
+                    m.add_message(role="user", content=compiler_prompt)
 
                 # debug incorrect code
                 if self.debugging :
                     print("\n-------------------------------------- \n## debugger (i="+str(i)+", baseline="+str(baseline)+"): ")
                     response = self.debugger.call()
                     print("--------------------------------------")
-                    self.assistant.add_message(role="debugger", content=debugger_revise+response)
+                    self.assistant.add_message(role=self.debugger_role, content=debugger_revise+response)
 
             if code is None or not self.debugging:
                 # apply chat templates and return an answer
                 print("\n-------------------------------------- \n## assistant (i="+str(i)+", baseline="+str(baseline)+"): ")
                 response = self.assistant.call()
                 print("--------------------------------------")
-                if self.debugging: self.debugger.add_message(role="assistant", content=response)
+                if self.debugging: self.debugger.add_message(role=self.assistant_role, content=response)
 
             if extract_code(response)=="":
                 if code is not None:
