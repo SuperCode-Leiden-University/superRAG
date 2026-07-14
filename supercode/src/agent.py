@@ -221,8 +221,8 @@ class Agent():
 
                 for m in self.models_list:
                     # save the tool results in the message history of all models
-                    m.add_message(role=self.tool_role, content=compiler_result, name="sandboxed_compiler")
-                    #m.add_message(role=self.tool_role, content=perf_result, name="run_perf")
+                    m.add_message(role=self.tool_role, content=str(compiler_result), name="sandboxed_compiler")
+                    #m.add_message(role=self.tool_role, content=str(perf_result), name="run_perf")
 
                 if compiler_result[0] == 0: # check if the code compiled correctly
                     response = "There is nothing to improve."+"\nPrevious code:\n<code>\n"+code+"\n</code>"
