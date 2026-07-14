@@ -1,3 +1,16 @@
+
+Errors summary:
+    >> assert syntax --> 1 ### may mask other errors!
+    >> wrong assert  --> 3 # the model guessed a solution wrong ### may mask other errors!
+    >> extract error --> 0 # the code wasn't extracted correctly ### may mask other errors!
+    >> wrong prompt  --> 1 # the example in the prompt is incorrect ### may mask other errors! (126, 158)
+    >> num fluct     --> 1
+    >> wrong logic   --> 7
+    >> prog knowhow  --> 3 # misuse of python
+
+    ## tot errors    --> 16
+
+
 {'task_id': 'HumanEval/0', 'completion': 'There is nothing to improve.
 Previous code:
 <code>

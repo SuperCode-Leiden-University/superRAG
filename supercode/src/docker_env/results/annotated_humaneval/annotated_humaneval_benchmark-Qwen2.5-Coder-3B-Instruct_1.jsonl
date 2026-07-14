@@ -8,6 +8,8 @@ Errors summary:
     >> wrong logic   --> 17
     >> prog knowhow  --> 2 # misuse of python
 
+    ## tot errors    --> 33
+
 
 
 {'task_id': 'HumanEval/0', 'completion': 'There is nothing to improve.

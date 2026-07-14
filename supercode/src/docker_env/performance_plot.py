@@ -13,9 +13,9 @@ performance_values = [
     ], [r'\textbf{\begin{flushright} Qwen3-Coder-Next-80B-A3B \end{flushright}}',
         [93.66, 92.68, 98.41, 96.34],
         [0.08, 0.15, 0.22, 0.24]
-    ], [r'\textbf{\begin{flushright} Qwen2.5-Coder-3B-Instruct\\+Qwen3-4B \end{flushright}}',
+    ], [r'\textbf{\begin{flushright} Qwen2.5-Coder-3B-Instruct\\+Qwen3-4B (1 iteration) \end{flushright}}',
         [78.05, 75.00, 90.24, 84.15],
-        [0,0,0,0]
+        [0.91, 1.69, 0.95, 2.31]
     ], [r'\textbf{\begin{flushright} Qwen2.5-Coder-3B-Instruct\\+Qwen3-4B (3 iterations) \end{flushright}}',
         [78.90, 75.37, 90.73, 84.63],
         [0.91, 1.69, 0.95, 2.31]
@@ -37,10 +37,10 @@ for m, model in enumerate(performance_values):
     test_pass_bench.append(model[1][3]) ; test_pass_bench_std.append(model[2][3])
 
 labels = [
-    r'\textbf{exemples_pass with compiler feedback}',
-    r'\textbf{test_pass with compiler feedback}',
-    r'\textbf{exemples_pass baseline}',
-    r'\textbf{test_pass baseline}'
+    r'\textbf{agent, examples only}',
+    r'\textbf{agent, examples and test units}',
+    r'\textbf{baseline, examples only}',
+    r'\textbf{baseline, examples and test units}'
 ]
 data = [comp_pass_bench, test_pass_bench, comp_pass_base, test_pass_base]
 data_std = [comp_pass_bench_std, test_pass_bench_std, comp_pass_base_std, test_pass_base_std]
