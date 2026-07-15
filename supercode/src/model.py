@@ -109,7 +109,7 @@ class Model():
 
     def reset_memory(self):
         self.messages = [{
-            "role": "system",
+            "role": "user", # should be system!!
             "content": self.system_prompt
         }]
 
