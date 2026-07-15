@@ -8,8 +8,8 @@ performance_values = [
         [76.59, 73.78, 80.12, 76.46],
         [1.34, 1.14, 1.26, 1.76]
     ], [r'\textbf{\begin{flushright} Qwen3-4B (with thinking) \end{flushright}}',
-        [86.59, 84.76, 90.24, 88.41],
-        [0,0,0,0]
+        [86.46, 83.66, 90.37, 87.07],
+        [2.12, 1.63, 0.26, 0.36]
     ], [r'\textbf{\begin{flushright} Qwen3-Coder-Next-80B-A3B \end{flushright}}',
         [93.66, 92.68, 98.41, 96.34],
         [0.08, 0.15, 0.22, 0.24]
