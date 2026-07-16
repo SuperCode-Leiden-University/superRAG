@@ -79,6 +79,8 @@ import ... # optional
 def ...
 
 assert ...
+
+print('end of the code')
 ```
 Do not include extra examples besides those given in the description of the function.
 """
