@@ -108,8 +108,8 @@ class Model():
             self.model = pipeline("text-generation", model=self.model_id)
 
     def reset_memory(self):
-        #self.messages = []
-        self.messages = [{
+        self.messages = []
+        messages = [{
             "role": "system",
             "content": self.system_prompt
         }] # system not supported by gemma, it also needs user/assistant/user/assistant only
