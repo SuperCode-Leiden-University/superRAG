@@ -4,7 +4,10 @@ import numpy as np
 
 performance_values = [
     # model, values: baseline (ex, test) + bench (ex, test), variance
-    [   r'\textbf{\begin{flushright} Qwen2.5-Coder-3B-Instruct \end{flushright}}',
+[   r'\textbf{\begin{flushright} CodeLlama-7b-Instruct \end{flushright}}',
+        [21.95, 17.07, 37.8, 20.73],
+        [0, 0, 0, 0]
+    ], [   r'\textbf{\begin{flushright} Qwen2.5-Coder-3B-Instruct \end{flushright}}',
         [76.59, 73.78, 80.12, 76.46],
         [1.34, 1.14, 1.26, 1.76]
     ], [r'\textbf{\begin{flushright} Qwen3-4B (with thinking) \end{flushright}}',

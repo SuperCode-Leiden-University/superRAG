@@ -61,10 +61,12 @@ def extract_code(response, entry_point=None):
         code_end = response.rfind("```")
         code_start = response.rfind("```", 0, code_end) + offset
 
-        code = response[code_start:code_end]
+        #code = response[code_start:code_end]
 
         pl_offset = len("python")
-        if code.rfind("python", code_start, code_end) != -1 :
+        #print(response.rfind("python", code_start, code_end),"\n")
+        if response.rfind("python", code_start, code_end) != -1 :
+            #print("py check")
             code_start+=pl_offset ; offset+=pl_offset
 
         if code_start==-1+offset or code_end==-1:
