@@ -4,25 +4,42 @@ import numpy as np
 
 performance_values = [
     # model, values: baseline (ex, test) + bench (ex, test), variance
-[   r'\textbf{\begin{flushright} CodeLlama-7b-Instruct \end{flushright}}',
-        [21.95, 17.07, 37.8, 20.73],
-        [0, 0, 0, 0]
-    ], [   r'\textbf{\begin{flushright} Qwen2.5-Coder-3B-Instruct \end{flushright}}',
+    [   #r'\textbf{
+    r"\begin{flushright} CodeLlama-7B-Instruct \end{flushright}",
+#}',
+        [21.95, 17.07, 37.8, 20.73], # the official score is 24.37% (source: https://llm-explorer.com/model/codellama%2FCodeLlama-7b-hf,9wLn4CFDFFUu7QIbKH6D1)
+        [0, 0, 0, 0] # 5 samples, it didn't let me change the temperature... Only allowed user/assistant/user/assistant
+    ], [   #r'\textbf{
+    r"\begin{flushright} CodeGemma-7B-it \end{flushright}",
+#}',
+        [44.51, 33.54, 65.24, 42.68], # the official score is 27.76% (source: https://llm-explorer.com/model/google%2Fcodegemma-7b-it,w0es5iCFh1MfSTareEucN)
+        [0, 0, 0, 0] # 5 samples, it didn't let me change the temperature... Only allowed user/assistant/user/assistant and no system prompts
+    ], [   #r'\textbf{
+    r"\begin{flushright} Qwen2.5-Coder-3B-Instruct \end{flushright}",
+#}',
         [76.59, 73.78, 80.12, 76.46],
         [1.34, 1.14, 1.26, 1.76]
-    ], [r'\textbf{\begin{flushright} Qwen3-4B (with thinking) \end{flushright}}',
+    ], [#r'\textbf{
+    r"\begin{flushright} Qwen3-4B (with thinking) \end{flushright}",
+#}',
         [86.46, 83.66, 90.37, 87.07],
         [2.12, 1.63, 0.26, 0.36]
-    ], [r'\textbf{\begin{flushright} Qwen3-Coder-Next-80B-A3B \end{flushright}}',
+    ], [#r'\textbf{
+    r"\begin{flushright} Qwen3-Coder-Next-80B-A3B \end{flushright}",
+#}',
         [93.66, 92.68, 98.41, 96.34],
         [0.08, 0.15, 0.22, 0.24]
     ],
     # -------------------------------------------------------------------------------------------------
     # hybrid mode
-    [r'\textbf{\begin{flushright} Qwen2.5-Coder-3B-Instruct\\+Qwen3-4B (1 iteration) \end{flushright}}',
+    [#r'\textbf{
+    r"\begin{flushright} Qwen2.5-Coder-3B-Instruct\\+Qwen3-4B (1 iteration) \end{flushright}",
+#}',
         [78.05, 75.00, 90.24, 84.15],
         [0.91, 1.69, 0.95, 2.31]
-    ], [r'\textbf{\begin{flushright} Qwen2.5-Coder-3B-Instruct\\+Qwen3-4B (3 iterations) \end{flushright}}',
+    ], [#r'\textbf{
+    r"\begin{flushright} Qwen2.5-Coder-3B-Instruct\\+Qwen3-4B (3 iterations) \end{flushright}",
+#}',
         [78.90, 75.37, 90.73, 84.63],
         [0.91, 1.69, 0.95, 2.31]
     ],
@@ -47,13 +64,23 @@ comp_gain = np.subtract(comp_pass_bench,comp_pass_base)
 test_gain = np.subtract(test_pass_bench,test_pass_base)
 
 labels = [
-    r'\textbf{agent, examples only}',
-    r'\textbf{agent, examples and test units}',
-    r'\textbf{baseline, examples only}',
-    r'\textbf{baseline, examples and test units}'
+    #r'\textbf{
+    "agent, only unit tests",
+#}',
+    #r'\textbf{
+    "agent, unit tests and validation set",
+#}',
+    #r'\textbf{
+    "baseline, only unit tests",
+#}',
+    #r'\textbf{
+    "baseline, unit tests and validation set"
+#}'
 ]
-comp_label = r'\textbf{examples only}'
-test_label = r'\textbf{test units and examples}'
+#comp_label = r'\textbf{only unit tests}'
+comp_label = "only unit tests"
+#test_label = r'\textbf{unit tests and validation set}'
+test_label = "unit tests and validation set"
 
 data = [comp_pass_bench, test_pass_bench, comp_pass_base, test_pass_base]
 data_std = [comp_pass_bench_std, test_pass_bench_std, comp_pass_base_std, test_pass_base_std]
@@ -67,12 +94,12 @@ hatches = ['\\\\\\', '///', '\\', '/']
 plt.rc('font', family='serif')
 matplotlib.rc('text', usetex=True)
 #matplotlib.rc('legend')
-matplotlib.rcParams['text.latex.preamble'] = r'\boldmath' # makes the numbers bold
+#matplotlib.rcParams['text.latex.preamble'] = r'\boldmath' # makes the numbers bold
 
 
 #########################################################################################################
 # plot the performance for all models
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(5.5, 6), sharey=True, gridspec_kw={'width_ratios': [1, 10]})
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(4.5, 6.5), sharey=True, gridspec_kw={'width_ratios': [1, 10]})
 
 # plot the same data on both Axes
 for ax in [ax1, ax2]:
@@ -82,7 +109,7 @@ for ax in [ax1, ax2]:
 
 # zoom-in / limit the view to different portions of the data
 ax1.set_xlim(0, 2)
-ax2.set_xlim(57, 100)
+ax2.set_xlim(15, 100)
 
 # hide the spines between ax and ax2
 ax1.invert_yaxis()
@@ -101,22 +128,28 @@ ax1.plot([0.75, 0.5, 0.75, 0.5], [0, 0, 1, 1], transform=ax1.transAxes, **kwargs
 
 ax2.grid(axis='x', alpha=0.5)
 ax1.set_yticks(x, model_names)
-ax1.set_ylabel(r'\textbf{Model}')
-ax2.set_xlabel(r'\textbf{Performance (\%)}')
-ax2.legend(bbox_to_anchor=(-0.58, 1)) # loc='upper center')
+ax1.set_ylabel(#r'\textbf{
+    "Model"
+#}'
+)
+ax2.set_xlabel(#r'\textbf{
+    r"Performance (\%)"
+#}'
+)
+ax2.legend(bbox_to_anchor=(0, 1), loc='lower center')
 
 fig.tight_layout() # tighten everything
 fig.subplots_adjust(wspace=0)  # adjust space between Axes
 
 #plt.show()
-plt.savefig("plots/performance_plot.png", dpi=500)
+plt.savefig("plots/performance_plot.pdf", dpi=500)
 
 
 #########################################################################################################
 # show the delta between benchmark and baseline
 n_model = -2 # plot all models except the last 2 (bc they are hybrids
 
-fig2, ax3 = plt.subplots(1, 1, figsize=(5.5, 4))
+fig2, ax3 = plt.subplots(1, 1, figsize=(4.5, 2.8))
 ax3.scatter(comp_gain[:n_model], x[:n_model], label=comp_label, marker="o")
 ax3.scatter(test_gain[:n_model], x[:n_model], label=test_label, marker="^")
 #ax3.plot([0, 100], [xx, xx], c="black", lw=0.7)  # separation line between pure and hybrid mode
@@ -128,15 +161,21 @@ ax3.set_xlim(0, max_gain)
 ax3.invert_yaxis()
 
 ax3.grid(axis='x', alpha=0.5)
-ax3.set_xticks(np.arange(0, max_gain, 1.0))
+ax3.set_xticks(np.arange(0, max_gain, 2.0))
 ax3.set_yticks(x[:n_model], model_names[:n_model])
-ax3.set_ylabel(r'\textbf{Model}')
-ax3.set_xlabel(r'\textbf{Gain (\% points, agent - baseline)}')
-ax3.legend(bbox_to_anchor=(0.5, 1.25)) # loc='upper center')
+ax3.set_ylabel(#r'\textbf{
+    "Model"
+#}'
+)
+ax3.set_xlabel(#r'\textbf{
+    r"Gain (\% points, agent - baseline)"
+#}'
+)
+ax3.legend(bbox_to_anchor=(0, 1), loc='lower center')
 
 fig2.tight_layout() # tighten everything
 fig2.subplots_adjust(wspace=0)  # adjust space between Axes
 
 #plt.show()
-plt.savefig("plots/gain_plot.png", dpi=500)
+plt.savefig("plots/gain_plot.pdf", dpi=500)
 

@@ -291,7 +291,8 @@ def sandboxed_compiler(function, test=None, entry_point=None):
         # docker run --rm sandbox_code python3 results/gen_code/gen_code_temp.py
         # docker run --mount type=bind,src=/home/elisa/PycharmProjects/phd-leiden-supercode/supercode/src/docker_env/results,dst=/workspace --rm sandbox_code
         result = subprocess.run( # run a program from inside the container (and remove the container afterwards)
-            ["docker", "run", "--mount", "type=bind,src="+abs_docker_path+",dst=/workspace", "--rm", "sandbox_code", "python3", docker_code_path],
+            ["docker", "run", "-m", "0.5g", "--mount", "type=bind,src="+abs_docker_path+",dst=/workspace", "--rm", "sandbox_code", "python3", docker_code_path],
+            # -m is memory, must be between 6m and 1g (adding "--memory-swap", "512m" will forbit memory swaps)
             capture_output=True,
             text=True,
             timeout=10 # seconds

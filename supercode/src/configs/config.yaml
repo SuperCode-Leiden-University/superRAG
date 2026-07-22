@@ -1,6 +1,6 @@
 ---
 # general
-verbose: 10 # how much info is printed: 0=none, 1=little, 2=lots, 3=all
+verbose: 0 # how much info is printed: 0=none, 1=little, 2=lots, 3=all
 
 n_iterations: 1 # n of times the model is called
 debugging: False # use thinking model for debugging
