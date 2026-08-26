@@ -1,0 +1,2 @@
+[console_scripts]
+run-supercode = supercode.__main__:main

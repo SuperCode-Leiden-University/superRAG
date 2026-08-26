@@ -1,26 +1,12 @@
+import functools
 import inspect
 import importlib
 import pprint
 from typing import get_type_hints
 
 from src.configs.parse_config import *
-
-
-##################################################################################################################
-# tool decorator
-def tool(func):
-    func.__is_tool__ = True
-
-    func._tool_metadata = {
-            #"name": None,
-            "provides": None,
-            "requires": None,
-            "tags": None,
-            "examples": None,
-            "req_flag": False,
-        }
-    return func
-
+import src.tools.tools  # do NOT remove this because the decorators have to run!
+from src.tools.tools import get_TOOLS
 
 ##################################################################################################################
 # functions for handling the tools
@@ -29,18 +15,10 @@ def tool(func):
 # return all the tools as a list of functions
 def get_tools():
     if verbose>0 : print(">> fetching available tools")
-    #module = sys.modules[__name__] # only check this file
-    module = importlib.import_module("src.tools.tools") # only check another file
-    """ # for checking all files inside a directory named "tools"
-    package = "tools"
-    package_path = Path(__file__).parent
-    for module_info in pkgutil.iter_modules([str(package_path)]): module = importlib.import_module(
-        f"{package}.{module_info.name}")
-    #"""
+    __TOOLS = get_TOOLS()
     tools = {
-        name : obj # obj is the tool function
-        for name, obj in inspect.getmembers(module, inspect.isfunction) # check all objects defined in this module
-        if getattr(obj, "__is_tool__", False)
+        f.__name__ : f # is the tool function
+        for f in __TOOLS if getattr(f, "__is_tool__", False)
     }
     if verbose>0 : print(">> tools available: ", tools.keys())
     return tools

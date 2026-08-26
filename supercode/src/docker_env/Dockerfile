@@ -5,10 +5,9 @@ RUN apt-get update
 
 # install basic packages
 
-RUN apt-get install -y time #sudo # utilities
-RUN apt-get install -y libffi-dev libssl-dev # pip
-RUN apt-get install -y build-essential # C/C++ compilers
-RUN apt-get install -y python3 python3-pip python3-dev python3.13-venv # Python
+# order: sudo/utilities, pip, C/C++ compilers, Python
+RUN apt-get install -y time libffi-dev libssl-dev build-essential \
+                       python3 python3-pip python3-dev python3.13-venv
 #RUN apt-get install -y nodejs npm # Node.js
 #RUN apt-get install -y openjdk-17-jdk # Java
 #RUN apt-get install -y curl && curl https://sh.rustup.rs -sSf | sh -s -- -y # Rust
@@ -20,8 +19,7 @@ RUN python3 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 # install HumanEval evaluator inside the venv
-RUN pip install --no-cache-dir datasets
-RUN pip install --no-cache-dir human-eval
+RUN pip install --no-cache-dir datasets human-eval
 
 # copy all the files inside results to the container
 WORKDIR /workspace

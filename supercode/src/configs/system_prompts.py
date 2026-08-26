@@ -93,7 +93,7 @@ In the final code you must never include extra examples besides those given in t
 """
 benchmark_prompt = """
 Improve this function based on the following description. 
-FFor the examples included in the description of the function, check that the function returns the expected results with a statement using the following template: 
+For the examples included in the description of the function, check that the function returns the expected results with a statement using the following template: 
 `assert function_name(example_i) == result_i , f'the correct result is { result_i }, but the function returned { function_name(example_i) } instead'`.
 If result_i is only a number (with no parenthesis, no letters and no special characters), then consider using `assert abs(function_name(example_i) - result_i) < 1e-6` instead of `assert function_name(example_i)==result_i` to avoid errors due to numerical fluctuations.
 The assert statements should be outside the function. Finally print('end of the code') at the end. 

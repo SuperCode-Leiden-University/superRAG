@@ -6,16 +6,51 @@ from langchain_huggingface import HuggingFaceEmbeddings
 
 from src.configs.parse_config import *
 from src.database.database import Database
-from src.tools.manage_tools import tool
 
 
+__TOOLS = []
+
+##################################################################################################################
+# tool decorator
+
+def tool(metadata: dict):
+    """Costum decorator for setting the metadata of the tool."""
+
+    def decorator(func):
+        func.__is_tool__ = True
+
+        func._tool_metadata  = {
+            # "name": None,
+            "provides": None,
+            "requires": None,
+            "tags": None,
+            "examples": None,
+            "req_flag": False,
+            **metadata # use the values above if metadata doesn't set a new value
+        }
+
+        __TOOLS.append(func)
+
+        return func
+    return decorator
+
+
+def get_TOOLS():
+    return __TOOLS
 
 ##################################################################################################################
 # Define Tools
 
 # ----------------------------------------------------------------------------------------------
-@tool
+@tool({
+        "provides": "numerical solution of a math equation",
+        "requires": "math expression provided by the user",
+        "tags": ["math", "calculator", "equation", "solve", "result"],
+        "examples": ["what is the result of (8261+8257)/16290*545-46303?"],
+        "req_flag": False
+})
 def calculator(expr: str): # arguments should have a defined type
+    """Calculate the result of a mathematical expression."""
     if verbose>0 : print(">> using the calculator")
     # replace '−' (U+2212) with '-' (U+002d), they look similar with this font, but the first one causes an error
     expr.replace("−", "-")
@@ -36,21 +71,18 @@ def calculator(expr: str): # arguments should have a defined type
         print(f"\nAn error occurred in the calculator:\n{e}\n")
         return f"Couldn't compute the result. An error occurred:\n{e}"
 
-# describe the use of the tool
-calculator.__doc__ = "Calculate the result of a mathematical expression."
-calculator._tool_metadata = {
-            #"name": calculator.__name__,
-            "provides": "numerical solution of a math equation",
-            "requires": "math expression provided by the user",
-            "tags": ["math", "calculator", "equation", "solve", "result"],
-            "examples": ["what is the result of (8261+8257)/16290*545-46303?"],
-            "req_flag": False,
-        }
-
 
 # ----------------------------------------------------------------------------------------------
-@tool
+@tool({
+        "provides": "path where the graph was saved",
+        "requires": "math function provided by the user and range of the function provided by the user, "
+                    "use [-10, +10] if no range is given",
+        "tags": ["math", "graph", "plot", "figure"],
+        "examples": ["plot y=3*x+2 for x in [0,5]"],
+        "req_flag": False,
+})
 def draw_graph(expr: str, x_range: list[float]):
+    """Plot a function given its mathematical expression and x range."""
     if verbose>0 : print(">> using the draw_graph")
     try:
         if verbose>1 : print(">> converting the function")
@@ -82,21 +114,29 @@ def draw_graph(expr: str, x_range: list[float]):
         print(f"\nAn error occurred in the draw_graph tool:\n{e}\n")
         return f"I couldn't draw the graph. An error occurred:\n{e}"
 
-# describe the use of the tool
-draw_graph.__doc__ = "Plot a function given its mathematical expression and x range."
-draw_graph._tool_metadata = {
-            #"name": draw_graph.__name__,
-            "provides": "path where the graph was saved",
-            "requires": "math function provided by the user and range of the function provided by the user, "
-                        "use [-10, +10] if no range is given",
-            "tags": ["math", "graph", "plot", "figure"],
-            "examples": ["plot y=3*x+2 for x in [0,5]"],
-            "req_flag": False,
-        }
-
 # ----------------------------------------------------------------------------------------------
-@tool
+@tool({
+        #"name": search_database.__name__,
+        "provides": "chunks of documents with relevant information and metadata of the documents "
+                    "(like source file and programming language)",
+        "requires": """
+        query for searching the database and the number of retrieved docs.
+        n_retriev should be: 
+        - around 1-5 for easy queries, with straightforward answer; 
+        - around 5-10 for medium difficulty queries, where the answer requires few pieces of information; 
+        - around 10-15 for generic or complex queries, where the answer may requires many pieces of information. 
+        """,
+        "tags": ["search", "database", "codebase", "project"],
+        "examples": ["find the file where I defined this function"],
+        "req_flag": False,
+})
 def search_database(query: str, n_retriv: int):
+    """
+        Retrieve relevant information from the codebase of the project, for example:
+        - the programming languages used;
+        - functions writen in the code;
+        - what the code does and how.
+    """
     if verbose>0 : print(">> using the search_database")
     if n_retriv < 1: return "No document has been retrieved"
     try:
@@ -127,32 +167,38 @@ def search_database(query: str, n_retriv: int):
 
     return retriv_docs
 
-# describe the use of the tool
-search_database.__doc__ = """
-    Retrieve relevant information from the codebase of the project, for example:
-    - the programming languages used;
-    - functions writen in the code;
-    - what the code does and how.
-"""
-search_database._tool_metadata = {
-            #"name": search_database.__name__,
-            "provides": "chunks of documents with relevant information and metadata of the documents "
-                        "(like source file and programming language)",
-            "requires": """
-            query for searching the database and the number of retrieved docs.
-            n_retriev should be: 
-            - around 1-5 for easy queries, with straightforward answer; 
-            - around 5-10 for medium difficulty queries, where the answer requires few pieces of information; 
-            - around 10-15 for generic or complex queries, where the answer may requires many pieces of information. 
-            """,
-            "tags": ["search", "database", "codebase", "project"],
-            "examples": ["find the file where I defined this function"],
-            "req_flag": False,
-        }
-
 # ----------------------------------------------------------------------------------------------
-#@tool
+@tool({
+        #"name": run_megalinter.__name__,
+        "provides": "report with errors, warnings and best practices suggestions for the codebase",
+        "requires": "flavor from the user or programming language, which can be found by searching the database",
+        "tags": ["static analysis", "errors", "warnings"],
+        "examples": """
+        Available flavors are:
+        - `all`: to include all possible linters;
+        - `c_cpp`: for pure C/C++ projects;
+        - `ci_light`: for CI items (Dockerfile, Jenkinsfile, JSON or YAML schemas, XML);
+        - `cupcake`: for the most commonly used languages;
+        - `documentation`: for documentation projects;
+        - `dotnet`: for C, C++, C# or VB based projects;
+        - `dotnetweb`: for C, C++, C# or VB based projects with JAVASCRIPT or TYPESCRIPT;
+        - `formatters`: contains only formatters;
+        - `go`: for GO based projects;
+        - `java`: for JAVA based projects;
+        - `javascript`: for JAVASCRIPT or TYPESCRIPT based projects;
+        - `php`: for PHP based projects;
+        - `python`: for PYTHON based projects;
+        - `ruby`: for RUBY based projects;
+        - `rust`: for RUST based projects;
+        - `salesforce`: for Salesforce based projects;
+        - `security`: for security;
+        - `swift`: for SWIFT based projects;
+        - `terraform`: for TERRAFORM based projects;
+        """,
+        "req_flag": True,
+})
 def run_megalinter(flavor: str):
+    """Use a static analysis tool to find errors and warnings in the codebase."""
     if verbose>0 : print(">> using the run_megalinter")
     path = tools_dir+"/megalinter-reports/"
     try:
@@ -175,42 +221,17 @@ def run_megalinter(flavor: str):
 
     return logs
 
-# describe the use of the tool
-run_megalinter.__doc__ = "Use a static analysis tool to find errors and warnings in the codebase."
-run_megalinter._tool_metadata = {
-            #"name": run_megalinter.__name__,
-            "provides": "report with errors, warnings and best practices suggestions for the codebase",
-            "requires": "flavor from the user or programming language, which can be found by searching the database",
-            "tags": ["static analysis", "errors", "warnings"],
-            "examples": """
-            Available flavors are:
-            - `all`: to include all possible linters;
-            - `c_cpp`: for pure C/C++ projects;
-            - `ci_light`: for CI items (Dockerfile, Jenkinsfile, JSON or YAML schemas, XML);
-            - `cupcake`: for the most commonly used languages;
-            - `documentation`: for documentation projects;
-            - `dotnet`: for C, C++, C# or VB based projects;
-            - `dotnetweb`: for C, C++, C# or VB based projects with JAVASCRIPT or TYPESCRIPT;
-            - `formatters`: contains only formatters;
-            - `go`: for GO based projects;
-            - `java`: for JAVA based projects;
-            - `javascript`: for JAVASCRIPT or TYPESCRIPT based projects;
-            - `php`: for PHP based projects;
-            - `python`: for PYTHON based projects;
-            - `ruby`: for RUBY based projects;
-            - `rust`: for RUST based projects;
-            - `salesforce`: for Salesforce based projects;
-            - `security`: for security;
-            - `swift`: for SWIFT based projects;
-            - `terraform`: for TERRAFORM based projects;
-            """,
-            "req_flag": True,
-        }
-
 
 # ----------------------------------------------------------------------------------------------
-#@tool
+@tool({
+        #"name": run_perf.__name__,
+        "provides": "report with how long the code spends for each function and operation, which can be used to improve the code performances",
+        "requires": "main file of the code, which can be found by searching the database",
+        "tags": ["dynamic analysis", "performance", "bottleneck"],
+        "examples": ""
+})
 def run_perf(main_file: str):
+    """Use a dynamic analysis tool to find bottlenecks in the codebase."""
     if verbose>0 : print(">> using the run_perf")
     exe_name = "myprog"
     path = tools_dir+"/perf-reports"
@@ -247,19 +268,14 @@ def run_perf(main_file: str):
 
     return logs
 
-# describe the use of the tool
-run_perf.__doc__ = "Use a dynamic analysis tool to find bottlenecks in the codebase."
-run_perf._tool_metadata = {
-            #"name": run_perf.__name__,
-            "provides": "report with how long the code spends for each function and operation, which can be used to improve the code performances",
-            "requires": "main file of the code, which can be found by searching the database",
-            "tags": ["dynamic analysis", "performance", "bottleneck"],
-            "examples": ""
-}
 
-
-@tool
-
+@tool({
+        #"name": sandboxed_compiler.__name__,
+        "provides": "runs the code and returns the compiler output",
+        "requires": "function to be run",
+        "tags": ["dynamic analysis", "errors", "warnings", "remarks"],
+        "examples": "run the hello_word function to check if the output is correct"
+})
 def sandboxed_compiler(function, test=None, entry_point=None):
     if verbose>0 : print(">> using the sandboxed_compiler")
     # this only checks if the code compiles (semantic correctness)

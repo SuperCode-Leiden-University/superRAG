@@ -1,5 +1,6 @@
 RAG-codebase
-benchmark_results
-supercode
+RAG-radioastronomy
+plots
+src
 test-ideas&results
 tools-outputs

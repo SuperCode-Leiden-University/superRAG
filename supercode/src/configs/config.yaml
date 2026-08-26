@@ -15,17 +15,19 @@ model:
         #Qwen/Qwen3-4B
         #Qwen/Qwen3-Coder-Next # MoE, 3B active and 80B total
         #codellama/CodeLlama-7b-Instruct-hf
-        google/codegemma-7b-it
+        #google/codegemma-7b-it
 
         # --------------------------------------------------------------------------------------------
-        #Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF
-        #Qwen/Qwen2.5-Coder-1.5B-Instruct-AWQ
+        Qwen/Qwen2.5-Coder-1.5B-Instruct
         #Qwen/Qwen2.5-Coder-1.5B-Instruct-GPTQ-Int4
+        #Qwen/Qwen2.5-Coder-1.5B-Instruct-AWQ
+        #Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF
 
     raw_model: true # True if the model is loaded directly, False if loaded through pipeline
     quant_type: full # valid values: ("full", "sinq", "AWQ", "GPTQ", "bits") --> check file formats!!!
     gen_args:
-        temperature: 0.4 # 0 = always select the most likely word, 1 = random
+        temperature: 0.4 # 0 = always select the most likely word; 1 = unmodified logit distribution; >1 = more and more random
+        top-p: 0.9 # top-p is a confidence-adaptive filter: threshold based on the CUMULATIVE prob of the tokens
         max_new_tokens: 6000 # max number of tokens that can be generated
         presence_penalty: 0.3 # positive values penalize repeating sentences and words (range [-2,+2], advisable to keep in [-1,+1] for good performances)
         frequency_penalty: 0.2 # high to avoid repetition of specific words (presence is more about having new topics)

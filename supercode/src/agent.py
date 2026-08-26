@@ -36,9 +36,9 @@ class Agent():
         # roles:
         #self.system_role = "system"
         #self.user_role = "user"
-        self.tool_role = "assistant"#"tool"
+        self.tool_role = "tool"
         self.assistant_role = "assistant"
-        self.debugger_role = "assistant"#"debugger"
+        self.debugger_role = "debugger"
 
         # reasoning model for planning/debugging
         self.debugging = debugging # use thinking model for debugging

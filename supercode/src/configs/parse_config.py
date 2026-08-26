@@ -1,3 +1,4 @@
+import os
 from yaml import load # for the config file
 try:
     from yaml import CLoader as Loader
@@ -6,7 +7,8 @@ except ImportError:
 
 # ----------------------------------------------------------------------------------------------
 # loading variables from the configuration file (.yaml)
-vars = load(open("src/configs/config.yaml", 'r'), Loader=Loader)
+#print("current dir:", os.getcwd())
+vars = load(open("supercode/src/configs/config.yaml", 'r'), Loader=Loader)
 
 # ----------------------------------------------------------------------------------------------
 # general
