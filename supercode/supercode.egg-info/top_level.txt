@@ -1,6 +1,0 @@
-RAG-codebase
-RAG-radioastronomy
-plots
-src
-test-ideas&results
-tools-outputs

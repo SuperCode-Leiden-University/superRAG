@@ -18,6 +18,7 @@ hf_cache/
 .env
 .venv/
 .idea/
+*.egg-info
 
 # ignore testing material
 test*/

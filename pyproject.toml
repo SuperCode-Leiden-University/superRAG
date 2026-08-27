@@ -5,6 +5,10 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "supercode"
 version = "0.2.0"
+license = "Apache-2.0"
+authors = [
+  {name = "Elisa Chiarotto"},
+]
 description = "SuperCode model package"
 requires-python = ">=3.10"
 dependencies = [
