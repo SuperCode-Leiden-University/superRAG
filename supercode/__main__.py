@@ -1,18 +1,15 @@
 # libraries
-#import torch
-import ast # pretty-print for dict
+import torch
+#import ast # pretty-print for dict
 from datetime import datetime
 import getopt, sys # handle flags and pass args from terminal
-
-# benchmark datasets
-from datasets import load_dataset # load datasets from Hugging Face
-from human_eval.data import read_problems
 
 # my packages
 from src.agent import Agent
 from src.tools.code_processing import *
 from src.tools.tools import *
-from src.run_benchmark import *
+from src.benchmark import *
+
 # importing variables from the config file
 from src.configs.parse_config import *
 from src.configs.system_prompts import baseline_prompt, benchmark_prompt
@@ -40,7 +37,7 @@ try:
             print("Activate coding agent.\nPass '-b' to evaluate on benchmark.\nPress 'q' to quit.")
         elif currentArg in ("-b", "--benchmark"):
             benchmark_mode = True
-            bench_name = currentVal
+            bench_path = currentVal # example: "openai/openai_humaneval"
             print("Evaluating benchmark:", currentVal)
 except getopt.error as err:
     print(str(err))
@@ -79,15 +76,15 @@ def main():
                 break
 
             start = datetime.now()
-            if verbose>0 : print(">> processing the query")
+            if verbose>-1 : print(">> processing the query")
             model.call(user_prompt)
 
             end = datetime.now()
-            if verbose>0 : print(">> Time to Answer =", end-start)
+            if verbose>-1 : print(">> Time to Answer =", end-start)
 
     else: # evaluating benchmark
         run_benchmark(
-            model, "openai/openai_humaneval",
+            model, bench_path,
             baseline=True, num_samples_per_task=5,
             check_single_task=False, i_task=102
         )

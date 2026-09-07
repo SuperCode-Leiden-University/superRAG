@@ -1,14 +1,17 @@
 import json, torch
 import pprint
 import threading
-from transformers import pipeline, AutoModelForCausalLM, AutoTokenizer, TextIteratorStreamer
+from transformers import pipeline, AutoModel, AutoModelForCausalLM, AutoTokenizer, TextIteratorStreamer
 
-#from awq import AutoAWQForCausalLM
-#from transformers import SinqConfig
+# for quantizing a model on the spot
+from transformers import SinqConfig, BitsAndBytesConfig
+from compressed_tensors.offload import dispatch_model
+from llmcompressor import oneshot
+from llmcompressor.modifiers.quantization import QuantizationModifier
 
 """
 - pipeline is for direct inference, with AutoModelForCausalLM, AutoTokenizer you load the raw model
-- BitsAndBytesConfig and awq are for quantization
+- BitsAndBytesConfig and SinqConfig are libraries for quantizing models
 - TextIteratorStreamer and threading are for printing the answer as it is being generated
 """
 
@@ -39,58 +42,47 @@ class Model():
 
         self.tool_schemas = tool_schemas # for calling tools
 
+        # ----------------------------------------------------------------------------------------------
         ##### IMPORTING THE MODEL
         if self.raw_model:
-            self.tokenizer = AutoTokenizer.from_pretrained(self.model_id)
-            self.streamer = TextIteratorStreamer(self.tokenizer, skip_prompt=True, skip_special_tokens=True)
+            if self.quant_type != "GGUF":
+                self.tokenizer = AutoTokenizer.from_pretrained(self.model_id)
+                self.streamer = TextIteratorStreamer(self.tokenizer, skip_prompt=True, skip_special_tokens=True)
 
-            if self.quant_type == "full":  # full precision
+            if self.quant_type == "pretrained": # full precision
                 self.model = AutoModelForCausalLM.from_pretrained(
                     self.model_id,
                     device_map="auto",  # automatically places layers on GPU(s) if possible
-                    #dtype="auto"
+                    dtype="auto"
                 )
             # quantization structures (temporarily disabled):
-            """ 
-            if self.quant_type == "sinq":
-                print(">> quantizing")
-                quant_config = SinqConfig(
-                    nbits=4,
-                    group_size=64,
-                    tiling_mode="1D",
-                    method="sinq",
-                    modules_to_not_convert=["lm_head"]
-                )
-                self.tokenizer = AutoTokenizer.from_pretrained(self.model_id)
-                self.model = AutoModelForCausalLM.from_pretrained(
-                    self.model_id,
-                    quantization_config=quant_config,
-                    device_map="auto",  # automatically places layers on GPU(s) if possible
-                    dtype=torch.bfloat16
-                )
-                #model.save_pretrained("/path/to/save/"+self.model_id+"-sinq-4bit") # save quantized version
-            
-            if self.quant_type == "AWQ":  # AWQ quantization
-                self.model = AutoAWQForCausalLM.from_quantized(
+
+            if self.quant_type == "GGUF":
+                self.model = AutoModel.from_pretrained(
                     self.model_id,
                     device_map="auto",  # automatically places layers on GPU(s) if possible
-                    #dtype="auto"
-                )
-            
-            if self.quant_type == "GPTQ":  # GPTQ quantization
-                self.tokenizer = AutoTokenizer.from_pretrained(self.model_id, trust_remote_code=True)
-                self.streamer = TextIteratorStreamer(self.tokenizer, skip_prompt=True, skip_special_tokens=True)
-                self.model = AutoModelForCausalLM.from_pretrained(
-                    self.model_id,
-                    device_map="auto",  # automatically places layers on GPU(s) if possible
-                    dtype="auto", #torch.float16,  # recommended for GPTQ
-                    trust_remote_code=True,
-                    quantization_config=None # fix incompatibility between Transformers and Optimum GPTQ
-                    # consequences: no CUDA kernels optimization, lose correct dequantization behavior,
-                    # lose numerical stability guarantees, may have unexpected runtime errors
+                    dtype="auto"
                 )
 
+            if self.quant_type == "compressor":  # vllm-project/llm-compressor
+                self.model = AutoModelForCausalLM.from_pretrained(
+                    self.model_id,
+                    device_map="auto",  # automatically places layers on GPU(s) if possible
+                    dtype="auto"
+                )
+                # Configure the quantization algorithm and scheme.
+                # scheme=FP8, algo=GPTQ,
+                recipe = QuantizationModifier(
+                    targets="Linear",
+                    scheme="FP8_BLOCK",
+                    ignore=["lm_head", "re:.*mlp.gate$"],
+                )
+                # Apply quantization.
+                oneshot(model=self.model, recipe=recipe)
+                dispatch_model(self.model)
+
             if self.quant_type == "bits":  # for 4-8 bits quantization
+                print(">> quantizing with bits")
                 quant_config = BitsAndBytesConfig(
                     load_in_4bit=True,  # or load_in_8bit=True
                     bnb_4bit_compute_dtype="float16",
@@ -102,11 +94,38 @@ class Model():
                     device_map="auto",  # automatically places layers on GPU(s) if possible
                     quantization_config=quant_config
                 )
-            
+
+            #"""
+            # NOTE: AutoAWQ is deprecated and no longer maintained, it has been adopted by: https://github.com/vllm-project/llm-compressor
+            # if self.quant_type == "AWQ":  # AWQ quantization
+            #     self.model = AutoAWQForCausalLM.from_quantized(
+            #         self.model_id,
+            #         device_map="auto",  # automatically places layers on GPU(s) if possible
+            #         dtype="auto"
+            #     )
+
+            # if self.quant_type == "SINQ": # DOESN'T WORK!!!
+            #     print(">> quantizing")
+            #     quant_config = SinqConfig(
+            #         nbits=4,
+            #         group_size=64,
+            #         tiling_mode="1D",
+            #         method="sinq",
+            #         modules_to_not_convert=["lm_head"]
+            #     )
+            #     self.tokenizer = AutoTokenizer.from_pretrained(self.model_id)
+            #     self.model = AutoModelForCausalLM.from_pretrained(
+            #         self.model_id,
+            #         quantization_config=quant_config,
+            #         device_map="auto",  # automatically places layers on GPU(s) if possible
+            #         dtype="auto"
+            #     )
+                # model.save_pretrained("/path/to/save/"+self.model_id+"-sinq-4bit") # save quantized version
             #"""
         else:
             self.model = pipeline("text-generation", model=self.model_id)
 
+    # ----------------------------------------------------------------------------------------------
     def reset_memory(self):
         self.messages = []
         messages = [{
