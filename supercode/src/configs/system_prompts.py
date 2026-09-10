@@ -8,7 +8,6 @@ Your job is to:
 - Keep all names, numbers, and factual details exactly as returned.
 - Never describe the tool‑use process, reasoning steps, or how results were obtained.
 - Never invent alternative answers when tool results are available. 
-- The final version of the code must always start with <code> and end with </code>.
 You may summarize the results from tools if they are very long, but you must not add unsupported details. 
 """
 # During reasoning, try to keep your answer short and avoid repeating the same concepts many times.
@@ -52,7 +51,6 @@ debugger_prompt = """
 You are a debugger assistant.
 Your job is to understand the logic of the code and plan how the code can be improved .
 Keep your answer short and avoid repeating the same concept more than once.
-The final version of the code must always start with <code> and end with </code>.
 """
 debugger_prequery = ""
 compiler_prompt = """There is an error in the code (examples of errors: incorrect logic, syntax mistakes or the expected result of the test cases could be incorrect). 
@@ -72,7 +70,7 @@ For the examples included in the description of the function, check that the fun
 `assert function_name(example_i) == result_i , f'the correct result is { result_i }, but the function returned { function_name(example_i) } instead'`.
 If result_i is only a number (with no parenthesis, no letters and no special characters), then consider using `assert abs(function_name(example_i) - result_i) < 1e-6` instead of `assert function_name(example_i)==result_i` to avoid errors due to numerical fluctuations.
 The assert statements should be outside the function. Finally print('end of the code') at the end. 
-First explain your reasoning, then write the function definition and all assert statements in one single block of code, delimited by either "```" or <code> </code>. 
+First explain your reasoning, then write the function definition and all assert statements in one single block of code. 
 Do not write the function and the assert statements in separate blocks, follow the following structure: 
 ```
 import ... # optional

@@ -48,30 +48,23 @@ def extract_code(response, entry_point=None):
             print("WARNING: entry_point not found")
             return ""
 
-    # tags from instructions
-    offset = len("<code>")
-    code_start = response.rfind("<code>")+offset
-    code_end = response.rfind("</code>")
+    # LLMs format their answer using markdown
+    # code is delimited by ```python ... ```
+    offset = len("```")
+    code_end = response.rfind("```")
+    code_start = response.rfind("```", 0, code_end) + offset
 
-    code = response[code_start:code_end]
+    #code = response[code_start:code_end]
+
+    pl_offset = len("python")
+    #print(response.rfind("python", code_start, code_end),"\n")
+    if response.rfind("python", code_start, code_end) != -1 :
+        #print("py check")
+        code_start+=pl_offset ; offset+=pl_offset
 
     if code_start==-1+offset or code_end==-1:
-        # failsafe in case the model uses the standard ``` ... ```
-        offset = len("```")
-        code_end = response.rfind("```")
-        code_start = response.rfind("```", 0, code_end) + offset
-
-        #code = response[code_start:code_end]
-
-        pl_offset = len("python")
-        #print(response.rfind("python", code_start, code_end),"\n")
-        if response.rfind("python", code_start, code_end) != -1 :
-            #print("py check")
-            code_start+=pl_offset ; offset+=pl_offset
-
-        if code_start==-1+offset or code_end==-1:
-            print("WARNING: code not found")
-            return ""
+        print("WARNING: code not found")
+        return ""
     #print(">> code extracted successfully")
     code = response[code_start:code_end].strip()
     return code

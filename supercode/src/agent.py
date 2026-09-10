@@ -1,7 +1,4 @@
-import json, torch, sys
-import pprint
-import threading
-from transformers import pipeline, AutoModelForCausalLM, AutoTokenizer, TextIteratorStreamer
+import json
 
 #from awq import AutoAWQForCausalLM
 #from transformers import SinqConfig
@@ -12,9 +9,8 @@ from transformers import pipeline, AutoModelForCausalLM, AutoTokenizer, TextIter
 - TextIteratorStreamer and threading are for printing the answer as it is being generated
 """
 
-from src.model import Model
+from src.model_loader.model_loader import Model
 from src.tools.manage_tools import * # import all the tools
-from src.configs.parse_config import *
 from src.configs.system_prompts import *
 from src.tools.tools import *
 from src.tools.code_processing import *

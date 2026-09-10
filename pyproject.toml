@@ -25,6 +25,7 @@ dependencies = [
     "langchain-community>=0.4.2",
     "langchain-huggingface>=1.2.2",
     "langchain-text-splitters>=1.1.2",
+    "llama-cpp-python>=0.3.35",
     "llmcompressor>=0.13.1a20260824",
     "lm-eval>=0.4.12",
     "matplotlib>=3.10.9",

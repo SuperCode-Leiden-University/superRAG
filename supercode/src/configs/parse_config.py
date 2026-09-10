@@ -13,6 +13,7 @@ vars = load(open("supercode/src/configs/config.yaml", 'r'), Loader=Loader)
 # ----------------------------------------------------------------------------------------------
 # general
 verbose = vars["verbose"] # how much info is printed: 0=none, 1=little, 2=all
+backend = vars["backend"] # which backend is used: ["transformers", "llama-cpp", "vLLM"]
 
 n_iterations = vars["n_iterations"]
 debugging = vars["debugging"]
@@ -22,7 +23,7 @@ tool_selection = vars["tool_selection"]
 # chat assistant model
 model_args     = vars["model"]
 model_id       = vars["model"]["model_id"] # model ID from HuggingFace
-raw_model      = vars["model"]["raw_model"]   # True if the model is loaded directly, False if loaded through pipeline
+#raw_model      = vars["model"]["raw_model"]   # True if the model is loaded directly, False if loaded through pipeline
 quant_type     = vars["model"]["quant_type"] # valid values: ("full", "bits", "GPTQ") --> check file formats!!!
 temperature    = vars["model"]["gen_args"]["temperature"] # 0 = always select the most likely word, 1 = random
 max_new_tokens = vars["model"]["gen_args"]["max_new_tokens"] # max number of tokens that can be generated

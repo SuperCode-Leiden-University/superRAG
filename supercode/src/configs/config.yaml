@@ -1,5 +1,6 @@
 ---
 # general
+backend: transformers # valid values: ["transformers", "llama-cpp", "vLLM"]
 verbose: 0 # how much info is printed: 0=none, 1=little, 2=lots, 3=all
 
 n_iterations: 1 # n of times the model is called
@@ -18,15 +19,15 @@ model:
         #google/codegemma-7b-it
 
         # --------------------------------------------------------------------------------------------
-        #Qwen/Qwen2.5-Coder-1.5B-Instruct
+        Qwen/Qwen2.5-Coder-1.5B-Instruct
         #Qwen/Qwen2.5-Coder-1.5B-Instruct-GPTQ-Int4
         #Qwen/Qwen2.5-Coder-1.5B-Instruct-AWQ
-        Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF
+        #Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF
 
         #mradermacher/hpc-coder-v2-6.7b-GGUF # HPC-coder, fine-tuned version of Deepseek Coder 6.7b
 
-    raw_model: true # True if the model is loaded directly, False if loaded through pipeline
-    quant_type: GGUF # valid values: ("pretrained", "SINQ", "compressor", "bits", "GGUF") --> check file formats!!!
+    #raw_model: true # True if the model is loaded directly, False if loaded through pipeline
+    quant_type: pretrained # valid values: ["pretrained", "gguf", "compressor", "bits", "sinq"] --> check file formats!!!
     # SINQ doesn't work!!! prequantized AWQ and GPTQ models can be loaded using pretrained
     gen_args:
         temperature: 0.4 # 0 = always select the most likely word; 1 = unmodified logit distribution; >1 = more and more random
