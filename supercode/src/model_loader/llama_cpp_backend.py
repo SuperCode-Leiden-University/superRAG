@@ -1,29 +1,39 @@
 import os
-from typing import List, Dict, Any, Optional
+from typing import Optional, List, Dict, Any, Literal
 from llama_cpp import Llama
 
 from src.model_loader.base_backend import BaseLLM
 
 class LlamaCppLLM(BaseLLM):
-    def __init__(
-        self,
-        model_path: str,
-        n_ctx: int = 2048,
-        n_gpu_layers: int = 0,  # 0 = CPU only
-        chat_format: str = "llama-2",  # e.g., "llama-2", "chatml", "zephyr"
-        **kwargs,
-    ):
-        self.model = Llama(
-            model_path=model_path,
-            n_ctx=n_ctx,
-            n_gpu_layers=n_gpu_layers,
-            chat_format=chat_format,
-            logits_all=False,
-            embedding=False,
-            **kwargs
+    def __init__(self,
+                 model_id: str,
+                 quant_type: Literal["pretrained", "gguf", "bits", "compressor", "sinq"], # specify that only these values are allowed
+                 gen_args: Dict[str, Any], # other settings, such as temperature and max tokens (default vals in config)
+                 # n_ctx: int = 2048, # context window
+                 # n_gpu_layers: int = 0,  # 0 = CPU only
+                 # chat_format: str = "llama-2",  # e.g., "llama-2", "chatml", "zephyr"
+                 **kwargs,
+                 ):
+        print(">> loading with llama.cpp")
+        ##### model's name and parameters are saved in the config
+        self.model_id = model_id  # name of the model from Hugging Face
+        self.quant_type = quant_type
+        self.gen_args = gen_args  # other settings, such as temperature and max tokens (default vals in config)
+
+        # self.model = Llama(
+        #     model_path=model_path,
+        #     n_ctx=n_ctx,
+        #     n_gpu_layers=n_gpu_layers,
+        #     chat_format=chat_format,
+        #     logits_all=False,
+        #     embedding=False,
+        #     **kwargs
+        # )
+        self.model = Llama.from_pretrained(
+            repo_id=self.model_id,
+            filename="*q8_0.gguf",
+            verbose=False # otherwise it prints A LOT
         )
-        self.model_path = model_path
-        self.chat_format = chat_format
 
     def compile_prompt(self, prompt: str) -> str:
         """
@@ -51,11 +61,13 @@ class LlamaCppLLM(BaseLLM):
             **kwargs
         )
         # Normalize to match transformers output format (e.g., 'content', 'tool_calls')
-        return {
-            "content": response["choices"][0]["message"]["content"],
-            "tool_calls": response["choices"][0]["message"].get("tool_calls", []),
-            "usage": response.get("usage", {}),
-        }
+        return response["choices"][0]["message"]["content"]
+        # {
+        #     "content": response["choices"][0]["message"]["content"],
+        #     "tool_calls": response["choices"][0]["message"].get("tool_calls", []),
+        #     "usage": response.get("usage", {}),
+        # } # response= {'content': '', 'tool_calls': [], 'usage': {'prompt_tokens': 166, 'completion_tokens': 2, 'total_tokens': 168}}
+
 
     def get_tokenizer(self):
         # Return a minimal tokenizer interface

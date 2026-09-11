@@ -21,11 +21,11 @@ class TransformersLLM(BaseLLM):
                  # specify that only these values are allowed
                  gen_args: Dict[str, Any] # other settings, such as temperature and max tokens (default vals in config)
                  ):
+        print(">> loading with transformers")
         ##### model's name and parameters are saved in the config
         self.model_id = model_id  # name of the model from Hugging Face
         self.quant_type = quant_type
         self.gen_args = gen_args  # other settings, such as temperature and max tokens (default vals in config)
-        print("### model_id = " + self.model_id)
 
         # ----------------------------------------------------------------------------------------------
         ##### IMPORTING THE MODEL
@@ -100,12 +100,11 @@ class TransformersLLM(BaseLLM):
 
         else: raise ValueError(f"Unsupported quantization type: {quant_type}")
 
-    def generate(
-            self,
-            messages: List[Dict[str, str]],
-            tools: Optional[List[Dict[str, Any]]] = None,
-            **kwargs
-    ) -> str:
+    def generate(self,
+                 messages: List[Dict[str, str]],
+                 tools: Optional[List[Dict[str, Any]]] = None,
+                 **kwargs
+                 ) -> str:
         """Generate a model response given messages and optional feedback from tools."""
         inputs = self.tokenizer.apply_chat_template(
             messages,

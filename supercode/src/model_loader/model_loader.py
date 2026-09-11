@@ -13,7 +13,13 @@ class Model():
         ##### extract model's name and parameters
         self.model_id = model_args["model_id"]  # name of the model from Hugging Face
         self.gen_args = model_args["gen_args"]  # other settings, such as temperature and max tokens (default vals in config)
-        print("### model_id = " + self.model_id)
+        print("\n### model_id = " + self.model_id)
+
+        # if backend == "llama-cpp":
+        #     # llama has different key names from transformes, so I need to rename them first:
+        #     self.gen_args['top_p'] = self.gen_args.pop('top-p')
+        #     self.gen_args['max_tokens'] = self.gen_args.pop('max_new_tokens')
+        #     print("\n>> gen_args =", self.gen_args,"\n")
 
         # define prompts and tools schemas
         self.system_prompt = system_prompt
@@ -75,8 +81,11 @@ class Model():
         response = self.model.generate(
             self.messages,
             tools=self.tool_schemas,
-            **self.gen_args
+            # **self.gen_args
         )
+
         self.add_message(role="assistent", content=response)
+
+        print("\n>> response:\n", response, "\n")
 
         return response

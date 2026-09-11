@@ -29,7 +29,7 @@ model:
     #raw_model: true # True if the model is loaded directly, False if loaded through pipeline
     quant_type: pretrained # valid values: ["pretrained", "gguf", "compressor", "bits", "sinq"] --> check file formats!!!
     # SINQ doesn't work!!! prequantized AWQ and GPTQ models can be loaded using pretrained
-    gen_args:
+    gen_args: # these are called differently in different backends!!!
         temperature: 0.4 # 0 = always select the most likely word; 1 = unmodified logit distribution; >1 = more and more random
         top-p: 0.9 # top-p is a confidence-adaptive filter: threshold based on the CUMULATIVE prob of the tokens
         max_new_tokens: 6000 # max number of tokens that can be generated
