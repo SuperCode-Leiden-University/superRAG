@@ -8,7 +8,7 @@ class BaseLLM(ABC):
     """Interface for language models backends (transformers, llama.cpp, vLLM, etc...)."""
 
     @abstractmethod
-    def compile_prompt(self, prompt: str) -> str:
+    def apply_chat_template(self, prompt: str) -> str:
         """Apply chat template/formatting (e.g., Jinja-based)."""
         pass
 

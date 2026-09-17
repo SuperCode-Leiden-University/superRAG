@@ -72,6 +72,6 @@ class vLLM_import_model(BaseLLM):
         pass
 
 
-    def compile_prompt(self, prompt: str) -> str:
+    def apply_chat_template(self, prompt: str) -> str:
         """Apply chat template/formatting (e.g., Jinja-based)."""
         pass

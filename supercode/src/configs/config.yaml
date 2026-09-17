@@ -1,10 +1,10 @@
 ---
 # general
-backend: llama_cpp # valid values: ["transformers", "llama_cpp", "vLLM"]
+backend: transformers # valid values: ["transformers", "llama_cpp", "vLLM"]
 verbose: 0 # how much info is printed: 0=none, 1=little, 2=lots, 3=all
 
 model_iter: 1 # n of times the model loops over the same issue (1 = run only once), recommended setting is 1
-tools_iter: 1 # n steps for choosing tools (0 = no tools, 1 = all tools in one go), recommended setting is 2-3
+tools_iter: 0 # n steps for choosing tools (0 = no tools, 1 = all tools in one go), recommended setting is 2-3
 
 #tool_selection: False # use the same model either to choose which tool to use or to generate an answer
 #n_revise: 1 # n of extra steps for choosing tools, useful if tools have requirements that need info from other tools
@@ -34,19 +34,26 @@ model:
         #google/codegemma-7b-it
 
         # --------------------------------------------------------------------------------------------
-        #Qwen/Qwen2.5-Coder-1.5B-Instruct
+        Qwen/Qwen2.5-Coder-1.5B-Instruct
         #Qwen/Qwen2.5-Coder-1.5B-Instruct-GPTQ-Int4
         #Qwen/Qwen2.5-Coder-1.5B-Instruct-AWQ
-        Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF
+        #Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF
 
         #mradermacher/hpc-coder-v2-6.7b-GGUF # HPC-coder, fine-tuned version of Deepseek Coder 6.7b
 
     quant_type: pretrained # valid values: ["pretrained", "gguf", "compressor", "bits", "sinq"] --> check file formats!!!
     # SINQ doesn't work!!! prequantized AWQ and GPTQ models can be loaded using pretrained
     gen_args: # I'm using parameter names from transformers. NOTE: parameters are called differently in llama.cpp
-        #num_return_sequences: 1 # n of samples per input
         temperature: 0.8 # 0 = always select the most likely word; 1 = unmodified logit distribution; >1 = more and more random
         max_new_tokens: 6000 # max number of tokens that can be generated
+
+        num_return_sequences: 3 # n of samples per input
+        do_sample: True,  # enable sampling for diversity
+        num_beams: 5 # explore multiple sequences in parallel (then select the top ones), must be larger or equal to num_return_sequences
+        early_stopping: True # stop when all beams have finished
+        no_repeat_ngram_size: 2 # avoid repeating n-grams
+        #max_length=100,
+
         #top-p: 0.9 # this is a confidence-adaptive filter: threshold based on the CUMULATIVE prob of the tokens
         #presence_penalty: 0.3 # positive values penalize repeating sentences and words (range [-2,+2], advisable to keep in [-1,+1] for good performances)
         #frequency_penalty: 0.2 # high to avoid repetition of specific words (presence is more about having new topics)
@@ -56,11 +63,12 @@ model:
 # thinking model for choosing tools (good at extrapolating logic issues)
 thinking_model:
     model_id: # model ID from HuggingFace
-        #Qwen/Qwen3.5-4B # DOESN'T WORK??? # includes thinking mode by default
-        #Qwen/Qwen3-0.6B # includes thinking mode by default
-        Qwen/Qwen3-0.6B-GGUF # includes thinking mode by default
+        Qwen/Qwen3-0.6B # includes thinking mode by default
+        #Qwen/Qwen3-0.6B-GGUF # includes thinking mode by default
+
         #Qwen/Qwen3-4B # includes thinking mode by default
         #Qwen/Qwen3-4B-Thinking-2507
+        #Qwen/Qwen3.5-4B # DOESN'T WORK??? # includes thinking mode by default
     quant_type: pretrained
     gen_args:
         temperature: 0.4 # 0 = always select the most likely word, 1 = random

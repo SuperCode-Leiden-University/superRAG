@@ -1,5 +1,5 @@
 from typing import Optional, List, Dict, Any, Literal
-import threading
+import torch, threading, pprint
 from transformers import AutoModel, AutoModelForCausalLM, AutoTokenizer, TextIteratorStreamer, BitsAndBytesConfig
 from compressed_tensors.offload import dispatch_model
 from llmcompressor import oneshot
@@ -100,34 +100,31 @@ class Transformers_import_model(BaseLLM):
         else: raise ValueError(f"Unsupported quantization type: {quant_type}")
 
 
-    def compile_prompt(self, prompt: str) -> str:
+    def apply_chat_template(self,
+                       messages: List[Dict[str, str]],
+                       tools: Optional[List[Dict[str, Any]]] = None
+                       ):
         """Apply chat template/formatting."""
-        return self.tokenizer.apply_chat_template(
-            [{
-                "role": "user",
-                "content": prompt
-            }],
-            add_generation_prompt=True,
-            tokenize=False
-        )
-
-
-    def generate(self,
-                 messages: List[Dict[str, str]],
-                 tools: Optional[List[Dict[str, Any]]] = None,
-                 #num_samples: int = 1, # for multi-sampling
-                 **kwargs
-                 ) -> str:
-        """Generate a model response given messages and optional feedback from tools."""
         inputs = self.tokenizer.apply_chat_template(
-            messages,
-            tools=tools,
+            messages, # chat history
+            tools=tools, # tools schemas
             add_generation_prompt=True,
             tokenize=True,
             return_dict=True,
             return_tensors="pt",
         ).to(self.model.device)
+        return inputs
 
+
+    def generate(self,
+                 messages: List[Dict[str, str]],
+                 tools: Optional[List[Dict[str, Any]]] = None,
+                 **kwargs # override default generation arguments
+                 ) -> str:
+        """Generate a model response given messages and optional feedback from tools."""
+        inputs = self.apply_chat_template(messages, tools=tools)
+
+        """
         # streamer and threads are needed to see the response while it is being generated
         streamer = TextIteratorStreamer(
             self.tokenizer,
@@ -140,7 +137,7 @@ class Transformers_import_model(BaseLLM):
                 **inputs,
                 **self.gen_args, # config such as temperature, max_new_tokens, etc...
                 streamer=streamer,
-                # **kwargs # pass additional generation arguments
+                # **kwargs # override default generation arguments
             )
         # begin generation thread
         thread = threading.Thread(target=generate)
@@ -151,4 +148,31 @@ class Transformers_import_model(BaseLLM):
             print(token, end="", flush=True)
             response += token
         print()
-        return response
+        """
+
+
+
+        # Generate multiple sequences from the single prompt
+        input_length = inputs.input_ids.shape[1]
+        with torch.no_grad():
+            # this is a tensor with n elements, where n = num_return_sequences
+            outputs = self.model.generate(
+                **inputs,
+                pad_token_id=self.tokenizer.eos_token_id,
+                **self.gen_args, # config such as temperature, max_new_tokens, etc...
+                # **kwargs # override default generation arguments
+            )
+
+        # Extract the generated tokens (skip the input prompt)
+        generated_ids = outputs[
+            :, #i*n_samples+i : i*n_samples+i+1,
+            input_length :
+        ]
+
+        # Decode the generated part only
+        responses = self.tokenizer.decode(
+            generated_ids,
+            skip_prompt=True,
+            skip_special_tokens=True
+        )
+        return responses

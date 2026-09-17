@@ -41,7 +41,7 @@ class LlamaCpp_import_model(BaseLLM):
             n_ctx=32000, # context window (default is 512...)
         )
 
-    def compile_prompt(self, prompt: str) -> str:
+    def apply_chat_template(self, prompt: str) -> str:
         """
         In llama-cpp, chat templates are handled via chat_format & messages,
         but you can still apply custom prompt formatting here if needed.

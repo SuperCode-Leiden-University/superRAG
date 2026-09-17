@@ -240,17 +240,17 @@ class Agent():
                 print("--------------------------------------")
 
                 # failsafe in case the model doesn't return any code
-                if extract_code(response)=="":
-                    if code is not None:
-                        print(">> appending prev code")
-                        response = response+"\nPrevious code:\n```"+code+"```"
-                        break
-                    else:
-                        print("WARNING: failed to extract code and no previous code to fall back to")
-                        response = response+"\nNo code:\n```raise Exception('NO CODE')```"
-                        continue # failed to extract code and no previous code to fall back to
-                else:
-                    code = extract_code(response)
+                # if extract_code(response)=="":
+                #     if code is not None:
+                #         print(">> appending prev code")
+                #         response = response+"\nPrevious code:\n```"+code+"```"
+                #         break
+                #     else:
+                #         print("WARNING: failed to extract code and no previous code to fall back to")
+                #         response = response+"\nNo code:\n```raise Exception('NO CODE')```"
+                #         continue # failed to extract code and no previous code to fall back to
+                # else:
+                #     code = extract_code(response)
 
         return response
 
