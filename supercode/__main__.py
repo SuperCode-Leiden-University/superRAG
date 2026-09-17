@@ -1,6 +1,6 @@
 # libraries
-import torch
-#import ast # pretty-print for dict
+import torch, pprint # pretty-print for dict
+#import ast
 from datetime import datetime
 import getopt, sys # handle flags and pass args from terminal
 
@@ -64,7 +64,7 @@ def main():
         while True:
             # ask the user to write a query
             user_prompt = input(
-                    "\nEnter your query (type 'q' or 'quit' to exit) \n"
+                    "\nEnter your query (type 'q' or 'quit' to exit, 'reset' or 'r' to clear chat history) \n"
                     "----------------------------------------------------------------------------\n"
                     "## Ut: "
             )
@@ -73,7 +73,12 @@ def main():
             # check if user wants to quit
             if user_prompt.lower() == "quit" or user_prompt.lower() == "q":
                 print("Goodbye!")
+
+                print("chat history:\n") ; model.print_chat_history()
                 break
+            elif user_prompt.lower() == "reset" or user_prompt.lower() == "r":
+                model.reset_memory()
+                continue
 
             start = datetime.now()
             if verbose>-1 : print(">> processing the query")

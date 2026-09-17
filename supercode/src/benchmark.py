@@ -47,14 +47,11 @@ def run_benchmark(model, benchmark_path, baseline=True, num_samples_per_task=5, 
     if baseline: print("benchmark baseline and model for "+bench_name)
     else: print("benchmark model for "+bench_name)
 
-    if debugging: debug_model = "+"+debug_model_id
-    else: debug_model = ""
-
-    if n_iterations>1 : iter="_x"+n_iterations
+    if model_iter>1 : iter="_x"+model_iter
     else: iter=""
 
-    baseline_file  = gen_code_dir+"/"+bench_name+"_"+model_id[model_id.find("/")+1:]+debug_model+"_baseline_" +str(num_samples_per_task)+iter+".jsonl"
-    benchmark_file = gen_code_dir+"/"+bench_name+"_"+model_id[model_id.find("/")+1:]+debug_model+"_benchmark_"+str(num_samples_per_task)+iter+".jsonl"
+    baseline_file  = gen_code_dir+"/"+bench_name+"_"+coder_model_id[coder_model_id.find("/")+1:]+"_baseline_" +str(num_samples_per_task)+iter+".jsonl"
+    benchmark_file = gen_code_dir+"/"+bench_name+"_"+coder_model_id[coder_model_id.find("/")+1:]+"_benchmark_"+str(num_samples_per_task)+iter+".jsonl"
 
     # ---------------------------------------------------------------------------------------------- #
     # ---------------------------------------------------------------------------------------------- #
@@ -99,7 +96,7 @@ def run_benchmark(model, benchmark_path, baseline=True, num_samples_per_task=5, 
         prompt = sample["prompt"]
         test = sample["test"]
 
-        if task_id == "HumanEval/47" : prompt = prompt.replace("15.0", "8.0") ; print(prompt)
+        if task_id == "HumanEval/47" : prompt = prompt.replace("15.0", "8.0") # error in the prompt...
 
         for j in range(num_samples_per_task):
             if baseline: # create the baseline

@@ -15,28 +15,29 @@ vars = load(open("supercode/src/configs/config.yaml", 'r'), Loader=Loader)
 verbose = vars["verbose"] # how much info is printed: 0=none, 1=little, 2=all
 backend = vars["backend"] # which backend is used: ["transformers", "llama-cpp", "vLLM"]
 
-n_iterations = vars["n_iterations"]
-debugging = vars["debugging"]
-tool_selection = vars["tool_selection"]
+model_iter = vars["model_iter"]
+tools_iter = vars["tools_iter"]
+#tool_selection = vars["tool_selection"]
+#n_revise = vars["n_revise"]
 
 # ----------------------------------------------------------------------------------------------
 # chat assistant model
-model_args     = vars["model"]
-model_id       = vars["model"]["model_id"] # model ID from HuggingFace
-#raw_model      = vars["model"]["raw_model"]   # True if the model is loaded directly, False if loaded through pipeline
-quant_type     = vars["model"]["quant_type"] # valid values: ("full", "bits", "GPTQ") --> check file formats!!!
-temperature    = vars["model"]["gen_args"]["temperature"] # 0 = always select the most likely word, 1 = random
-max_new_tokens = vars["model"]["gen_args"]["max_new_tokens"] # max number of tokens that can be generated
+coder_model_args     = vars["model"]
+coder_model_id       = vars["model"]["model_id"] # model ID from HuggingFace
+coder_quant_type     = vars["model"]["quant_type"] # valid values: ("full", "bits", "GPTQ") --> check file formats!!!
+coder_gen_args       = vars["model"]["gen_args"]
+# coder_temperature    = vars["model"]["gen_args"]["temperature"] # 0 = always select the most likely word, 1 = random
+# coder_max_new_tokens = vars["model"]["gen_args"]["max_new_tokens"] # max number of tokens that can be generated
 
 
 # ----------------------------------------------------------------------------------------------
-# thinking model for planning/debugging
-debug_model_args     = vars["thinking_model"]
-debug_model_id       = vars["thinking_model"]["model_id"] # model ID from HuggingFace
-debug_raw_model      = vars["thinking_model"]["raw_model"]   # True if the model is loaded directly, False if loaded through pipeline
-debug_quant_type     = vars["thinking_model"]["quant_type"] # valid values: ("full", "bits", "GPTQ") --> check file formats!!!
-debug_temperature    = vars["thinking_model"]["gen_args"]["temperature"] # 0 = always select the most likely word, 1 = random
-debug_max_new_tokens = vars["thinking_model"]["gen_args"]["max_new_tokens"] # max number of tokens that can be generated
+# thinking model for selecting tools
+think_model_args     = vars["thinking_model"]
+think_model_id       = vars["thinking_model"]["model_id"] # model ID from HuggingFace
+think_quant_type     = vars["thinking_model"]["quant_type"] # valid values: ("full", "bits", "GPTQ") --> check file formats!!!
+think_gen_args       = vars["thinking_model"]["gen_args"]
+# think_temperature    = vars["thinking_model"]["gen_args"]["temperature"] # 0 = always select the most likely word, 1 = random
+# think_max_new_tokens = vars["thinking_model"]["gen_args"]["max_new_tokens"] # max number of tokens that can be generated
 
 # ----------------------------------------------------------------------------------------------
 # embedding model for building the database (for RAG)

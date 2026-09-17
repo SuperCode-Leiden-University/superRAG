@@ -19,7 +19,7 @@ assistant_prequery = "Use the following information to answer the question in na
 # partial prompt for the tool manager
 manager_prompt_1 = "You are a tool manager, tools at your disposal are described in:\n\n"
 manager_prompt_2 = """
-Your job is to return a list of JSON objects with tools are relevant to the user's request in the order they must be called.
+Your job is to understand which tool (if any) is necessary to answer the query and return a list of JSON objects with relevant tools in the order they must be called.
 You must only choose the tools, you must NEVER try to solve the problem directly.
 
 You must explain your reasoning step-by-step for choosing each tool and comply to all the following guidelines:

@@ -7,6 +7,11 @@ from typing import Optional, List, Dict, Any
 class BaseLLM(ABC):
     """Interface for language models backends (transformers, llama.cpp, vLLM, etc...)."""
 
+    @abstractmethod
+    def compile_prompt(self, prompt: str) -> str:
+        """Apply chat template/formatting (e.g., Jinja-based)."""
+        pass
+
     # this decorator let us declare a method that must be implemented in the subclasses
     @abstractmethod
     def generate(
@@ -19,12 +24,3 @@ class BaseLLM(ABC):
         # note that the input include previous messages and optional tools, the output will be the answer
         pass
 
-    @abstractmethod
-    def get_tokenizer(self):
-        """Return a tokenizer-compatible object (e.g., for encoding/decoding)."""
-        pass
-
-    @abstractmethod
-    def compile_prompt(self, prompt: str) -> str:
-        """Apply chat template/formatting (e.g., Jinja-based)."""
-        pass
