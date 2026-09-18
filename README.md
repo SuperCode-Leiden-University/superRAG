@@ -3,31 +3,38 @@
 ## Installation
 (Premise: this instructions assume you're using Linux.)
 
-Besides cloning the repository you'll need to to these 3 things:
+Besides cloning the repository you'll need to do the following:
 
 
-#### STEP 1) Creating a Virtual Environment:
+#### Installing dependencies and virtual environment:
 
 Just open the terminal and run:
-`python3 -m venv .venv`
-where "`.venv`" is the name of the virtual environment we used (you can change it if you don't like it).
-
-(NOTE: remember to use `ls -a` instead of just `ls` if you want to see hidden files and directories!)
-
-
-#### STEP 2) Installing all the modules
-
-Activate your virtual environment (with `source .venv/bin/activate`) and then run:
-`pip install -r requirements.txt`
+```bash
+pip install uv
+uv init
+uv add -r requirements.txt
+```
+This will install the uv library, which will be used to create the virtual environment and install the dependencies listed inside pyproject.toml 
 
 
-#### STEP 3) Downloading the model from Hugging Face
+Optional step: you can install the repository as a module locally using: 
+```bash
+python -m pip install -e .
+```
+and run it with
+```bash
+run supercode
+```
+
+#### Downloading the model from Hugging Face
 
 You'll need a Hugging Face account, then you need to generate a token 
 (see https://youtu.be/1h6lfzJ0wZw?t=362&si=Q2_sgqa1pT0Jtpg8).
 
 From terminal run:
-`huggingface-cli login`
+```bash
+huggingface-cli login
+```
 then paste the token when prompted, you can say yes to the git credentials.
 
 You'll get a message saying where your token was saved, should be something like: 
@@ -37,55 +44,86 @@ The model will be downloaded the first time you will run this program and it wil
 `/home/your_user_name/.cache/huggingface/hub/`
 
 
-#### STEP 3) Installing Mega-Linter
+#### Installing Mega-Linter
 
 Follow the instructions in https://megalinter.io/latest/install-assisted/ 
 and keep in mind that you need both `node.js` and `Docker Engine` installed.
 
-To do so you only need to run the following commands:
-* `sudo apt install nodejs npm` to install node.js
-* `sudo apt install docker.io` to install Docker Engine
-* `npx mega-linter-runner --install` to install Mega-Linter
+To do so you only need to run the following commands to install node.js, docker engine and Megalinter
+```bash
+sudo apt install nodejs npm
+sudo apt install docker.io
+npx mega-linter-runner --install
+```
+to install Mega-Linter
 
 NOTE: The order doesn't matter.
 
 If this is the first time you're running docker, you'll need to run 2 additional commands:
-1) `sudo groupadd docker`, this may say "group already exists" and that's fine
-2) `sudo usermod -aG docker $USER`, this add the user to the docker group so you'll have permission to run it
-3) Finally you need to logout & login again (or reboot) to update group membership.
+```bash
+sudo groupadd docker
+sudo usermod -aG docker $USER
+```
+The first may return "group already exists" and that's fine, the second command will add the user to the docker group so you'll have permission to run it
+Finally you need to logout & login again (or reboot) to update group membership.
 
-Now you can run Mega-Linter with: `npx mega-linter-runner --flavor <flavor_name>` (you won't need to do this manually).
+Now you may try to run Mega-Linter to check if it is working, using: 
+```bash
+npx mega-linter-runner --flavor <flavor_name>
+```
 
 Flavors can be found at https://megalinter.io/latest/flavors/.
 
 Mega-Linter can be reconfigured using the `.mega-linter.yml` file, present in this directory.
 
-###### TROUBLESHOOTING:
+###### TROUBLESHOOTING DOCKER:
 
 If you're working on a remote server you may encounter this error:
 
 `Cannot connect to the Docker daemon at unix:///run/user/1005/podman/podman.sock. Is the docker daemon running?`
 
 The issue is that Docker is not enabled, which can be fixed like follows:
-1) `sudo systemctl start docker`
-2) `sudo systemctl enable docker`
-3) (optional) `sudo systemctl status docker` to verify that it is indeed active
+```bash
+sudo systemctl start docker
+sudo systemctl enable docker
+sudo systemctl status docker
+```
+the last command is optional, just to verify that it is indeed active.
 
-If it still does not work try `dpkg -l | grep docker`, if you see `podman-docker` then 
-you just need to remove the packege with `sudo apt remove podman-docker`.
+If it still does not work try
+```bash
+dpkg -l | grep docker
+```
+if you see `podman-docker` then you just need to remove the packege with 
+```bash
+sudo apt remove podman-docker
+```
 
-Finally check environment variables with `echo $DOCKER_HOST`, if you get something like 
+Finally check environment variables with 
+```bash
+echo $DOCKER_HOST
+``` 
+if you get something like 
 `unix:///run/user/1005/podman/podman.sock`, then run the following commands:
-1) `unset DOCKER_HOST` to clear the env variable
-2) `grep -R "DOCKER_HOST" ~/.bashrc ~/.profile ~/.zshrc` to remove it from shell config (this may not be necessary)
+```bash
+unset DOCKER_HOST
+grep -R "DOCKER_HOST" ~/.bashrc ~/.profile ~/.zshrc
+```
+This will clear the env variable and remove it from shell config (may not be necessary)
 
 
 #### Installing Linux perf
 
-On Ubuntu: `sudo apt install linux-tools-common` 
+On Ubuntu: 
+```bash
+sudo apt install linux-tools-common
+```
 https://packages.ubuntu.com/eoan/linux-tools-common
 
-On Debian: `sudo apt install linux-perf` 
+On Debian: 
+```bash
+sudo apt install linux-perf
+``` 
 https://packages.debian.org/buster/linux-perf
 
 

@@ -6,10 +6,10 @@ from llmcompressor import oneshot
 from llmcompressor.modifiers.quantization import QuantizationModifier
 
 # importing my functions from other files
-from src.configs.parse_config import *  # model's name and parameters
-from src.configs.system_prompts import *  # prompts
-from src.tools.code_processing import *  # tools
-from src.model_loader.base_backend import BaseLLM
+from supercode.src.configs.parse_config import *  # model's name and parameters
+from supercode.src.configs.system_prompts import *  # prompts
+from supercode.src.tools.code_processing import *  # tools
+from supercode.src.model_loader.base_backend import BaseLLM
 
 
 class Transformers_import_model(BaseLLM):

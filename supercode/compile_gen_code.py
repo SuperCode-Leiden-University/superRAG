@@ -9,9 +9,9 @@ from datasets import load_dataset # load datasets from Hugging Face
 
 #print("current dir:", os. getcwd())
 
-#from src.configs.parse_config import *
-from src.tools.code_processing import *
-from src.tools.tools import *
+#from supercode.src.configs.parse_config import *
+from supercode.src.tools.code_processing import *
+from supercode.src.tools.tools import *
 
 verbose = 0
 

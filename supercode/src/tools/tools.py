@@ -4,8 +4,8 @@ import numpy as np
 from datetime import datetime
 from langchain_huggingface import HuggingFaceEmbeddings
 
-from src.configs.parse_config import *
-from src.database.database import Database
+from supercode.src.configs.parse_config import *
+from supercode.src.database.database import Database
 
 
 __TOOLS = []

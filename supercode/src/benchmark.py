@@ -6,13 +6,13 @@ from datasets import load_dataset # load datasets from Hugging Face
 from human_eval.data import read_problems
 
 # my packages
-from src.agent import Agent
-from src.tools.code_processing import *
-from src.tools.tools import *
+from supercode.src.agent import Agent
+from supercode.src.tools.code_processing import *
+from supercode.src.tools.tools import *
 
 # importing variables from the config file
-from src.configs.parse_config import *
-from src.configs.system_prompts import baseline_prompt, benchmark_prompt
+from supercode.src.configs.parse_config import *
+from supercode.src.configs.system_prompts import baseline_prompt, benchmark_prompt
 
 
 # ---------------------------------------------------------------------------------------------- #

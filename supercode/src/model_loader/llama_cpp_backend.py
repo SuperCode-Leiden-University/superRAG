@@ -2,7 +2,7 @@ import os, pprint
 from typing import Optional, List, Dict, Any, Literal
 from llama_cpp import Llama
 
-from src.model_loader.base_backend import BaseLLM
+from supercode.src.model_loader.base_backend import BaseLLM
 
 class LlamaCpp_import_model(BaseLLM):
     def __init__(self,

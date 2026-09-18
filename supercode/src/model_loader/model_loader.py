@@ -1,10 +1,10 @@
 from typing import Literal, Optional, Dict, Any
 
-from src.configs.parse_config import *
-from src.model_loader.base_backend import BaseLLM
-from src.model_loader.transformers_backend import Transformers_import_model
-from src.model_loader.llama_cpp_backend import LlamaCpp_import_model
-# from src.model_loader.vllm_backend import vLLM_import_model
+from supercode.src.configs.parse_config import *
+from supercode.src.model_loader.base_backend import BaseLLM
+from supercode.src.model_loader.transformers_backend import Transformers_import_model
+from supercode.src.model_loader.llama_cpp_backend import LlamaCpp_import_model
+# from supercode.src.model_loader.vllm_backend import vLLM_import_model
 
 
 

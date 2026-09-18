@@ -5,9 +5,9 @@ import pprint
 import json
 from typing import get_type_hints
 
-from src.configs.parse_config import *
-import src.tools.tools  # do NOT remove this because the decorators have to run!
-from src.tools.tools import get_TOOLS
+from supercode.src.configs.parse_config import *
+from supercode.src.tools.tools import get_TOOLS
+import supercode.src.tools.tools  # do NOT remove this because the decorators have to run!
 
 ##################################################################################################################
 # functions for handling the tools

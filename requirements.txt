@@ -1,30 +1,32 @@
-torch
-matplotlib
-langchain-huggingface
-transformers
-langchain
-langchain-community
-langchain-text-splitters
-huggingface_hub
-faiss-cpu
-#faiss-gpu
-sentence-transformers
+# note: this file is a list of all libraries required, but uv installation is recommended!
+
 accelerate
-
+#autoawq # for the AWQ models --> no longer mainteined, adopted by llm-compressor
 bitsandbytes # for quantizing the model
-sinq # for quantizing the model
-#optimum # for the GPTQ models --> broken, internal incompatibilities with the new version of transformers
-#autoawq # for the AWQ models --> broken, internal incompatibilities with the new version of transformers
-#intel_extension_for_pytorch # for the AWQ models
-
-pyyaml # for the config file
-
-datasets
-lm-eval # for evaluating multiple benchmarks
+datasets # hugging face datasets
+faiss-cpu # database for RAG
+#faiss-gpu
+gemlite
+gptqmodel
+huggingface-hub
 human-eval # humaneval benchmark
-
-
-#networkx # general purpose
-#PyCG # static call graph
-#graphviz # general?
-#pycallgraph2 # for exact runtime call
+intel-extension-for-pytorch # for awq
+langchain # implementing RAG
+langchain-community
+langchain-huggingface
+langchain-text-splitters
+llama-cpp-python
+llmcompressor # for quantizing the model
+lm-eval # for evaluating multiple benchmarks
+matplotlib
+numpy
+optimum # for gptq models
+pip
+pyyaml # for the config file
+sentence-transformers
+sentencepiece
+sinq # for quantizing the model
+tiktoken
+torch
+transformers
+#vllm # requires cuda to be installed
