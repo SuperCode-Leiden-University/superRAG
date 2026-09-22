@@ -1,6 +1,6 @@
 ---
 # general
-backend: transformers # valid values: ["transformers", "llama_cpp", #"vLLM"]
+backend: llama_cpp # valid values: ["transformers", "llama_cpp", #"vLLM"]
 verbose: 0 # how much info is printed: 0=none, 1=little, 2=lots, 3=all
 
 model_iter: 1 # n of times the model loops over the same issue (1 = run only once), recommended setting is 1
@@ -30,10 +30,10 @@ coder_model:
         #google/codegemma-7b-it
 
         # --------------------------------------------------------------------------------------------
-        Qwen/Qwen2.5-Coder-1.5B-Instruct
+        #Qwen/Qwen2.5-Coder-1.5B-Instruct
         #Qwen/Qwen2.5-Coder-1.5B-Instruct-GPTQ-Int4
         #Qwen/Qwen2.5-Coder-1.5B-Instruct-AWQ
-        #Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF
+        Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF
 
         #mradermacher/hpc-coder-v2-6.7b-GGUF # HPC-coder, fine-tuned version of Deepseek Coder 6.7b
 
