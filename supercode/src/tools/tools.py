@@ -42,13 +42,14 @@ def get_TOOLS():
 # Define Tools
 
 # ----------------------------------------------------------------------------------------------
-@tool({
+metadata = {
         "provides": "numerical solution of a math equation",
         "requires": "math expression provided by the user",
         "tags": ["math", "calculator", "equation", "solve", "result"],
         "examples": ["what is the result of (8261+8257)/16290*545-46303?"],
         "req_flag": False
-})
+}
+@tool(metadata)
 def calculator(expr: str): # arguments should have a defined type
     """Calculate the result of a mathematical expression."""
     if verbose>0 : print(">> using the calculator")
@@ -73,14 +74,15 @@ def calculator(expr: str): # arguments should have a defined type
 
 
 # ----------------------------------------------------------------------------------------------
-@tool({
+metadata = {
         "provides": "path where the graph was saved",
         "requires": "math function provided by the user and range of the function provided by the user, "
                     "use [-10, +10] if no range is given",
         "tags": ["math", "graph", "plot", "figure"],
         "examples": ["plot y=3*x+2 for x in [0,5]"],
         "req_flag": False,
-})
+}
+@tool(metadata)
 def draw_graph(expr: str, x_range: list[float]):
     """Plot a function given its mathematical expression and x range."""
     if verbose>0 : print(">> using the draw_graph")
@@ -115,7 +117,7 @@ def draw_graph(expr: str, x_range: list[float]):
         return f"I couldn't draw the graph. An error occurred:\n{e}"
 
 # ----------------------------------------------------------------------------------------------
-@tool({
+metadata = {
         #"name": search_database.__name__,
         "provides": "chunks of documents with relevant information and metadata of the documents "
                     "(like source file and programming language)",
@@ -129,7 +131,8 @@ def draw_graph(expr: str, x_range: list[float]):
         "tags": ["search", "database", "codebase", "project"],
         "examples": ["find the file where I defined this function"],
         "req_flag": False,
-})
+}
+@tool(metadata)
 def search_database(query: str, n_retriv: int):
     """
         Retrieve relevant information from the codebase of the project, for example:
@@ -168,7 +171,7 @@ def search_database(query: str, n_retriv: int):
     return retriv_docs
 
 # ----------------------------------------------------------------------------------------------
-@tool({
+metadata = {
         #"name": run_megalinter.__name__,
         "provides": "report with errors, warnings and best practices suggestions for the codebase",
         "requires": "flavor from the user or programming language, which can be found by searching the database",
@@ -196,7 +199,8 @@ def search_database(query: str, n_retriv: int):
         - `terraform`: for TERRAFORM based projects;
         """,
         "req_flag": True,
-})
+}
+@tool(metadata)
 def run_megalinter(flavor: str):
     """Use a static analysis tool to find errors and warnings in the codebase."""
     if verbose>0 : print(">> using the run_megalinter")
@@ -223,13 +227,14 @@ def run_megalinter(flavor: str):
 
 
 # ----------------------------------------------------------------------------------------------
-@tool({
+metadata = {
         #"name": run_perf.__name__,
         "provides": "report with how long the code spends for each function and operation, which can be used to improve the code performances",
         "requires": "main file of the code, which can be found by searching the database",
         "tags": ["dynamic analysis", "performance", "bottleneck"],
         "examples": ""
-})
+}
+@tool(metadata)
 def run_perf(main_file: str):
     """Use a dynamic analysis tool to find bottlenecks in the codebase."""
     if verbose>0 : print(">> using the run_perf")
@@ -269,13 +274,15 @@ def run_perf(main_file: str):
     return logs
 
 
-@tool({
+# ----------------------------------------------------------------------------------------------
+metadata = {
         #"name": sandboxed_compiler.__name__,
         "provides": "runs the code and returns the compiler output",
         "requires": "function to be run",
         "tags": ["dynamic analysis", "errors", "warnings", "remarks"],
         "examples": "run the hello_word function to check if the output is correct"
-})
+}
+@tool(metadata)
 def sandboxed_compiler(function, test=None, entry_point=None):
     if verbose>0 : print(">> using the sandboxed_compiler")
     # this only checks if the code compiles (semantic correctness)
