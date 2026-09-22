@@ -57,18 +57,22 @@ def main():
     # ---------------------------------------------------------------------------------------------- #
     # ---------------------------------------------------------------------------------------------- #
     ##### IMPORTING THE MODEL
+    tot_start = datetime.now()
     model = Agent()
 
     if not benchmark_mode:
         ##### CHAT WITH THE MODEL
         while True:
             # ask the user to write a query
+
+            user_start = datetime.now()
             user_prompt = input(
                     "\nEnter your query (type 'q' or 'quit' to exit, 'reset' or 'r' to clear chat history) \n"
                     "----------------------------------------------------------------------------\n"
                     "## Ut: "
             )
             print(  "----------------------------------------------------------------------------\n")
+            user_end = datetime.now()
 
             # check if user wants to quit
             if user_prompt.lower() == "quit" or user_prompt.lower() == "q":
@@ -87,12 +91,17 @@ def main():
             end = datetime.now()
             if verbose>-1 : print(">> Time to Answer =", end-start)
 
+        tot_start += (user_end - user_start) # avoid counting the time the user takes to write the message
+
     else: # evaluating benchmark
         run_benchmark(
             model, bench_path,
             baseline=True, num_samples_per_task=5,
             check_single_task=False, i_task=102
         )
+
+    tot_end = datetime.now()
+    print(">> Total Time: ", tot_end-tot_start)
 
 if __name__ == '__main__':
     main()

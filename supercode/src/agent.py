@@ -1,12 +1,3 @@
-#from awq import AutoAWQForCausalLM
-#from transformers import SinqConfig
-
-"""
-- pipeline is for direct inference, with AutoModelForCausalLM, AutoTokenizer you load the raw model
-- BitsAndBytesConfig and awq are for quantization
-- TextIteratorStreamer and threading are for printing the answer as it is being generated
-"""
-
 from supercode.src.model_loader.model_loader import Model
 from supercode.src.tools.manage_tools import * # import all the tools
 from supercode.src.configs.system_prompts import *
@@ -14,7 +5,7 @@ from supercode.src.tools.tools import *
 from supercode.src.tools.code_processing import *
 
 """
-Roles:
+Standard/officially-used roles:
 - system: general instructions
 - user: the user
 - assistent: the model

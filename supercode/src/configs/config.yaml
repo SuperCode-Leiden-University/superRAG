@@ -1,14 +1,10 @@
 ---
 # general
-backend: transformers # valid values: ["transformers", "llama_cpp", "vLLM"]
+backend: transformers # valid values: ["transformers", "llama_cpp", #"vLLM"]
 verbose: 0 # how much info is printed: 0=none, 1=little, 2=lots, 3=all
 
 model_iter: 1 # n of times the model loops over the same issue (1 = run only once), recommended setting is 1
 tools_iter: 0 # n steps for choosing tools (0 = no tools, 1 = all tools in one go), recommended setting is 2-3
-
-#tool_selection: False # use the same model either to choose which tool to use or to generate an answer
-#n_revise: 1 # n of extra steps for choosing tools, useful if tools have requirements that need info from other tools
-# n_revise=0 means call all the tools in one go, n_revise=1 means call the tools in two steps
 
 # ---------------------------------------------------------------------------------------------------------------------
 # NOTE: the model can be loaded as quantized only if someone published the quantized version (see file's extensions):
@@ -23,7 +19,7 @@ tools_iter: 0 # n steps for choosing tools (0 = no tools, 1 = all tools in one g
 #     - model.gguf (NOT compatible with Transformers!)
 
 # coder assistant
-model:
+coder_model:
     model_id: # model ID from HuggingFace, size for Qwen2.5: 32B, 14B, 7B, 3B, 1.5B, 0.5B,
         # file size (for 1.5B) is: GPTQ-Int4 (1.16 GB) ~ AWQ (1.63 GB) < full (3.1 GB) < GGUF (9.76 GB)
         # --------------------------------------------------------------------------------------------
@@ -43,25 +39,28 @@ model:
 
     quant_type: pretrained # valid values: ["pretrained", "gguf", "compressor", "bits", "sinq"] --> check file formats!!!
     # SINQ doesn't work!!! prequantized AWQ and GPTQ models can be loaded using pretrained
+    gen_mode: multisample # valid values: ["multisample", "stream"]
+    # either pass the arguments for multi-sampling or enable streaming (show the tokens as they are generated)
+
     gen_args: # I'm using parameter names from transformers. NOTE: parameters are called differently in llama.cpp
         temperature: 0.8 # 0 = always select the most likely word; 1 = unmodified logit distribution; >1 = more and more random
         max_new_tokens: 6000 # max number of tokens that can be generated
-
-        num_return_sequences: 3 # n of samples per input
-        do_sample: True,  # enable sampling for diversity
-        num_beams: 5 # explore multiple sequences in parallel (then select the top ones), must be larger or equal to num_return_sequences
-        early_stopping: True # stop when all beams have finished
-        no_repeat_ngram_size: 2 # avoid repeating n-grams
-        #max_length=100,
-
+        # Note: max_length = max total tokens (incl input and output), but it is going to be deprecated soon
         #top-p: 0.9 # this is a confidence-adaptive filter: threshold based on the CUMULATIVE prob of the tokens
         #presence_penalty: 0.3 # positive values penalize repeating sentences and words (range [-2,+2], advisable to keep in [-1,+1] for good performances)
         #frequency_penalty: 0.2 # high to avoid repetition of specific words (presence is more about having new topics)
         # Reminder that code from LLMs has been shown to be more repetitive than human's, so it makes sense to penalize it a bit!
 
+    multi_sampl_args: # not supported in llama.cpp
+        num_return_sequences: 5 # n of samples per input
+        do_sample: True,  # enable sampling for diversity, default is false to use greedy decoder
+        num_beams: 5 # explore multiple sequences in parallel (then select the top ones), must be larger or equal to num_return_sequences
+        early_stopping: True # stop when all beams have finished
+        no_repeat_ngram_size: 2 # avoid repeating n-grams
+
 
 # thinking model for choosing tools (good at extrapolating logic issues)
-thinking_model:
+think_model:
     model_id: # model ID from HuggingFace
         Qwen/Qwen3-0.6B # includes thinking mode by default
         #Qwen/Qwen3-0.6B-GGUF # includes thinking mode by default
@@ -70,6 +69,7 @@ thinking_model:
         #Qwen/Qwen3-4B-Thinking-2507
         #Qwen/Qwen3.5-4B # DOESN'T WORK??? # includes thinking mode by default
     quant_type: pretrained
+    gen_mode: stream
     gen_args:
         temperature: 0.4 # 0 = always select the most likely word, 1 = random
         max_new_tokens: 6000 # max number of tokens that can be generated

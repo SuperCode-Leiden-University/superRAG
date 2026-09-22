@@ -17,27 +17,23 @@ backend = vars["backend"] # which backend is used: ["transformers", "llama-cpp",
 
 model_iter = vars["model_iter"]
 tools_iter = vars["tools_iter"]
-#tool_selection = vars["tool_selection"]
-#n_revise = vars["n_revise"]
 
 # ----------------------------------------------------------------------------------------------
 # chat assistant model
-coder_model_args     = vars["model"]
-coder_model_id       = vars["model"]["model_id"] # model ID from HuggingFace
-coder_quant_type     = vars["model"]["quant_type"] # valid values: ("full", "bits", "GPTQ") --> check file formats!!!
-coder_gen_args       = vars["model"]["gen_args"]
-# coder_temperature    = vars["model"]["gen_args"]["temperature"] # 0 = always select the most likely word, 1 = random
-# coder_max_new_tokens = vars["model"]["gen_args"]["max_new_tokens"] # max number of tokens that can be generated
-
+coder_model_args       = vars["coder_model"]
+coder_model_id         = vars["coder_model"]["model_id"] # model ID from HuggingFace
+coder_quant_type       = vars["coder_model"]["quant_type"] # valid values: ("full", "bits", "GPTQ") --> check file formats!!!
+coder_gen_mode         = vars["coder_model"]["gen_mode"] # either "multisample" or "stream"
+coder_gen_args         = vars["coder_model"]["gen_args"]
+coder_multi_sampl_args = vars["coder_model"]["multi_sampl_args"]
 
 # ----------------------------------------------------------------------------------------------
 # thinking model for selecting tools
-think_model_args     = vars["thinking_model"]
-think_model_id       = vars["thinking_model"]["model_id"] # model ID from HuggingFace
-think_quant_type     = vars["thinking_model"]["quant_type"] # valid values: ("full", "bits", "GPTQ") --> check file formats!!!
-think_gen_args       = vars["thinking_model"]["gen_args"]
-# think_temperature    = vars["thinking_model"]["gen_args"]["temperature"] # 0 = always select the most likely word, 1 = random
-# think_max_new_tokens = vars["thinking_model"]["gen_args"]["max_new_tokens"] # max number of tokens that can be generated
+think_model_args       = vars["think_model"]
+think_model_id         = vars["think_model"]["model_id"] # model ID from HuggingFace
+think_quant_type       = vars["think_model"]["quant_type"] # valid values: ("full", "bits", "GPTQ") --> check file formats!!!
+think_gen_mode         = vars["think_model"]["gen_mode"] # either "multisample" or "stream"
+think_gen_args         = vars["think_model"]["gen_args"]
 
 # ----------------------------------------------------------------------------------------------
 # embedding model for building the database (for RAG)

@@ -1,14 +1,20 @@
 from typing import Optional, List, Dict, Any, Literal
 import torch, threading, pprint
-from transformers import AutoModel, AutoModelForCausalLM, AutoTokenizer, TextIteratorStreamer, BitsAndBytesConfig
+from transformers import AutoModel, AutoModelForCausalLM, AutoTokenizer, TextIteratorStreamer, BitsAndBytesConfig, SinqConfig
 from compressed_tensors.offload import dispatch_model
 from llmcompressor import oneshot
 from llmcompressor.modifiers.quantization import QuantizationModifier
 
+"""
+- pipeline is for direct inference, with AutoModelForCausalLM, AutoTokenizer you load the raw model
+- BitsAndBytesConfig and awq are for quantization
+- TextIteratorStreamer and threading are for printing the answer as it is being generated
+"""
+
 # importing my functions from other files
 from supercode.src.configs.parse_config import *  # model's name and parameters
-from supercode.src.configs.system_prompts import *  # prompts
-from supercode.src.tools.code_processing import *  # tools
+# from supercode.src.configs.system_prompts import *  # prompts
+# from supercode.src.tools.code_processing import *  # tools
 from supercode.src.model_loader.base_backend import BaseLLM
 
 
@@ -17,14 +23,16 @@ class Transformers_import_model(BaseLLM):
     def __init__(self,
                  model_id: str,
                  quant_type: Literal["pretrained", "bits", "compressor", "sinq"],
-                 # specify that only these values are allowed
-                 gen_args: Dict[str, Any] # other settings, such as temperature and max tokens (default vals in config)
+                 gen_mode: Literal["multisample", "stream"], # Literal specify which values are allowed
+                 gen_args: Dict[str, Any], # other settings, such as temperature and max tokens (default vals in config)
+                 multi_sampl_args: Optional[Dict[str, Any]], # optional for multi-sampling
                  ):
         print(">> loading with transformers")
         ##### model's name and parameters are saved in the config
         self.model_id = model_id  # name of the model from Hugging Face
-        self.quant_type = quant_type
+        self.gen_mode = gen_mode
         self.gen_args = gen_args  # other settings, such as num_return_sequences, temperature and max tokens (default vals in config)
+        if gen_mode == "multisample": self.multi_sampl_args = multi_sampl_args
 
         # ----------------------------------------------------------------------------------------------
         ##### IMPORTING THE MODEL
@@ -72,7 +80,7 @@ class Transformers_import_model(BaseLLM):
             oneshot(model=self.model, recipe=recipe)
             dispatch_model(self.model)
         # quantizing a model with sinq (no finetuning)
-        # if self.quant_type == "sinq": # DOESN'T WORK!!!
+        # if quant_type == "sinq": # DOESN'T WORK!!!
         #     if verbose > 1: print(">> quantizing model with SINQ")
         #     quant_config = SinqConfig(
         #         nbits=4,
@@ -124,55 +132,57 @@ class Transformers_import_model(BaseLLM):
         """Generate a model response given messages and optional feedback from tools."""
         inputs = self.apply_chat_template(messages, tools=tools)
 
-        """
         # streamer and threads are needed to see the response while it is being generated
-        streamer = TextIteratorStreamer(
-            self.tokenizer,
-            skip_prompt=True,
-            skip_special_tokens=True
-        )
-        # use a separate thread for generation and streaming
-        def generate():
-            self.model.generate(
-                **inputs,
-                **self.gen_args, # config such as temperature, max_new_tokens, etc...
-                streamer=streamer,
-                # **kwargs # override default generation arguments
+        if self.gen_mode == "stream":
+            streamer = TextIteratorStreamer(
+                self.tokenizer,
+                skip_prompt=True,
+                skip_special_tokens=True
             )
-        # begin generation thread
-        thread = threading.Thread(target=generate)
-        thread.start()
-        # collect streamed responses
-        response = ""
-        for token in streamer:
-            print(token, end="", flush=True)
-            response += token
-        print()
-        """
-
-
+            # use a separate thread for generation and streaming
+            def generate():
+                self.model.generate(
+                    **inputs,
+                    **self.gen_args, # config such as temperature, max_new_tokens, etc...
+                    streamer=streamer,
+                    # **kwargs # override default generation arguments
+                )
+            # begin generation thread
+            thread = threading.Thread(target=generate)
+            thread.start()
+            # collect streamed responses
+            response = ""
+            for token in streamer:
+                print(token, end="", flush=True)
+                response += token
+            print()
 
         # Generate multiple sequences from the single prompt
-        input_length = inputs.input_ids.shape[1]
-        with torch.no_grad():
-            # this is a tensor with n elements, where n = num_return_sequences
-            outputs = self.model.generate(
-                **inputs,
-                pad_token_id=self.tokenizer.eos_token_id,
-                **self.gen_args, # config such as temperature, max_new_tokens, etc...
-                # **kwargs # override default generation arguments
+        elif self.gen_mode == "multisample":
+            input_length = inputs.input_ids.shape[1]
+            with torch.no_grad():
+                # this is a tensor with n elements, where n = num_return_sequences
+                outputs = self.model.generate(
+                    **inputs,
+                    pad_token_id=self.tokenizer.eos_token_id,
+                    **self.gen_args, # config such as temperature, max_new_tokens, etc...
+                    **self.multi_sampl_args,
+                    # **kwargs # override default generation arguments
+                )
+
+            # Extract the generated tokens (skip the input prompt)
+            generated_ids = outputs[
+                :, #i*n_samples+i : i*n_samples+i+1,
+                input_length :
+            ]
+
+            # Decode the generated part only
+            response = self.tokenizer.decode(
+                generated_ids,
+                skip_prompt=True,
+                skip_special_tokens=True
             )
 
-        # Extract the generated tokens (skip the input prompt)
-        generated_ids = outputs[
-            :, #i*n_samples+i : i*n_samples+i+1,
-            input_length :
-        ]
+        else: raise ValueError(f"Unsupported generation mode: {self.gen_mode}")
 
-        # Decode the generated part only
-        responses = self.tokenizer.decode(
-            generated_ids,
-            skip_prompt=True,
-            skip_special_tokens=True
-        )
-        return responses
+        return response

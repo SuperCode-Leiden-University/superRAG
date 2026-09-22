@@ -2,13 +2,18 @@ import os, pprint
 from typing import Optional, List, Dict, Any, Literal
 from llama_cpp import Llama
 
+# importing my functions from other files
+from supercode.src.configs.parse_config import *  # model's name and parameters
 from supercode.src.model_loader.base_backend import BaseLLM
 
 class LlamaCpp_import_model(BaseLLM):
     def __init__(self,
                  model_id: str,
-                 quant_type: Literal["pretrained", "gguf", "bits", "compressor", "sinq"], # specify that only these values are allowed
-                 gen_args: Dict[str, Any], # other settings, such as temperature and max tokens (default vals in config)
+                 quant_type: Literal["pretrained", "bits", "compressor", "sinq"],
+                 gen_mode: Literal["multisample", "stream"],  # Literal specify which values are allowed
+                 gen_args: Dict[str, Any],
+                 # other settings, such as temperature and max tokens (default vals in config)
+                 multi_sampl_args: Optional[Dict[str, Any]],  # optional for multi-sampling
                  # n_ctx: int = 2048, # context window
                  # n_gpu_layers: int = 0,  # 0 = CPU only
                  # chat_format: str = "llama-2",  # e.g., "llama-2", "chatml", "zephyr"
@@ -17,8 +22,9 @@ class LlamaCpp_import_model(BaseLLM):
         print(">> loading with llama.cpp")
         ##### model's name and parameters are saved in the config
         self.model_id = model_id  # name of the model from Hugging Face
-        self.quant_type = quant_type
-        self.gen_args = gen_args  # other settings, such as temperature and max tokens (default vals in config)
+        self.gen_mode = gen_mode
+        self.gen_args = gen_args  # other settings, such as num_return_sequences, temperature and max tokens (default vals in config)
+        if gen_mode == "multisample": self.multi_sampl_args = multi_sampl_args
 
         # llama has different key names from transformers, so I need to rename them first:
         keys = self.gen_args.keys()
@@ -34,6 +40,9 @@ class LlamaCpp_import_model(BaseLLM):
         #     embedding=False,
         #     **kwargs
         # )
+        if "gguf" not in model_id.lower():
+            raise ValueError(f"Model is not GGUF: {model_id}")
+
         self.model = Llama.from_pretrained(
             repo_id=self.model_id,
             filename="*8_0.gguf", # can be "*q8_0.gguf" or "*Q8_0.gguf"
@@ -62,13 +71,30 @@ class LlamaCpp_import_model(BaseLLM):
         # Example: if tools are provided, prepend system message or tool schema
 
         # Call model chat completion
-        completion = self.model.create_chat_completion(
-            messages=messages,
-            tools=tools,
-            **self.gen_args, # default param
-            # **kwargs # for changing the param at each call
-        )
-        response = completion["choices"][0]["message"]["content"]
+        if self.gen_mode == "stream":
+            completion = self.model.create_chat_completion(
+                messages=messages,
+                tools=tools,
+                #stream=True, # to see tokens while they are generated
+                **self.gen_args, # default param
+                # **kwargs # for changing the param at each call
+            )
+            response = completion["choices"][0]["message"]["content"]
+
+        elif self.gen_mode == "multisample":
+            n_samples = self.multi_sampl_args["num_return_sequences"]
+            response = []
+            for i in range(n_samples):
+                completion = self.model.create_chat_completion(
+                    messages=messages,
+                    seed=-1, # random seed
+                    **self.gen_args,  # includes temperature, top_k, etc.
+                    stream=False,  # disable stream for batch processing
+                )
+                response.append(completion["choices"][0]["message"]["content"])
+
+        else: raise ValueError(f"Unsupported generation mode: {self.gen_mode}")
+
         pprint.pprint(completion)
         """
         completion = {

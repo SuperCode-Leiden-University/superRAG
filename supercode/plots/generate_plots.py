@@ -179,3 +179,41 @@ fig2.subplots_adjust(wspace=0)  # adjust space between Axes
 #plt.show()
 plt.savefig("gain_plot.pdf", dpi=500)
 
+
+
+
+
+#########################################################################################################
+# Evolution scatterplot with arrows
+"""
+# Example data
+baseline = np.array([[x, y], ...]) # Baseline datapoints coordinates
+improved = np.array([[x, y], ...]) # Improved datapoints coordinates
+
+# Create figure and axis
+fig, ax = plt.subplots(figsize=(8, 6))
+
+# Plot baseline and improved points
+ax.scatter(baseline[:, 0], baseline[:, 1], color='blue', label='Baseline', s=100)
+ax.scatter(improved[:, 0], improved[:, 1], color='green', label='Improved', s=100)
+
+# Connect points with arrows
+for i in range(len(baseline)):
+    ax.annotate(
+        '',
+        xy=(improved[i, 0], improved[i, 1]),  # End point (improved)
+        xytext=(baseline[i, 0], baseline[i, 1]),  # Start point (baseline)
+        arrowprops=dict(arrowstyle='->', color='red', lw=1.5, shrinkA=5, shrinkB=5), # shrinkA/B is to avoid overlaps
+    )
+
+# Add labels and legend
+ax.set_xlabel('X-axis')
+ax.set_ylabel('Y-axis')
+ax.set_title('Improvement from Baseline to Improved (with Arrows)')
+ax.legend()
+ax.grid(True)
+
+# Show plot
+plt.tight_layout()
+plt.show()
+"""
