@@ -95,7 +95,7 @@ class LlamaCpp_import_model(BaseLLM):
 
         else: raise ValueError(f"Unsupported generation mode: {self.gen_mode}")
 
-        pprint.pprint(completion)
+        #pprint.pprint(completion)
         """
         completion = {
             'id': 'chatcmpl-7b3f3ca1-1367-4736-9044-65cbf2d9c437', 
@@ -123,7 +123,7 @@ class LlamaCpp_import_model(BaseLLM):
         #     "usage": response.get("usage", {}),
         # } # response= {'content': '', 'tool_calls': [], 'usage': {'prompt_tokens': 166, 'completion_tokens': 2, 'total_tokens': 168}}
 
-        #print(response)
+        print(response)
         return response
 
     def get_tokenizer(self):

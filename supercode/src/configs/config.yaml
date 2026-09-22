@@ -1,6 +1,6 @@
 ---
 # general
-backend: llama_cpp # valid values: ["transformers", "llama_cpp", #"vLLM"]
+backend: transformers # valid values: ["transformers", "llama_cpp", #"vLLM"]
 verbose: 0 # how much info is printed: 0=none, 1=little, 2=lots, 3=all
 
 model_iter: 1 # n of times the model loops over the same issue (1 = run only once), recommended setting is 1
@@ -30,10 +30,10 @@ coder_model:
         #google/codegemma-7b-it
 
         # --------------------------------------------------------------------------------------------
-        #Qwen/Qwen2.5-Coder-1.5B-Instruct
+        Qwen/Qwen2.5-Coder-1.5B-Instruct
         #Qwen/Qwen2.5-Coder-1.5B-Instruct-GPTQ-Int4
         #Qwen/Qwen2.5-Coder-1.5B-Instruct-AWQ
-        Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF
+        #Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF
 
         #mradermacher/hpc-coder-v2-6.7b-GGUF # HPC-coder, fine-tuned version of Deepseek Coder 6.7b
 
@@ -52,11 +52,12 @@ coder_model:
         # Reminder that code from LLMs has been shown to be more repetitive than human's, so it makes sense to penalize it a bit!
 
     multi_sampl_args: # not supported in llama.cpp
-        num_return_sequences: 5 # n of samples per input
+        num_return_sequences: 5 # n of samples per input (batching)
         do_sample: True,  # enable sampling for diversity, default is false to use greedy decoder
-        num_beams: 5 # explore multiple sequences in parallel (then select the top ones), must be larger or equal to num_return_sequences
-        early_stopping: True # stop when all beams have finished
-        no_repeat_ngram_size: 2 # avoid repeating n-grams
+        # IMPORTANT: beam search and do_sample are mutually exclusive logics, sampling is stochastic but ensures more diversity
+        #num_beams: 5 # explore multiple sequences in parallel (then select the top ones), must be larger or equal to num_return_sequences
+        #early_stopping: True # stop when all beams have finished
+        #no_repeat_ngram_size: 2 # avoid repeating n-grams
 
 
 # thinking model for choosing tools (good at extrapolating logic issues)
