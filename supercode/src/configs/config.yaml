@@ -39,7 +39,7 @@ coder_model:
 
     quant_type: pretrained # valid values: ["pretrained", "gguf", "compressor", "bits", "sinq"] --> check file formats!!!
     # SINQ doesn't work!!! prequantized AWQ and GPTQ models can be loaded using pretrained
-    gen_mode: stream # valid values: ["multisample", "stream"]
+    gen_mode: multisample # valid values: ["multisample", "stream"]
     # either pass the arguments for multi-sampling or enable streaming (show the tokens as they are generated)
 
     gen_args: # I'm using parameter names from transformers. NOTE: parameters are called differently in llama.cpp
