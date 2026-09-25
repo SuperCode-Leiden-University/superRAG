@@ -29,12 +29,14 @@ You must explain your reasoning step-by-step for choosing each tool and comply t
 4. Built a list of JSON objects (this must be formatted as: ```json [...] ```) with the tools and their arguments (reference the schemas to check the required argument for each tool), you can include multiple tools if needed, or return an empty list if none of the tools fits.
 
 Additional instructions:
+- Comments are NOT allowed inside JSON objects, you may add comments before or after the json markers (```json [...] ```).
+- If the argument of a tool is unknown, you must not try to guess, instead you should first try to find the value of the unknown argument by calling another tool.
+- If you successfully obtained the result from a tool, you don't need to call it again if the arguments are the same.
+
+Tool-specific patterns and instructions:
 - When calling 'run_megalinter' the flavor should align with the programming language unless the user specify a specific flavor. You must NEVER try to guess the flavor and must NEVER assume the programming language.
 - When calling 'search_database' you must first determine the level of complexity of the query (multi-step, broad or generic questions are considered complex, single-step or straightforward queries are considered easy) and determine the number of retrieved documents 'n_retriev' based on that (refer to the schema).
-- Comments are NOT allowed inside JSON objects, you may add comments before or after the json markers (```json [...] ```).
 - If you see the following pattern: 'var_name'=(math expression), than you need to call the calculator to solve (math expression) than replace 'var_name' with (result of the math expression) before continuing.
-- If you successfully obtained the result from a tool, you don't need to call it again if the arguments are the same.
-- If a tool has a requirement that was not fulfilled yet, do not try to guess the value: you must use a placeholder
 
 Example: if the static analysis tool is relevant, check if the user provided a programming language or a flavor, if not than you need to first search the database to find out the programming language, than choose the flavor that matches the programming language.
 In this case the json object will include the 'search_database' tool before the 'run_megalinter' tool. """
@@ -46,13 +48,7 @@ tool_manager_revise = "Use the tools results to improve your previous answer and
 
 
 ########################################################################################################################
-# complete prompt for the debugger model
-debugger_prompt = """
-You are a debugger assistant.
-Your job is to understand the logic of the code and plan how the code can be improved .
-Keep your answer short and avoid repeating the same concept more than once.
-"""
-debugger_prequery = ""
+# other prompts
 compiler_prompt = """There is an error in the code (examples of errors: incorrect logic, syntax mistakes or the expected result of the test cases could be incorrect). 
 Start by analyzing the error message, find the line that generated the error and follow the logic of the code step-by-step to understand why the code didn't produce the correct result.
 Finally summarize why the code failed and change the code to fix the issue.

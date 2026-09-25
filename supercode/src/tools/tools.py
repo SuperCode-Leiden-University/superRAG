@@ -2,6 +2,7 @@ import re, os, subprocess, tempfile
 import matplotlib.pyplot as plt
 import numpy as np
 from datetime import datetime
+from typing import Optional, List, Dict, Any, Literal
 from langchain_huggingface import HuggingFaceEmbeddings
 
 from supercode.src.configs.parse_config import *
@@ -20,13 +21,13 @@ def tool(metadata: dict):
         func.__is_tool__ = True
 
         func._tool_metadata  = {
-            # "name": None,
+            # use the values above if metadata doesn't set a new value
+            # "name": None, # unnecessary
             "provides": None,
             "requires": None,
             "tags": None,
             "examples": None,
-            "req_flag": False,
-            **metadata # use the values above if metadata doesn't set a new value
+            **metadata
         }
 
         __TOOLS.append(func)
@@ -43,16 +44,15 @@ def get_TOOLS():
 
 # ----------------------------------------------------------------------------------------------
 metadata = {
-        "provides": "numerical solution of a math equation",
+        "provides": "numerical solution of a simple math equation",
         "requires": "math expression provided by the user",
         "tags": ["math", "calculator", "equation", "solve", "result"],
         "examples": ["what is the result of (8261+8257)/16290*545-46303?"],
-        "req_flag": False
 }
 @tool(metadata)
 def calculator(expr: str): # arguments should have a defined type
     """Calculate the result of a mathematical expression."""
-    if verbose>0 : print(">> using the calculator")
+    if verbose>0 : print(">> using tool: calculator")
     # replace '−' (U+2212) with '-' (U+002d), they look similar with this font, but the first one causes an error
     expr.replace("−", "-")
 
@@ -76,16 +76,14 @@ def calculator(expr: str): # arguments should have a defined type
 # ----------------------------------------------------------------------------------------------
 metadata = {
         "provides": "path where the graph was saved",
-        "requires": "math function provided by the user and range of the function provided by the user, "
-                    "use [-10, +10] if no range is given",
+        "requires": "math function provided by the user and range of the function provided by the user, use [-10, +10] if no range is given",
         "tags": ["math", "graph", "plot", "figure"],
         "examples": ["plot y=3*x+2 for x in [0,5]"],
-        "req_flag": False,
 }
 @tool(metadata)
-def draw_graph(expr: str, x_range: list[float]):
+def draw_graph(expr: str, x_range: List[float]):
     """Plot a function given its mathematical expression and x range."""
-    if verbose>0 : print(">> using the draw_graph")
+    if verbose>0 : print(">> using tool: draw_graph")
     try:
         if verbose>1 : print(">> converting the function")
         # replace '−' (U+2212) with '-' (U+002d), they look similar with this font, but the first one causes an error
@@ -119,8 +117,7 @@ def draw_graph(expr: str, x_range: list[float]):
 # ----------------------------------------------------------------------------------------------
 metadata = {
         #"name": search_database.__name__,
-        "provides": "chunks of documents with relevant information and metadata of the documents "
-                    "(like source file and programming language)",
+        "provides": "chunks of documents with relevant information and metadata of the documents (like source file and programming language)",
         "requires": """
         query for searching the database and the number of retrieved docs.
         n_retriev should be: 
@@ -130,7 +127,6 @@ metadata = {
         """,
         "tags": ["search", "database", "codebase", "project"],
         "examples": ["find the file where I defined this function"],
-        "req_flag": False,
 }
 @tool(metadata)
 def search_database(query: str, n_retriv: int):
@@ -140,14 +136,14 @@ def search_database(query: str, n_retriv: int):
         - functions writen in the code;
         - what the code does and how.
     """
-    if verbose>0 : print(">> using the search_database")
+    if verbose>0 : print(">> using tool: search_database")
     if n_retriv < 1: return "No document has been retrieved"
     try:
         # "emb_model" is for creating the embeddings for the vector database (for RAG)
         emb_model = HuggingFaceEmbeddings(model_name=emb_model_id)
 
         start = datetime.now()
-        # this will first check if the database exists and if it needs to be updated
+        # this will automatically check if the database exists and if it needs to be updated
         # then either load or create the database
         db = Database(emb_model, docs_dir, db_dir, update_db).load()
         end = datetime.now()
@@ -156,11 +152,9 @@ def search_database(query: str, n_retriv: int):
         if verbose>0 : print(">> searching the database")
         start = datetime.now()
         # find the relevant docs
-
         retriv_docs = db.similarity_search(query, k=n_retriv) # find the k most relevant documents to the query
         if verbose>1 : print(">> n_retriv_docs =", len(retriv_docs), "=", n_retriv)
         #if verbose>2 : print("most relevant doc\n", retriv_docs[0])
-
         end = datetime.now()
         if verbose>0 : print(">> Time to Retrieval =", end-start)
 
@@ -176,37 +170,39 @@ metadata = {
         "provides": "report with errors, warnings and best practices suggestions for the codebase",
         "requires": "flavor from the user or programming language, which can be found by searching the database",
         "tags": ["static analysis", "errors", "warnings"],
-        "examples": """
-        Available flavors are:
-        - `all`: to include all possible linters;
-        - `c_cpp`: for pure C/C++ projects;
-        - `ci_light`: for CI items (Dockerfile, Jenkinsfile, JSON or YAML schemas, XML);
-        - `cupcake`: for the most commonly used languages;
-        - `documentation`: for documentation projects;
-        - `dotnet`: for C, C++, C# or VB based projects;
-        - `dotnetweb`: for C, C++, C# or VB based projects with JAVASCRIPT or TYPESCRIPT;
-        - `formatters`: contains only formatters;
-        - `go`: for GO based projects;
-        - `java`: for JAVA based projects;
-        - `javascript`: for JAVASCRIPT or TYPESCRIPT based projects;
-        - `php`: for PHP based projects;
-        - `python`: for PYTHON based projects;
-        - `ruby`: for RUBY based projects;
-        - `rust`: for RUST based projects;
-        - `salesforce`: for Salesforce based projects;
-        - `security`: for security;
-        - `swift`: for SWIFT based projects;
-        - `terraform`: for TERRAFORM based projects;
-        """,
-        "req_flag": True,
+        "examples": ["check the code for errors", "check if the code follows the best practices"],
 }
+flavors = ['all', 'c_cpp', 'ci_light', 'cupcake', 'documentation', 'dotnet', 'dotnetweb', 'formatters', 'go', 'java', 'javascript', 'php', 'python', 'ruby', 'rust', 'salesforce', 'security', 'swift', 'terraform']
 @tool(metadata)
-def run_megalinter(flavor: str):
-    """Use a static analysis tool to find errors and warnings in the codebase."""
-    if verbose>0 : print(">> using the run_megalinter")
+def run_megalinter(flavor: Literal['all', 'c_cpp', 'ci_light', 'cupcake', 'documentation', 'dotnet', 'dotnetweb', 'formatters', 'go', 'java', 'javascript', 'php', 'python', 'ruby', 'rust', 'salesforce', 'security', 'swift', 'terraform']):
+    """Use a static analysis tool to find errors and warnings in the codebase.
+    
+    Available flavors are:
+    - `all`: to include all possible linters;
+    - `c_cpp`: for pure C/C++ projects;
+    - `ci_light`: for CI items (Dockerfile, Jenkinsfile, JSON or YAML schemas, XML);
+    - `cupcake`: for the most commonly used languages;
+    - `documentation`: for documentation projects;
+    - `dotnet`: for C, C++, C# or VB based projects;
+    - `dotnetweb`: for C, C++, C# or VB based projects with JAVASCRIPT or TYPESCRIPT;
+    - `formatters`: contains only formatters;
+    - `go`: for GO based projects;
+    - `java`: for JAVA based projects;
+    - `javascript`: for JAVASCRIPT or TYPESCRIPT based projects;
+    - `php`: for PHP based projects;
+    - `python`: for PYTHON based projects;
+    - `ruby`: for RUBY based projects;
+    - `rust`: for RUST based projects;
+    - `salesforce`: for Salesforce based projects;
+    - `security`: for security;
+    - `swift`: for SWIFT based projects;
+    - `terraform`: for TERRAFORM based projects;
+    """
+    
+    if verbose>0 : print(">> using tool: run_megalinter")
     path = tools_dir+"/megalinter-reports/"
     try:
-        flavors = ['all', 'c_cpp', 'ci_light', 'cupcake', 'documentation', 'dotnet', 'dotnetweb', 'formatters', 'go', 'java', 'javascript', 'php', 'python', 'ruby', 'rust', 'salesforce', 'security', 'swift', 'terraform']
+
         if flavor not in flavors : # some are more likely to be misnamed by the LLM, this is a quick and dirty fix
             if flavor=="cpp" or flavor=="c" : flavor="c_cpp"
             if flavor in ["ci", "docker", "jenkins", "json", "yaml", "xml"] : flavor="ci_light"
@@ -237,7 +233,7 @@ metadata = {
 @tool(metadata)
 def run_perf(main_file: str):
     """Use a dynamic analysis tool to find bottlenecks in the codebase."""
-    if verbose>0 : print(">> using the run_perf")
+    if verbose>0 : print(">> using tool: run_perf")
     exe_name = "myprog"
     path = tools_dir+"/perf-reports"
     os.makedirs(path, exist_ok=True)
@@ -280,11 +276,11 @@ metadata = {
         "provides": "runs the code and returns the compiler output",
         "requires": "function to be run",
         "tags": ["dynamic analysis", "errors", "warnings", "remarks"],
-        "examples": "run the hello_word function to check if the output is correct"
+        "examples": "run the code to check if the output is correct"
 }
 @tool(metadata)
 def sandboxed_compiler(function, test=None, entry_point=None):
-    if verbose>0 : print(">> using the sandboxed_compiler")
+    if verbose>0 : print(">> using tool: sandboxed_compiler")
     # this only checks if the code compiles (semantic correctness)
     """
     with tempfile.NamedTemporaryFile("w", suffix=".py", delete=False) as tmp:
@@ -321,7 +317,7 @@ def sandboxed_compiler(function, test=None, entry_point=None):
             timeout=10 # seconds
         )
         if verbose>1 : print(">> command run successfully\n", result)
-        return result.returncode, "printed_output='" + result.stdout + "'\nerrors='" + result.stderr + "'"
+        return result.returncode, "printed_output=\'" + result.stdout + "\', \nerrors=\'" + result.stderr + "\'"
     except Exception as e:
         print("Error in sandboxed_compiler tool:", e)
         return 1, "Error in sandboxed_compiler tool:"+str(e)

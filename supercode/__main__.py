@@ -29,16 +29,15 @@ options = "hb:"
 long_options = ["help", "benchmark="]
 # in long_options, "name=" means the flag expects an argument
 
-benchmark_mode = False # default
 try:
     arguments, values = getopt.getopt(args, options, long_options)
     for currentArg, currentVal in arguments:
         if currentArg in ("-h", "--help"):
-            print("Activate coding agent.\nPass '-b' to evaluate on benchmark.\nPress 'q' to quit.")
-        elif currentArg in ("-b", "--benchmark"):
-            benchmark_mode = True
-            bench_path = currentVal # example: "openai/openai_humaneval"
-            print("Evaluating benchmark:", currentVal)
+            print("\nActivate coding agent.\nPass '-b' to evaluate on benchmark.\nPress 'q' to quit.\n")
+        if currentArg in ("-b", "--benchmark"):
+            # override the default in config
+            benchmark_path = currentVal # example: "openai/openai_humaneval"
+            print(f"\nEvaluating benchmark: {currentVal}\n")
 except getopt.error as err:
     print(str(err))
 
@@ -60,7 +59,14 @@ def main():
     tot_start = datetime.now()
     model = Agent()
 
-    if not benchmark_mode:
+    if benchmark_path is not None: # evaluating benchmark, given from terminal or default in config
+        run_benchmark(
+            model, benchmark_path,
+            baseline=True, # check the baseline model, then use feedback from tools
+            check_single_task=102, # check a specific task
+        )
+
+    else:
         ##### CHAT WITH THE MODEL
         while True:
             # ask the user to write a query
@@ -93,12 +99,6 @@ def main():
 
         tot_start += (user_end - user_start) # avoid counting the time the user takes to write the message
 
-    else: # evaluating benchmark
-        run_benchmark(
-            model, bench_path,
-            baseline=True, num_samples_per_task=5,
-            check_single_task=False, i_task=102
-        )
 
     tot_end = datetime.now()
     print(">> Total Time: ", tot_end-tot_start)

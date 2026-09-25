@@ -18,14 +18,14 @@ from supercode.src.configs.parse_config import *  # model's name and parameters
 from supercode.src.model_loader.base_backend import BaseLLM
 
 
-class Transformers_import_model(BaseLLM):
+class Transformers_Import_Model(BaseLLM):
     """Load a LLM using Hugging Face Transformers."""
     def __init__(self,
                  model_id: str,
                  quant_type: Literal["pretrained", "bits", "compressor", "sinq"],
                  gen_mode: Literal["multisample", "stream"], # Literal specify which values are allowed
                  gen_args: Dict[str, Any], # other settings, such as temperature and max tokens (default vals in config)
-                 multi_sampl_args: Optional[Dict[str, Any]], # optional for multi-sampling
+                 multi_sampl_args: Optional[Dict[str, Any]] = None, # optional for multi-sampling
                  ):
         print(">> loading with transformers")
         ##### model's name and parameters are saved in the config
@@ -127,7 +127,7 @@ class Transformers_import_model(BaseLLM):
     def generate(self,
                  messages: List[Dict[str, str]],
                  tools: Optional[List[Dict[str, Any]]] = None,
-                 **kwargs # override default generation arguments
+                 **kwargs #TODO: kwargs to override default generation arguments in config
                  ) -> str:
         """Generate a model response given messages and optional feedback from tools."""
         inputs = self.apply_chat_template(messages, tools=tools)
@@ -156,6 +156,7 @@ class Transformers_import_model(BaseLLM):
                 print(token, end="", flush=True)
                 response += token
             print()
+            thread.join()
 
         # Generate multiple sequences from the single prompt
         elif self.gen_mode == "multisample":

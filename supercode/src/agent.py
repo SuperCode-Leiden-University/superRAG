@@ -23,7 +23,7 @@ class Agent():
         self.user_role = "user"
         self.tool_role = "tool"
         self.assistant_role = "assistant" # coder assistant
-        self.tool_manager_role = "reasoning" # thinking model for selecting tools
+        #self.tool_manager_role = "reasoning" # thinking model for selecting tools
 
         # tools related parameters
         self.tool_results = []
@@ -93,10 +93,13 @@ class Agent():
         for m in self.models_list: 
             m.add_message(role=self.user_role, content=user_prompt)
 
-            # save the baseline code as context #TODO: decide if tool manager needs the code
-            if code is not None:# and m!=self.tool_manager:
-                m.add_message(role=self.tool_role, content="```\n"+code+"\n```", name="baseline code")
-                #TODO: check if I can specify the language!!!
+            # save the baseline code as context
+            # if code is not None:# and m!=self.tool_manager:
+            #     m.add_message(
+            #         role=self.tool_role,
+            #         content="baseline code:\n```\n"+code+"\n```",
+            #         #TODO: check if I can specify the language!!!
+            #     )
 
         for i in range(model_iter): # sequential iterations on the code
             # ----------------------------------------------------------------------------------------------
@@ -118,7 +121,7 @@ class Agent():
                 # let the thinking model choose a tool
                 if tools_iter>0:
                     print(f">> selecting tools")
-                    revise = False # the first iteration skip tools with requirements
+                    #revise = False # the first iteration skip tools with requirements
 
                     # refinement loop, useful when tools have requirements and need info from other tools
                     for r in range(tools_iter):
@@ -133,17 +136,17 @@ class Agent():
                         if "```json\n[]\n```" in response: print(">> NO NEW TOOLS INCLUDED") ; break
 
                         # parse the tool manager answer, find the tools, call them and report the results
-                        self.tool_results = parse_tools(response, self.tools, self.schemas, self.tool_results, revise)
+                        self.tool_results = parse_tools(response, self.tools, self.schemas, self.tool_results)#, revise)
                         if verbose>1: print(">> TOOL RESULTS: \n", self.tool_results, "\n", sep="")
 
                         # add the tool results to the chat history of all models
                         for tool in self.tool_results[tool_index:]: # only include new results
                             for m in self.models_list: # all models need the tool results
-                                m.add_message(role=self.tool_role, content=tool["result"], name=tool["name"])
+                                m.add_message(role=self.tool_role, content=tool)
 
                         # revise the answer to implement the correct dependencies
-                        if r<tools_iter-1: self.tool_manager.add_message(role=self.user_role, content=tool_manager_revise)
-                        revise = True
+                        #if r<tools_iter-1: self.tool_manager.add_message(role=self.user_role, content=tool_manager_revise)
+                        #revise = True
 
                 # ----------------------------------------------------------------------------------------------
                 # predetermined use of tools to analyze code (if given)
@@ -154,11 +157,25 @@ class Agent():
 
                     for m in self.models_list:
                         # save the tool results in the message history of all models
-                        m.add_message(role=self.tool_role, content=str(compiler_result), name="sandboxed_compiler")
-                        #m.add_message(role=self.tool_role, content=str(perf_result), name="run_perf")
+                        m.add_message(
+                            role=self.tool_role,
+                            content= {
+                                "name": "sandboxed_compiler",
+                                "input": code,
+                                "result": str(compiler_result)
+                            }
+                        )
+                        # m.add_message(
+                        #     role=self.tool_role,
+                        #     content= {
+                        #         "name": "run_perf",
+                        #         "input": gen_code_file,
+                        #         "result": str(perf_result)
+                        #     }
+                        # )
 
                         # prompt to improve the code if the compiler returns an error
-                        if compiler_result[0] != 0: m.add_message(role=self.user_role, content=compiler_prompt)
+                        #if compiler_result[0] != 0: m.add_message(role=self.user_role, content=compiler_prompt)
 
                     if compiler_result[0] == 0: # check if the code compiled correctly
                         response = "There is nothing to improve."+"\nPrevious code:\n```\n"+code+"\n```"

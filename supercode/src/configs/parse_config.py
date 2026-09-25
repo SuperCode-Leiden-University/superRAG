@@ -18,6 +18,9 @@ backend = vars["backend"] # which backend is used: ["transformers", "llama-cpp",
 model_iter = vars["model_iter"]
 tools_iter = vars["tools_iter"]
 
+benchmark_path = vars["benchmark_path"] # run benchmark
+
+
 # ----------------------------------------------------------------------------------------------
 # chat assistant model
 coder_model_args       = vars["coder_model"]

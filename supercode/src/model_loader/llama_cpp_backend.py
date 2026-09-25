@@ -1,4 +1,4 @@
-import os, pprint
+import os, threading, queue, pprint
 from typing import Optional, List, Dict, Any, Literal
 from llama_cpp import Llama
 
@@ -6,14 +6,14 @@ from llama_cpp import Llama
 from supercode.src.configs.parse_config import *  # model's name and parameters
 from supercode.src.model_loader.base_backend import BaseLLM
 
-class LlamaCpp_import_model(BaseLLM):
+class LlamaCpp_Import_Model(BaseLLM):
     def __init__(self,
                  model_id: str,
                  quant_type: Literal["pretrained", "bits", "compressor", "sinq"],
                  gen_mode: Literal["multisample", "stream"],  # Literal specify which values are allowed
                  gen_args: Dict[str, Any],
                  # other settings, such as temperature and max tokens (default vals in config)
-                 multi_sampl_args: Optional[Dict[str, Any]],  # optional for multi-sampling
+                 multi_sampl_args: Optional[Dict[str, Any]] = None,  # optional for multi-sampling
                  # n_ctx: int = 2048, # context window
                  # n_gpu_layers: int = 0,  # 0 = CPU only
                  # chat_format: str = "llama-2",  # e.g., "llama-2", "chatml", "zephyr"
@@ -63,23 +63,39 @@ class LlamaCpp_import_model(BaseLLM):
         tools: Optional[List[Dict[str, Any]]] = None,
         **kwargs,
     ) -> Dict[str, Any]:
-        # llama-cpp uses `tools` via structured output (if supported),
-        # but basic tool calling is usually handled via prompt formatting.
-        # For now: assume messages include tool calls in user/system prompts.
-
-        # Optional: Convert tools into prompt text (see "Tool Handling" below)
-        # Example: if tools are provided, prepend system message or tool schema
 
         # Call model chat completion
         if self.gen_mode == "stream":
-            completion = self.model.create_chat_completion(
-                messages=messages,
-                tools=tools,
-                #stream=True, # to see tokens while they are generated
-                **self.gen_args, # default param
-                # **kwargs # for changing the param at each call
-            )
-            response = completion["choices"][0]["message"]["content"]
+            token_queue = queue.Queue() # to print while tokens are being generated without waiting
+
+            # use a separate thread for generation and streaming
+            def generate():
+                streamer = self.model.create_chat_completion(
+                    messages=messages,
+                    tools=tools,
+                    stream=True, # when this is true, a generator object is returned instead of a dict
+                    **self.gen_args, # default param
+                    # **kwargs # for changing the param at each call
+                )
+                # collect streamed responses
+                for chunk in streamer:
+                    # each chunk is a dictionary, and the content is in choices[0]["delta"]["content"]
+                    if "content" in chunk["choices"][0]["delta"]:
+                        content = chunk["choices"][0]["delta"]["content"]
+                        token_queue.put(content)
+                token_queue.put(None)  # signal done
+
+            # begin generation thread
+            thread = threading.Thread(target=generate)
+            thread.start()
+            response = ""
+            while True:
+                token = token_queue.get()  # blocks until a token arrives
+                if token is None:
+                    break
+                print(token, end="", flush=True)
+                response += token
+            thread.join()
 
         elif self.gen_mode == "multisample":
             n_samples = self.multi_sampl_args["num_return_sequences"]
@@ -92,10 +108,10 @@ class LlamaCpp_import_model(BaseLLM):
                     stream=False,  # disable stream for batch processing
                 )
                 response.append(completion["choices"][0]["message"]["content"])
+            #pprint.pprint(completion)
 
         else: raise ValueError(f"Unsupported generation mode: {self.gen_mode}")
 
-        #pprint.pprint(completion)
         """
         completion = {
             'id': 'chatcmpl-7b3f3ca1-1367-4736-9044-65cbf2d9c437', 
@@ -123,7 +139,6 @@ class LlamaCpp_import_model(BaseLLM):
         #     "usage": response.get("usage", {}),
         # } # response= {'content': '', 'tool_calls': [], 'usage': {'prompt_tokens': 166, 'completion_tokens': 2, 'total_tokens': 168}}
 
-        print(response)
         return response
 
     def get_tokenizer(self):

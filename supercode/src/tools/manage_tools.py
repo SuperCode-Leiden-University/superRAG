@@ -44,7 +44,7 @@ def build_tool_schema(func):
             "x_metadata" : func._tool_metadata,
         }
     }
-    #if verbose>2 : pprint.pprint(scheme) ; print("")
+    if verbose>2 : pprint.pprint(scheme) ; print("")
     return scheme
 
 # ----------------------------------------------------------------------------------------------
@@ -84,32 +84,33 @@ def parse_tools(response, tools, schemas, tool_results, revise=False):
             tool_end  = response.find("}", tool_temp)+1  # and this find where the tool actually ends
 
             tool_request = json.loads( response[tool_begin:tool_end].strip("  ") ) # remove extra spaces and load
+            tool_name = tool_request["name"]
             print(">> JSON OBJ (PARTIAL): \n", tool_request, sep="")
 
             if tool_request not in tool_request_list: # to avoid duplicates
                 tool_request_list.append(tool_request)
 
-                tool_name = tool_request["name"]
                 if tool_name in tools.keys():
                     if verbose > 0: print(">> found tool:", tool_name)
 
                     # skip tools that require dependencies (req_flag=True) the first time (revise=False)
                     # this way the first time it will compute only results for tools with no dependencies
-                    for s in schemas:
-                        fn = s.get('function', {}) # the second value is returned if the first cannot be found
-                        if fn.get('name') == tool_name:
-                            req_flag = fn.get('x_metadata', {}).get('req_flag', False)
-                    skip = req_flag and not revise
-                    if skip :
-                        tool_result = "This tool has requirements."
-                        if verbose > 2: print(">> skipping tool:", tool_name)
-                    else:
-                        tool_result = dispatch_tool(tools, tool_name, tool_request["arguments"])
-                        #if verbose > 2: print(">> tool result:", tool_result)
+                    # for s in schemas:
+                    #     fn = s.get('function', {}) # the second value is returned if the first cannot be found
+                    #     if fn.get('name') == tool_name:
+                    #         req_flag = fn.get('x_metadata', {}).get('req_flag', False)
+                    # skip = req_flag and not revise
+                    # if skip :
+                    #     tool_result = "This tool has requirements."
+                    #     if verbose > 2: print(">> skipping tool:", tool_name)
+                    # else:
+                    tool_result = dispatch_tool(tools, tool_name, tool_request["arguments"])
+                    #if verbose > 2: print(">> tool result:", tool_result)
 
                     # save the results to pass them to the model
                     tool_result = {
                         "name": tool_name,
+                        "input": tool_request["arguments"],
                         "result": tool_result
                     }
                     if tool_result not in tool_results:

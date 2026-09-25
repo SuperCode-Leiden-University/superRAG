@@ -1,3 +1,10 @@
+import re
+import json
+import pprint
+
+from supercode.src.tools.tools import *
+
+
 """ sample structure for HumanEval:
 'canonical_solution':  'for idx, elem in enumerate(numbers):'
                        '    for idx2, elem2 in enumerate(numbers):'
@@ -28,46 +35,46 @@
 """
 
 # extract the code from the model's answer
-def extract_code(response, entry_point=None):
-    """
-    if entry_point == None: code_def = response.rfind("def ") # if entry_point is unknown
-    else: code_def = response.rfind("def "+entry_point) # robust signature for finding the function
-
-    if code_def==-1:
-        print("WARNING: function not found")
-        return ""
-    code_start = response.rfind("```", 0, code_def)+3
-    if response.rfind("python", code_start, code_def)>-1:
-        code_start += 6 # remove "python" as well if present
-    code_end = response.find("```", code_start)  # code blocks start and end with ``` (exclude ```)
-    """
-    # sanity check
-    if entry_point is not None:
-        entry_index = response.find(entry_point)
-        if entry_index == -1:
-            print("WARNING: entry_point not found")
-            return ""
-
-    # LLMs format their answer using markdown
-    # code is delimited by ```python ... ```
-    offset = len("```")
-    code_end = response.rfind("```")
-    code_start = response.rfind("```", 0, code_end) + offset
-
-    #code = response[code_start:code_end]
-
-    pl_offset = len("python")
-    #print(response.rfind("python", code_start, code_end),"\n")
-    if response.rfind("python", code_start, code_end) != -1 :
-        #print("py check")
-        code_start+=pl_offset ; offset+=pl_offset
-
-    if code_start==-1+offset or code_end==-1:
-        print("WARNING: code not found")
-        return ""
-    #print(">> code extracted successfully")
-    code = response[code_start:code_end].strip()
-    return code
+# def extract_code(response, entry_point=None):
+#     """
+#     if entry_point == None: code_def = response.rfind("def ") # if entry_point is unknown
+#     else: code_def = response.rfind("def "+entry_point) # robust signature for finding the function
+#
+#     if code_def==-1:
+#         print("WARNING: function not found")
+#         return ""
+#     code_start = response.rfind("```", 0, code_def)+3
+#     if response.rfind("python", code_start, code_def)>-1:
+#         code_start += 6 # remove "python" as well if present
+#     code_end = response.find("```", code_start)  # code blocks start and end with ``` (exclude ```)
+#     """
+#     # sanity check
+#     if entry_point is not None:
+#         entry_index = response.find(entry_point)
+#         if entry_index == -1:
+#             print("WARNING: entry_point not found")
+#             return ""
+#
+#     # LLMs format their answer using markdown
+#     # code is delimited by ```python ... ```
+#     offset = len("```")
+#     code_end = response.rfind("```")
+#     code_start = response.rfind("```", 0, code_end) + offset
+#
+#     #code = response[code_start:code_end]
+#
+#     pl_offset = len("python")
+#     #print(response.rfind("python", code_start, code_end),"\n")
+#     if response.rfind("python", code_start, code_end) != -1 :
+#         #print("py check")
+#         code_start+=pl_offset ; offset+=pl_offset
+#
+#     if code_start==-1+offset or code_end==-1:
+#         print("WARNING: code not found")
+#         return ""
+#     #print(">> code extracted successfully")
+#     code = response[code_start:code_end].strip()
+#     return code
 
 
 def extract_test_code(prompt, code):
@@ -149,12 +156,47 @@ def extract_test_code(prompt, code):
 
     return func_code+"\n"+test_code
 
+# def convert_to_json(task_id, response, code, **kwargs):
+#     json_sample = {
+#         "task_id": task_id,
+#         "completion": response, # backup the model's answer
+#         "code": code,
+#         **kwargs
+#     }
+#     return json_sample
 
-def convert_to_json(task_id, response, code, **kwargs):
-    json_sample = {
+def extract_code(completion_text):
+    """
+    Extracts programming language and code from a code block in the completion text.
+    Returns (language, code) or (None, None) if no code block found.
+    """
+    # Regex to match fenced code blocks: ```language\n code\n ```
+    pattern = r'```(\w*)\n(.*?)\n```'
+    match = re.search(pattern, completion_text, re.DOTALL)
+    if match:
+        language = match.group(1).strip()
+        code = match.group(2).strip()
+        return language, code
+    else:
+        return None, None
+
+def save_completion(task_id, response, filepath):
+    print("\n>> extracting code from response")
+    language, code = extract_code(response)
+    print("\n>> checking compiler output for response")
+    compiler_output = sandboxed_compiler(code)
+
+    # extract language and code from 'completion'
+    completion_task = {
         "task_id": task_id,
-        "completion": response, # backup the model's answer
+        "completion": response,
+        "language": language,
         "code": code,
-        **kwargs
+        "compiler_output": compiler_output
     }
-    return json_sample
+    if verbose>2: print("\n>> completion_task:") ; pprint.pprint(completion_task)
+    # save to JSONL (one JSON object per line)
+    with open(filepath, 'a', encoding='utf-8') as f:
+        f.write(json.dumps(completion_task, ensure_ascii=False) + '\n')
+        f.close()
+
