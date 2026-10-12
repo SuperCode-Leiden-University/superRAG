@@ -10,6 +10,7 @@ from supercode.src.model_loader.llama_cpp_backend import LlamaCpp_Import_Model
 
 # Main Model class that uses the backend
 class Model():
+    # ----------------------------------------------------------------------------------------------
     def __init__(self, model_args, system_prompt=None, prequery_prompt=None):
         print("\n### model_id = " + model_args["model_id"])
 
@@ -24,6 +25,7 @@ class Model():
         # initialize the backend (transformers in this case)
         self.model = self.load_llm(backend, **model_args)
 
+    # ----------------------------------------------------------------------------------------------
     # this func takes the config as input and returns a model for any implemented backend
     def load_llm(self,
                  backend: Literal["transformers", "llama_cpp", "vLLM"],
@@ -46,6 +48,7 @@ class Model():
         else:
             raise ValueError(f"Unknown backend: {backend}")
 
+    # ----------------------------------------------------------------------------------------------
     def reset_memory(self):
         """Reset conversation memory."""
         self.messages = [{
@@ -53,35 +56,12 @@ class Model():
             "content": self.system_prompt
         }]
 
+    # ----------------------------------------------------------------------------------------------
     def add_message(self, role, content):
         """Add a message to the conversation history."""
+        # NOTE: some models accept only "assistant/user/assistant/..." sequences
+        if verbose>1: print(">> saving message, role =", role)
 
-        # EXAMPLE:
-        """
-        messages = [
-            {
-                "role": "user", 
-                "content": "Read hello.py"
-            },
-            {
-                "role": "assistant",
-                "content": [{
-                    "type": "tool_use",
-                    "id": "toolu_01ABC",
-                    "name": "read_file",
-                    "input": {"file_path": "hello.py"},
-                }],
-            },
-            {
-                "role": "user",
-                "content": [{
-                    "type": "tool_result",
-                    "tool_use_id": "toolu_01ABC",
-                    "content": "print('hello')",
-                }],
-            },
-        ]                           
-        """
         if role == "assistant":
             self.messages.append({
                 "role": role,
@@ -112,17 +92,13 @@ class Model():
                 "content": f"the tool {content["name"]} retuned the following result: {content["result"]}",
             })
 
-        # if role == "user": content = self.prequery_prompt + content
-        # self.messages.append({
-        #     "role": role,
-        #     "content": content,
-        #     **kwargs
-        # })
 
+    # ----------------------------------------------------------------------------------------------
     def get_messages(self):
         """Get the conversation messages."""
         return self.messages
 
+    # ----------------------------------------------------------------------------------------------
     def call(self, tool_schemas=None):
         """Call the model with the current message history."""
         # Generate response using the backend
@@ -133,6 +109,6 @@ class Model():
         )
         #print(response)
 
-        self.add_message(role="assistent", content=response)
+        self.add_message(role="assistant", content=response)
 
         return response

@@ -26,10 +26,7 @@ def run_benchmark(
 ):
     # load vars
     bench_name = benchmark_path[benchmark_path.find("/")+1:] # NB: benchmark_path="openai/openai_humaneval")
-
-    if coder_gen_mode == "multisample":
-        num_samples_per_task = coder_multi_sampl_args["num_return_sequences"] # from config
-    else: num_samples_per_task = 1
+    num_samples_per_task = coder_multi_sampl_args["num_return_sequences"] # from config
 
     # print info
     if baseline: print("benchmark baseline and model for", bench_name, "; num_samples_per_task =", num_samples_per_task)

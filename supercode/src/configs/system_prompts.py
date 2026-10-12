@@ -1,6 +1,6 @@
 ########################################################################################################################
 # complete prompt for the chat assistant
-assistant_prompt = """You are a helpful AI coding assistant with access to a database and external tools. 
+coder_prompt = """You are a helpful AI coding assistant with access to a database and external tools. 
 When tool results are provided, treat them as authoritative facts. 
 Your job is to:
 - Use the tool outputs as the primary source of truth.
@@ -13,7 +13,7 @@ You may summarize the results from tools if they are very long, but you must not
 # During reasoning, try to keep your answer short and avoid repeating the same concepts many times.
 
 # prompt to add before the user_prompt
-assistant_prequery = "Use the following information to answer the question in natural language.\n\n### Question:\n"
+coder_prequery = "Use the following information to answer the question in natural language.\n\n### Question:\n"
 
 ########################################################################################################################
 # partial prompt for the tool manager

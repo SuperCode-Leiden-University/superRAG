@@ -20,19 +20,19 @@ from supercode.src.model_loader.base_backend import BaseLLM
 
 class Transformers_Import_Model(BaseLLM):
     """Load a LLM using Hugging Face Transformers."""
+    # ----------------------------------------------------------------------------------------------
     def __init__(self,
+                 # the following are defined in the config file
                  model_id: str,
                  quant_type: Literal["pretrained", "bits", "compressor", "sinq"],
-                 gen_mode: Literal["multisample", "stream"], # Literal specify which values are allowed
                  gen_args: Dict[str, Any], # other settings, such as temperature and max tokens (default vals in config)
                  multi_sampl_args: Optional[Dict[str, Any]] = None, # optional for multi-sampling
                  ):
         print(">> loading with transformers")
         ##### model's name and parameters are saved in the config
         self.model_id = model_id  # name of the model from Hugging Face
-        self.gen_mode = gen_mode
-        self.gen_args = gen_args  # other settings, such as num_return_sequences, temperature and max tokens (default vals in config)
-        if gen_mode == "multisample": self.multi_sampl_args = multi_sampl_args
+        self.gen_args = gen_args  # general settings, such as temperature and max tokens (default vals in config)
+        self.multi_sampl_args = multi_sampl_args # n_samples (num_return_sequences), sampling mode
 
         # ----------------------------------------------------------------------------------------------
         ##### IMPORTING THE MODEL
@@ -108,6 +108,7 @@ class Transformers_Import_Model(BaseLLM):
         else: raise ValueError(f"Unsupported quantization type: {quant_type}")
 
 
+    # ----------------------------------------------------------------------------------------------
     def apply_chat_template(self,
                        messages: List[Dict[str, str]],
                        tools: Optional[List[Dict[str, Any]]] = None
@@ -124,6 +125,7 @@ class Transformers_Import_Model(BaseLLM):
         return inputs
 
 
+    # ----------------------------------------------------------------------------------------------
     def generate(self,
                  messages: List[Dict[str, str]],
                  tools: Optional[List[Dict[str, Any]]] = None,
@@ -131,9 +133,12 @@ class Transformers_Import_Model(BaseLLM):
                  ) -> str:
         """Generate a model response given messages and optional feedback from tools."""
         inputs = self.apply_chat_template(messages, tools=tools)
+        n_samples = self.multi_sampl_args["num_return_sequences"]
 
-        # streamer and threads are needed to see the response while it is being generated
-        if self.gen_mode == "stream":
+
+        # generate a single sequence and stream it (print it on terminal) as it is being generated
+        if n_samples==1:
+            # streamer and threads are needed to see the response while it is being generated
             streamer = TextIteratorStreamer(
                 self.tokenizer,
                 skip_prompt=True,
@@ -157,12 +162,13 @@ class Transformers_Import_Model(BaseLLM):
                 response += token
             print()
             thread.join()
+            response = [response]
 
-        # Generate multiple sequences from the single prompt
-        elif self.gen_mode == "multisample":
+        # multisample: generate multiple sequences from the single prompt via parallel batching
+        else:
             input_length = inputs.input_ids.shape[1]
             with torch.no_grad():
-                # this is a tensor with n elements, where n = num_return_sequences
+                # this is a tensor with n_samples elements
                 outputs = self.model.generate(
                     **inputs,
                     pad_token_id=self.tokenizer.eos_token_id,
@@ -171,11 +177,8 @@ class Transformers_Import_Model(BaseLLM):
                     # **kwargs # override default generation arguments
                 )
 
-            # Extract the generated tokens (skip the input prompt)
-            generated_ids = outputs[
-                :, #i*n_samples+i : i*n_samples+i+1,
-                input_length :
-            ]
+            # Extract the generated tokens (but skip the input prompt)
+            generated_ids = outputs[ :, input_length: ]
 
             # Decode the generated part only
             response = self.tokenizer.decode(
@@ -183,7 +186,6 @@ class Transformers_Import_Model(BaseLLM):
                 skip_prompt=True,
                 skip_special_tokens=True
             )
-
-        else: raise ValueError(f"Unsupported generation mode: {self.gen_mode}")
+            if verbose>0: print(response)
 
         return response

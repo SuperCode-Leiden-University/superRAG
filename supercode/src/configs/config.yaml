@@ -1,13 +1,14 @@
 ---
 # general
 backend: llama_cpp # valid values: ["transformers", "llama_cpp", #"vLLM"]
-verbose: 10 # how much info is printed: 0=none, 1=little, 2=lots, 3=all
+verbose: 1 # how much info is printed: 0=none, 1=little, 2=lots, 3=all
 
 model_iter: 1 # n of times the model loops over the same issue (1 = run only once), recommended setting is 1
 tools_iter: 0 # n steps for choosing tools (0 = no tools, 1 = all tools in one go), recommended setting is 2-3
 
-benchmark_path: openai/openai_humaneval # None for chat mode
+benchmark_path: none #openai/openai_humaneval # none for chat mode
 # DATASETS: "bigcode/humanevalpack", "openai/openai_humaneval", "bigcode/crosscodeeval"
+
 
 # ---------------------------------------------------------------------------------------------------------------------
 # NOTE: the model can be loaded as quantized only if someone published the quantized version (see file's extensions):
@@ -20,7 +21,10 @@ benchmark_path: openai/openai_humaneval # None for chat mode
 #     - model.safetensors (AWQ)
 #     - gptq_model-4bit-128g.safetensors
 #     - model.gguf (NOT compatible with Transformers!)
+# ---------------------------------------------------------------------------------------------------------------------
 
+
+# ---------------------------------------------------------------------------------------------------------------------
 # coder assistant
 coder_model:
     model_id: # model ID from HuggingFace, size for Qwen2.5: 32B, 14B, 7B, 3B, 1.5B, 0.5B,
@@ -42,8 +46,6 @@ coder_model:
 
     quant_type: pretrained # valid values: ["pretrained", "gguf", "compressor", "bits", "sinq"] --> check file formats!!!
     # SINQ doesn't work!!! prequantized AWQ and GPTQ models can be loaded using pretrained
-    gen_mode: stream # valid values: ["multisample", "stream"]
-    # either pass the arguments for multi-sampling or enable streaming (show the tokens as they are generated)
 
     gen_args: # I'm using parameter names from transformers. NOTE: parameters are called differently in llama.cpp
         temperature: 0.8 # 0 = always select the most likely word; 1 = unmodified logit distribution; >1 = more and more random
@@ -54,15 +56,16 @@ coder_model:
         #frequency_penalty: 0.2 # high to avoid repetition of specific words (presence is more about having new topics)
         # Reminder that code from LLMs has been shown to be more repetitive than human's, so it makes sense to penalize it a bit!
 
-    multi_sampl_args: # not supported in llama.cpp
-        num_return_sequences: 5 # n of samples per input (batching)
-        do_sample: True,  # enable sampling for diversity, default is false to use greedy decoder
+    # arguments for multi-sampling or stream single response (show the tokens as they are generated)
+    multi_sampl_args:
+        num_return_sequences: 2 # n of samples per input (batching), when n=1 it will automatically stream the response
+        do_sample: True # enable sampling for diversity, default is false to use greedy decoder
         # IMPORTANT: beam search and do_sample are mutually exclusive logics, sampling is stochastic but ensures more diversity
         #num_beams: 5 # explore multiple sequences in parallel (then select the top ones), must be larger or equal to num_return_sequences
         #early_stopping: True # stop when all beams have finished
         #no_repeat_ngram_size: 2 # avoid repeating n-grams
 
-
+# ---------------------------------------------------------------------------------------------------------------------
 # thinking model for choosing tools (good at extrapolating logic issues)
 think_model:
     model_id: # model ID from HuggingFace
@@ -73,13 +76,21 @@ think_model:
         #Qwen/Qwen3-4B-Thinking-2507
         #Qwen/Qwen3.5-4B # DOESN'T WORK??? # includes thinking mode by default
     quant_type: pretrained
-    gen_mode: stream
     gen_args:
         temperature: 0.4 # 0 = always select the most likely word, 1 = random
         max_new_tokens: 6000 # max number of tokens that can be generated
         #top-p: 0.9 # this is a confidence-adaptive filter: threshold based on the CUMULATIVE prob of the tokens
         #presence_penalty: 1.0 # positive values penalize repeating sentences and words (range [-2,+2], advisable to keep in [-1,+1] for good performances)
         #frequency_penalty: 0.2 # high to avoid repetition of specific words (presence is more about having new topics)
+
+    # arguments for multi-sampling or stream single response (show the tokens as they are generated)
+    multi_sampl_args:
+        num_return_sequences: 1 # n of samples per input (batching), when n=1 it will automatically stream the response
+        do_sample: True # enable sampling for diversity, default is false to use greedy decoder
+        # IMPORTANT: beam search and do_sample are mutually exclusive logics, sampling is stochastic but ensures more diversity
+        #num_beams: 5 # explore multiple sequences in parallel (then select the top ones), must be larger or equal to num_return_sequences
+        #early_stopping: True # stop when all beams have finished
+        #no_repeat_ngram_size: 2 # avoid repeating n-grams
 
 # ---------------------------------------------------------------------------------------------------------------------
 # embedding model for building the database (for RAG)
