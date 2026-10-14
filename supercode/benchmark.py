@@ -29,8 +29,8 @@ def run_benchmark(
     num_samples_per_task = coder_multi_sampl_args["num_return_sequences"] # from config
 
     # print info
-    if baseline: print("benchmark baseline and model for", bench_name, "; num_samples_per_task =", num_samples_per_task)
-    else: print("benchmark model for", bench_name, "; num_samples_per_task =", num_samples_per_task)
+    if baseline: print("benchmark-results baseline and model for", bench_name, "; num_samples_per_task =", num_samples_per_task)
+    else: print("benchmark-results model for", bench_name, "; num_samples_per_task =", num_samples_per_task)
     if check_single_task is not None: print("WARNING: mode check_single_task, i_task =", check_single_task)
 
     if model_iter>1 : iter="_x"+model_iter
@@ -38,11 +38,11 @@ def run_benchmark(
 
     # ----------------------------------------------------------------------------------------------
     # files names
-    baseline_file  = gen_code_dir+"/"+bench_name+"_"+coder_model_id[coder_model_id.find("/")+1:]+"_baseline_" +str(num_samples_per_task)+iter+".jsonl"
-    benchmark_file = gen_code_dir+"/"+bench_name+"_"+coder_model_id[coder_model_id.find("/")+1:]+"_benchmark_"+str(num_samples_per_task)+iter+".jsonl"
+    baseline_file  = bench_dir+"/"+bench_name+"_"+coder_model_id[coder_model_id.find("/")+1:]+"_baseline_" +str(num_samples_per_task)+iter+".jsonl"
+    benchmark_file = bench_dir+"/"+bench_name+"_"+coder_model_id[coder_model_id.find("/")+1:]+"_benchmark_"+str(num_samples_per_task)+iter+".jsonl"
 
     # ----------------------------------------------------------------------------------------------
-    # importing the benchmark from hugging face
+    # importing the benchmark-results from hugging face
     dataset = load_dataset(benchmark_path) #, "python") # add the second argument when the dataset has multiple subsets
     problems = dataset["test"] ; n_tasks = len(problems)
     #print("Dataset structure:\n", dataset, sep="")

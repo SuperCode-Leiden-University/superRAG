@@ -2,15 +2,22 @@ import os
 from langchain_community.document_loaders import DirectoryLoader, TextLoader
 from langchain_community.vectorstores import FAISS
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from typing import Optional, List, Dict, Any, Literal
+
 
 from supercode.src.configs.parse_config import *
 
 
 class Database():
-    def __init__(self, emb_model, docs_dir, db_dir, update_db=False):
+    def __init__(self,
+                 emb_model, # embedding model to convert the docs to vectors, to be stored in the vector database
+                 docs_dir, db_dir, # respectively where to find the original docs and where to store the database
+                 topic: Literal['codebase', 'radioastronomy'], # separation of the databases by topic
+                 update_db=False
+                 ):
         self.emb_model = emb_model
-        self.docs_dir = docs_dir
-        self.db_dir = db_dir
+        self.docs_dir = docs_dir+"/"+topic
+        self.db_dir = db_dir+"/"+topic
         self.update_db = update_db
 
     def load(self):

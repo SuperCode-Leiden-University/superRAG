@@ -9,7 +9,7 @@ faiss-cpu # database for RAG
 gemlite
 gptqmodel
 huggingface-hub
-human-eval # humaneval benchmark
+human-eval # humaneval benchmark-results
 intel-extension-for-pytorch # for awq
 langchain # implementing RAG
 langchain-community

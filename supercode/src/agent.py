@@ -16,13 +16,16 @@ Standard/officially-used roles:
 class Agent():
     # ----------------------------------------------------------------------------------------------
     # define variables and import the model, vars not defined here are in the config file!
-    def __init__(self):
+    def __init__(self, coder_id):
         # tools related parameters
         self.tool_results = []
         self.tools = get_tools() # tools for the agent
         self.schemas = [build_tool_schema(f) for f in self.tools.values()]
         self.details = [f._tool_metadata for f in self.tools.values()] # info about requirements
         #pprint.pprint(self.schemas)
+
+        coder_model_args["model_id"] = coder_id # to change the model from terminal without editing the config file
+        #print(">> coder args\n", coder_model_args)
 
         ### MODELS
         # coding assistant (expert model)

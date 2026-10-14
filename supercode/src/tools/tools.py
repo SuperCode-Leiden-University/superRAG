@@ -271,6 +271,109 @@ def run_perf(main_file: str):
 
 
 # ----------------------------------------------------------------------------------------------
+def docker_container(command: Literal['activate', 'deactivate', 'delete']):
+    """Activate or deactivate the sandbox docker container for running code."""
+    image = docker_args["image"]
+    container_name = docker_args["container_name"]
+    workspace_path = os.path.join(os.getcwd(), docker_args["workspace"])
+    #print("workspace =", workspace_path)
+
+    if verbose>0: print(f"\n>> about to {command} docker container '{container_name}'")
+    # for debugging
+    if verbose>2:
+        print("----------------------------------------------------------------------------------------------\n", subprocess.run(
+            # 'docker ps' returns info of all (-a) containers filtered (-f) by name
+            ["docker", "ps", "-a", "-f", f"name={container_name}"],
+            capture_output=True, text=True, check=True
+        ).stdout.strip(), "\n", sep="")
+
+    # --------------------------------------------------------------------------------------
+    def execute_docker_command(command: Literal['build', 'create', 'activate', 'deactivate', 'delete']):
+        if command=="build":
+            # build the image for the container (docker build) based on the Dockerfile
+            if verbose>1: print(">> building image")
+            subprocess.run([
+                "docker", "build", "-t", image, docker_args["docker_dir"]
+            ], check=True)
+
+        elif command=="create":
+            # create a new container (docker run)
+            if verbose>1: print(">> creating container")
+            subprocess.run([
+                "docker", "run", "-d", "-it", # -d for detached mode (run in background and print container ID), -it for Interactive TTY session
+                "-m", docker_args["mem_limit"],  # memory limit, defined in config
+                "--name", container_name,  # fixed name for the container, defined in config
+                "--mount", f"type=bind,src={workspace_path},dst=/workspace",  # mount disk to save/access files
+                image  # select image for the docker container
+            ], check=True)
+            # other options:
+            # --rm for auto-cleanup on stop (very slow if done often)
+            # -v for binding the workspace directory as volume
+
+        elif command == "activate":
+            # activate the container (docker start)
+            if verbose>1: print(">> starting container")
+            subprocess.run(["docker", "start", container_name], check=True)
+
+        elif command=="deactivate":
+            # deactivate the container if it is running (docker stop)
+            if verbose>1: print(">> stopping container")
+            subprocess.run(["docker", "stop", container_name], check=True)
+
+        elif command=="delete":
+            # delete the container (docker rm)
+            if verbose>1: print(">> removing container")
+            subprocess.run(["docker", "rm", container_name], check=True)
+
+        else:
+            print(f"WARNING: unknown command {command} will be ignored")
+    # --------------------------------------------------------------------------------------
+    try:
+        # check if the container exists (active or not)
+        exist_docker_id = subprocess.run(
+            # 'docker ps' returns the IDs (-q) of all (-a) containers filtered (-f) by name
+            ["docker", "ps", "-a", "-q", "-f", f"name={container_name}"],
+            capture_output=True, text=True, check=True
+        ).stdout.strip()
+
+        # check if the container is active (this is a subset of the previous)
+        active_docker_id = subprocess.run(
+            # 'docker ps' returns the IDs (-q) of active containers filtered (-f) by name
+            ["docker", "ps", "-q", "-f", f"name={container_name}"],
+            capture_output=True, text=True, check=True
+        ).stdout.strip()
+
+        image_in_mem = image in subprocess.run(["docker", "images"], capture_output=True, text=True, check=True).stdout.strip()
+
+        # decision tree based on the command and whether the container exists/is running
+        if exist_docker_id: # check if the container exists
+            if active_docker_id: # check if is it active
+                if command == 'deactivate' or command == 'delete':
+                    execute_docker_command('deactivate')
+                    if command == 'delete': execute_docker_command(command)
+                # pass if command is activate
+            else: # if the container exists, but it is not active
+                if command == 'activate' or 'delete': execute_docker_command(command)
+                # pass if command is deactivate
+        else: # if the container doesn't exist
+            if command == 'activate':
+                if not image_in_mem: execute_docker_command('build') # build the image from the Dockerfile
+                execute_docker_command('create') # then create the container from the image
+                execute_docker_command('activate') # the created container automatically stops if no commands are given
+            # pass if deactivate/delete
+
+    except subprocess.CalledProcessError as e:
+        print(f"ERROR: docker_container tried to {command} {container_name} but failed:\n{e}")
+
+    # for debugging
+    if verbose>2:
+        print("\n", subprocess.run(
+            # 'docker ps' returns info of all (-a) containers filtered (-f) by name
+            ["docker", "ps", "-a", "-f", f"name={container_name}"],
+            capture_output=True, text=True, check=True
+        ).stdout.strip(), "\n----------------------------------------------------------------------------------------------\n", sep="")
+
+# ----------------------------------------------------------------------------------------------
 metadata = {
         #"name": sandboxed_compiler.__name__,
         "provides": "runs the code and returns the compiler output",
@@ -279,44 +382,78 @@ metadata = {
         "examples": "run the code to check if the output is correct"
 }
 @tool(metadata)
-def sandboxed_compiler(function, test=None, entry_point=None):
-    if verbose>0 : print(">> using tool: sandboxed_compiler")
-    # this only checks if the code compiles (semantic correctness)
-    """
-    with tempfile.NamedTemporaryFile("w", suffix=".py", delete=False) as tmp:
-        print("create temp file")
-        tmp.write(function)
-        tmp_path = tmp.name
-    """
+def sandboxed_compiler(code, language, unit_test=None, entry_point=None):
+    """Run the code in a sandboxed Docker environment."""
+    if verbose>0 : print(">> using tool: sandbox_compiler")
+    container_name = docker_args["container_name"]
     # IMPORTANT: the docker image can see ONLY files inside "results/"
     # and all paths in the container should be relative to "results/"!
 
-    cwd = os.getcwd() #; print(cwd)
-    abs_docker_path = cwd+"/"+docker_dir
-    #tmp_dir = abs_docker_path+"/results/gen_code"
+    if unit_test is not None: code = code+"\n\n"+unit_test+"\n\ncheck("+entry_point+")" # issue: this would work only for HumanEval!
 
-    if test == None: code = function
-    else: code = function+"\n\n"+test+"\n\ncheck("+entry_point+")" # issue: this would work only for HumanEval!
+    # ------------------------------------------------------------------------------------
+    def run_code_command(language):
+        # ----------------------------
+        if language == "python":
+            ext=".py" # file extension
+            cmd = [ # execute code in a running docker from terminal
+                "docker", "exec", "-i", container_name, # -i, --interactive, keep STDIN open even if not attached
+                "python3", gen_code_file+ext
+            ]
+        # ----------------------------
+        elif language == "c":
+            ext=".c" # file extension
+            cmd = [ # execute code in a running docker from terminal
+                "docker", "exec", "-i", container_name, # -i, --interactive, keep STDIN open even if not attached
+                # "sh"=shell, needed because I'm running 2 commands in one step (compile code && run exe)
+                "sh", "-c", f"gcc {gen_code_file+ext} -o {gen_code_file+'.out'} && ./{gen_code_file+'.out'}"
+            ]
+        # ----------------------------
+        elif language == "cpp":
+            ext=".cpp" # file extension
+            cmd = [ # execute code in a running docker from terminal
+                "docker", "exec", "-i", container_name, # -i, --interactive, keep STDIN open even if not attached
+                # "sh"=shell, needed because I'm running 2 commands in one step (compile code && run exe)
+                "sh", "-c", f"g++ {gen_code_file+ext} -o {gen_code_file+'.out'} && ./{gen_code_file+'.out'}"
+            ]
+        # ----------------------------
+        else: raise f"Error: Unsupported language '{language}'"
 
-    with open(gen_code_file, "w") as f:
-        if verbose>1 : print(">> saving the code at", gen_code_file)
-        f.write(code)
-        f.close()
+        # --------------------------------------------------------------------------------
+        # save the code in docker workspace
+        with open(gen_code_file+ext, "w") as f:
+            if verbose>1: print(">> saving the code at", gen_code_file+ext)
+            f.write(code)
+            f.close()
+
+        return cmd # command for running the code
+    # ------------------------------------------------------------------------------------
     try:
-        docker_code_path = gen_code_file[gen_code_file.find("results/"):]
-        if verbose>1 : print(">> docker_code_path", docker_code_path)
-        if verbose>1 : print(">> run command with docker run")
-        #subprocess.run("pwd")
-        # docker run --rm sandbox_code python3 results/gen_code/gen_code_temp.py
-        # docker run --mount type=bind,src=/home/elisa/PycharmProjects/phd-leiden-supercode/supercode/src/docker_env/results,dst=/workspace --rm sandbox_code
+        docker_container('activate') # to make sure the container is running
+        if verbose>2:
+            print("----------------------------------------------------------------------------------------------\n",
+                  subprocess.run(
+                      # 'docker ps' returns info of all (-a) containers filtered (-f) by name
+                      ["docker", "ps", "-a", "-f", f"name={container_name}"],
+                      capture_output=True, text=True, check=True
+                  ).stdout.strip(), "\n", sep="")
         result = subprocess.run( # run a program from inside the container (and remove the container afterwards)
-            ["docker", "run", "-m", "0.5g", "--mount", "type=bind,src="+abs_docker_path+",dst=/workspace", "--rm", "sandbox_code", "python3", docker_code_path],
+            run_code_command(language),
+            #["docker", "run", "-m", "0.5g", "--mount", "type=bind,src="+abs_docker_path+",dst=/workspace", "--rm", "sandbox_code", "python3", docker_code_path],
             # -m is memory, must be between 6m and 1g (adding "--memory-swap", "512m" will forbit memory swaps)
             capture_output=True,
             text=True,
-            timeout=10 # seconds
+            timeout=docker_args['timeout'] # seconds
         )
-        if verbose>1 : print(">> command run successfully\n", result)
+        if verbose>2:
+            print("\n", subprocess.run(
+                # 'docker ps' returns info of all (-a) containers filtered (-f) by name
+                ["docker", "ps", "-a", "-f", f"name={container_name}"],
+                capture_output=True, text=True, check=True
+            ).stdout.strip(), "\n----------------------------------------------------------------------------------------------\n", sep="")
+        #docker_container('deactivate')
+
+        if verbose>1 : print(">> command completed:\n", result, sep="")
         return result.returncode, "printed_output=\'" + result.stdout + "\', \nerrors=\'" + result.stderr + "\'"
     except Exception as e:
         print("Error in sandboxed_compiler tool:", e)

@@ -36,10 +36,10 @@ VALIDATE_ALL_CODEBASE: true # when set to false, only new or edited files will b
 #REPORT_OUTPUT_FOLDER: "../tool-outputs/megalinter-reports/"
 
 # The location containing files to lint if you are running locally.
-DEFAULT_WORKSPACE: /RAG-codebase
+DEFAULT_WORKSPACE: /codebase
 
 # only look in the directory (but this assumes you downloaded mega-linter in the repository!)
-FILTER_REGEX_INCLUDE: (../RAG-codebase/) #(../src/docker_env/results/gen_code/) #
+FILTER_REGEX_INCLUDE: (../codebase/) #(../src/docker_env/results/gen_code/) #
 
 # ignore following files
 FILTER_REGEX_EXCLUDE: '(\.automation/test|\.automation/generated|\.venv|docs/javascripts|docs/overrides|docs/json-schemas|flavors|clj-kondo|TEMPLATES)'

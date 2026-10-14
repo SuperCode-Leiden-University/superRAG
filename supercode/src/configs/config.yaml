@@ -1,7 +1,7 @@
 ---
 # general
-backend: llama_cpp # valid values: ["transformers", "llama_cpp", #"vLLM"]
 verbose: 1 # how much info is printed: 0=none, 1=little, 2=lots, 3=all
+backend: llama_cpp # valid values: ["transformers", "llama_cpp", #"vLLM"]
 
 model_iter: 1 # n of times the model loops over the same issue (1 = run only once), recommended setting is 1
 tools_iter: 0 # n steps for choosing tools (0 = no tools, 1 = all tools in one go), recommended setting is 2-3
@@ -21,8 +21,6 @@ benchmark_path: none #openai/openai_humaneval # none for chat mode
 #     - model.safetensors (AWQ)
 #     - gptq_model-4bit-128g.safetensors
 #     - model.gguf (NOT compatible with Transformers!)
-# ---------------------------------------------------------------------------------------------------------------------
-
 
 # ---------------------------------------------------------------------------------------------------------------------
 # coder assistant
@@ -38,7 +36,7 @@ coder_model:
 
         # --------------------------------------------------------------------------------------------
         #Qwen/Qwen2.5-Coder-1.5B-Instruct
-        Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF # ONLY LLAMA.CPP
+        Qwen/Qwen2.5-Coder-0.5B-Instruct-GGUF # ONLY LLAMA.CPP
         #Qwen/Qwen2.5-Coder-1.5B-Instruct-GPTQ-Int4
         #Qwen/Qwen2.5-Coder-1.5B-Instruct-AWQ
 
@@ -93,18 +91,33 @@ think_model:
         #no_repeat_ngram_size: 2 # avoid repeating n-grams
 
 # ---------------------------------------------------------------------------------------------------------------------
-# embedding model for building the database (for RAG)
-emb_model_id: sentence-transformers/msmarco-bert-base-dot-v5  # model ID from HuggingFace
+# folders for the results
+tools_dir: supercode/tools-outputs # where I save the results from the agent's tools
+bench_dir: supercode/benchmark-results # where I save the results from running benchmarks
+docs_dir:  supercode/RAG-docs # where I save the files for RAG
+# RAG subfolders/topics: [codebase, radioastronomy], must be the same in docs_dir and db_dir!!!
+# NOTE: all folders and file names should be relative to 'supercode/'
 
-# folders
-tools_dir:     tools-outputs # where I save the results from the agent's tools
-docs_dir:      RAG-codebase # where I save the files for RAG
-db_dir:        supercode/src/database/code-db  # where I save the vector database (db) for RAG
-docker_dir:    supercode/src/docker_env # where I save the dockerfile and docker_compose.yml
-gen_code_dir:  supercode/src/docker_env/results # where I mount with the docker container
-gen_code_file: supercode/src/docker_env/results/gen_code/gen_code_temp.py # where I save the temp file for generating code
-
+# ---------------------------------------------------------------------------------------------------------------------
 # database (RAG)
+emb_model_id: sentence-transformers/msmarco-bert-base-dot-v5  # embedding model ID from HuggingFace for building the DB
+db_dir: supercode/src/database/docs-db  # where I save the vector database (db) for RAG
+update_db: false # if I want to update the db (for example because I changed some files)
 chunk_size: 1000
 chunk_overlap: 200
-update_db: false # if I want to update the db (for example because I changed some files)
+
+# ---------------------------------------------------------------------------------------------------------------------
+# docker config
+#docker_dir:    supercode/src/docker_env # where I save the dockerfile and docker_compose.yml
+#gen_code_dir:  supercode/src/docker_env/gen_code # where I mount with the docker container
+gen_code_file: gen_code_temp # where I save the temp file for generating code
+docker:
+    docker_dir: supercode/src/docker_env # where I save the dockerfile and docker_compose.yml
+    image: sandbox_code # use the latest version by default
+    container_name: sandbox_code # my sandboxing image built from Dockerfile
+    workspace: supercode/src/docker_env/gen_code # where I mount with the docker container
+    tty: true # keeps the container running by simulating a terminal
+    timeout: 15 # seconds
+    cpus: 1 # CPU limit
+    mem_limit: 2g # memory limit
+    #network_mode: "none" # no network access

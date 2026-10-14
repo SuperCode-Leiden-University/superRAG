@@ -18,7 +18,7 @@ backend = vars["backend"] # which backend is used: ["transformers", "llama-cpp",
 model_iter = vars["model_iter"]
 tools_iter = vars["tools_iter"]
 
-benchmark_path = vars["benchmark_path"] # run benchmark
+benchmark_path = vars["benchmark_path"] # run benchmark-results
 
 
 # ----------------------------------------------------------------------------------------------
@@ -38,23 +38,25 @@ think_gen_args         = vars["think_model"]["gen_args"]
 think_multi_sampl_args = vars["think_model"]["multi_sampl_args"]
 
 # ----------------------------------------------------------------------------------------------
-# embedding model for building the database (for RAG)
-emb_model_id = vars["emb_model_id"] # model ID from HuggingFace
+# where I save the results
+tools_dir = vars["tools_dir"]     # where I save the results from the agent's tools
+bench_dir = vars["bench_dir"]     # where I save the results from the benchmarks
+docs_dir  = vars["docs_dir"]      # where I save the files for RAG
 
 # ----------------------------------------------------------------------------------------------
-# where I save the results from the agent's tools
-tools_dir     = vars["tools_dir"]     # where I save the results from the agent's tools
-docs_dir      = vars["docs_dir"]      # where I save the files for RAG
-db_dir        = vars["db_dir"]        # where I save the vector database (db) for RAG
-docker_dir    = vars["docker_dir"]    # where I save the dockerfile and docker_compose.yml
-gen_code_dir  = vars["gen_code_dir"]  # where I mount with the docker container
-gen_code_file = vars["gen_code_file"] # where I save the temp file for generating code
-
-# ----------------------------------------------------------------------------------------------
-# tools & database (RAG)
-update_db = vars["update_db"] # if I want to update the db (for example because I changed some files)
-chunk_size = vars["chunk_size"]
+# database (RAG)
+emb_model_id  = vars["emb_model_id"] # embedding model ID from HuggingFace for building the DB
+db_dir        = vars["db_dir"] # where I save the vector database (db) for RAG
+update_db     = vars["update_db"] # if I want to update the db (for example because I changed some files)
+chunk_size    = vars["chunk_size"]
 chunk_overlap = vars["chunk_overlap"]
+
+# ----------------------------------------------------------------------------------------------
+# docker
+#docker_dir    = vars["docker_dir"]    # where I save the dockerfile and docker_compose.yml
+#gen_code_dir  = vars["gen_code_dir"]  # where I mount with the docker container
+gen_code_file = vars["gen_code_file"] # where I save the temp file for generating code
+docker_args   = vars["docker"]
 
 
 

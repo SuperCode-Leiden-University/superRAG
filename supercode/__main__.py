@@ -1,19 +1,12 @@
 # libraries
-import torch, pprint # pretty-print for dict
 #import ast
-from datetime import datetime
 import getopt, sys # handle flags and pass args from terminal
 
 # my packages
-from supercode.src.agent import Agent
-from supercode.src.tools.code_processing import *
-from supercode.src.tools.tools import *
-from supercode.src.benchmark import *
+from supercode.benchmark import *
 
 # importing variables from the config file
 from supercode.src.configs.parse_config import *
-from supercode.src.configs.system_prompts import baseline_prompt, benchmark_prompt
-
 
 # ---------------------------------------------------------------------------------------------- #
 # ---------------------------------------------------------------------------------------------- #
@@ -25,8 +18,8 @@ from supercode.src.configs.system_prompts import baseline_prompt, benchmark_prom
 # print("Arguments:", sys.argv[1:])
 
 args = sys.argv[1:]
-options = "hb:"
-long_options = ["help", "benchmark="]
+options = "hbc:"
+long_options = ["help", "benchmark=", "model="]
 # in long_options, "name=" means the flag expects an argument
 
 try:
@@ -34,6 +27,12 @@ try:
     for currentArg, currentVal in arguments:
         if currentArg in ("-h", "--help"):
             print("\nActivate coding agent.\nPass '-b' to evaluate on benchmark.\nPress 'q' to quit.\n")
+
+        if currentArg in ("-c", "--coder"):
+            # override the default in config
+            coder_model_id = currentVal # manual selection for the model
+            print(f"\nEvaluating coder model: {currentVal}\n")
+
         if currentArg in ("-b", "--benchmark"):
             # override the default in config
             benchmark_path = currentVal # example: "openai/openai_humaneval"
@@ -57,9 +56,9 @@ def main():
     # ---------------------------------------------------------------------------------------------- #
     ##### IMPORTING THE MODEL
     tot_start = datetime.now()
-    agent = Agent()
+    agent = Agent(coder_model_id)
 
-    if benchmark_path != "none": # evaluating benchmark, given from terminal or default in config
+    if benchmark_path != "none": # evaluating benchmark-results, given from terminal or default in config
         run_benchmark(
             agent, benchmark_path,
             baseline=True, # check the baseline model, then use feedback from tools

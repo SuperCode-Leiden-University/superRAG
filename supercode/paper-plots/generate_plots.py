@@ -142,11 +142,11 @@ fig.tight_layout() # tighten everything
 fig.subplots_adjust(wspace=0)  # adjust space between Axes
 
 #plt.show()
-plt.savefig("plots/performance_plot.pdf", dpi=500)
+plt.savefig("paper-plots/performance_plot.pdf", dpi=500)
 
 
 #########################################################################################################
-# show the delta between benchmark and baseline
+# show the delta between benchmark-results and baseline
 n_model = -2 # plot all models except the last 2 (bc they are hybrids
 
 fig2, ax3 = plt.subplots(1, 1, figsize=(4.5, 2.8))
