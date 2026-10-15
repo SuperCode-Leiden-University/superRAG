@@ -20,9 +20,6 @@ class Agent():
         # tools related parameters
         self.tool_results = []
         self.tools = get_tools() # tools for the agent
-        self.schemas = [build_tool_schema(f) for f in self.tools.values()]
-        self.details = [f._tool_metadata for f in self.tools.values()] # info about requirements
-        #pprint.pprint(self.schemas)
 
         coder_model_args["model_id"] = coder_id # to change the model from terminal without editing the config file
         #print(">> coder args\n", coder_model_args)
@@ -35,12 +32,16 @@ class Agent():
             prequery_prompt=coder_prequery,
         )
         # tool manager is a reasoning model for selecting tools
-        tool_manager_prompt = manager_prompt_1+f"{self.schemas}"+manager_prompt_2
-        if tools_iter>0: self.tool_manager = Model(
-            think_model_args,
-            system_prompt=tool_manager_prompt,
-            prequery_prompt=tool_manager_prequery,
-        )
+        if tools_iter>0:
+            self.schemas = [build_tool_schema(f) for f in self.tools.values()]
+            self.details = [f._tool_metadata for f in self.tools.values()] # info about requirements
+            #pprint.pprint(self.schemas)
+            tool_manager_prompt = manager_prompt_1+f"{self.schemas}"+manager_prompt_2
+            self.tool_manager = Model(
+                think_model_args,
+                system_prompt=tool_manager_prompt,
+                prequery_prompt=tool_manager_prequery,
+            )
 
         if verbose>1: print(">> defining system prompt")
         self.reset_memory() # keep only the system prompts
@@ -187,7 +188,7 @@ class Agent():
                 print("--------------------------------------")
 
                 # failsafe in case the model doesn't return any code
-                # if extract_code(response)=="":
+                # if extract_code(response)==(None, ""): # language, code
                 #     if baseline_code is not None:
                 #         print(">> appending prev code")
                 #         response = response+"\nPrevious code:\n```"+baseline_code+"```"
@@ -197,7 +198,7 @@ class Agent():
                 #         response = response+"\nNo code:\n```raise Exception('NO CODE')```"
                 #         continue
                 # else:
-                #     baseline_code = extract_code(response)
+                #     language, baseline_code = extract_code(response)
 
         return response
 

@@ -170,21 +170,22 @@ def extract_code(completion_text):
     Extracts programming language and code from a code block in the completion text.
     Returns (language, code) or (None, None) if no code block found.
     """
-    # Regex to match fenced code blocks: ```language\n code\n ```
-    pattern = r'```(\w*)\n(.*?)\n```'
-    match = re.search(pattern, completion_text, re.DOTALL)
+    # Regex to match fenced code blocks: ```language\ncode\n```
+    pattern = r'```(\w*)\s(.*?)(\s```|.$)' # .$ takes into account the case where the models doesn't finish
+    match = re.search(pattern, completion_text, re.DOTALL) # finds the only fist occurrence
     if match:
         language = match.group(1).strip()
         code = match.group(2).strip()
         return language, code
     else:
-        return None, None
+        print("WARNING: no code was found!")
+        return None, ""
 
 def save_completion(task_id, response, filepath):
     print("\n>> extracting code from response")
     language, code = extract_code(response)
     print("\n>> checking compiler output for response")
-    compiler_output = sandboxed_compiler(code)
+    compiler_output = sandboxed_compiler(code, language)
 
     # extract language and code from 'completion'
     completion_task = {
@@ -200,3 +201,9 @@ def save_completion(task_id, response, filepath):
         f.write(json.dumps(completion_task, ensure_ascii=False) + '\n')
         f.close()
 
+
+def select_response(responses):
+    if len(responses)==1: # single
+        return responses[0]
+    else: # multi-sampling
+        return responses[0]

@@ -68,14 +68,13 @@ If result_i is only a number (with no parenthesis, no letters and no special cha
 The assert statements should be outside the function. Finally print('end of the code') at the end. 
 First explain your reasoning, then write the function definition and all assert statements in one single block of code. 
 Do not write the function and the assert statements in separate blocks, follow the following structure: 
+```language
+# import libraries
+# function definition
+# assert statements
+# print 'end of the code' at the end of the code
 ```
-import ... # optional
-def ...
-
-assert ...
-
-print('end of the code')
-```
+Remember that in python the assert function is already included, but in c/cpp you have to explicitly import it as <cassert> (for cpp) or assert.h (for c).
 Do not include extra examples besides those given in the description of the function.
 """
 # , f'the correct result is {result_i}, but the function returned {function_name(example_i)} instead'

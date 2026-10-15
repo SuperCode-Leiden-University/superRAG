@@ -18,15 +18,14 @@ from supercode.src.configs.system_prompts import baseline_prompt, benchmark_prom
 # ---------------------------------------------------------------------------------------------- #
 # ---------------------------------------------------------------------------------------------- #
 # ---------------------------------------------------------------------------------------------- #
-def run_benchmark(
-        model,
-        benchmark_path,
-        baseline=True,
-        check_single_task=None
-):
+def run_benchmark(model, benchmark_args):
     # load vars
+    benchmark_path = benchmark_args["name"]
     bench_name = benchmark_path[benchmark_path.find("/")+1:] # NB: benchmark_path="openai/openai_humaneval")
-    num_samples_per_task = coder_multi_sampl_args["num_return_sequences"] # from config
+    baseline = benchmark_args["baseline"]
+    bench_subset = benchmark_args["subset"] # optional argument, some benchmarks are divided in subsets
+    check_single_task = benchmark_args["check_single_task"]
+    num_samples_per_task = 1 # sequential samplings, num_return_sequences in config is parallel sampling
 
     # print info
     if baseline: print("benchmark-results baseline and model for", bench_name, "; num_samples_per_task =", num_samples_per_task)
@@ -36,14 +35,19 @@ def run_benchmark(
     if model_iter>1 : iter="_x"+model_iter
     else: iter=""
 
+    if bench_subset is not None : bench_name = bench_name+"_"+bench_subset
+
     # ----------------------------------------------------------------------------------------------
     # files names
     baseline_file  = bench_dir+"/"+bench_name+"_"+coder_model_id[coder_model_id.find("/")+1:]+"_baseline_" +str(num_samples_per_task)+iter+".jsonl"
     benchmark_file = bench_dir+"/"+bench_name+"_"+coder_model_id[coder_model_id.find("/")+1:]+"_benchmark_"+str(num_samples_per_task)+iter+".jsonl"
 
     # ----------------------------------------------------------------------------------------------
-    # importing the benchmark-results from hugging face
-    dataset = load_dataset(benchmark_path) #, "python") # add the second argument when the dataset has multiple subsets
+    # importing the benchmark-results from hugging face,
+    if bench_subset is None: dataset = load_dataset(benchmark_path)
+    else: dataset = load_dataset(benchmark_path, bench_subset)
+    # add the second argument when the dataset has multiple subsets
+
     problems = dataset["test"] ; n_tasks = len(problems)
     #print("Dataset structure:\n", dataset, sep="")
     """ dataset looks like this:
@@ -91,21 +95,20 @@ def run_benchmark(
 
     # ----------------------------------------------------------------------------------------------
     for i, sample in enumerate(problems):
+        if check_single_task is not None:
+            i=int(check_single_task)
+            sample = problems[i]
         # extract task
         task_id = sample["task_id"]
         entry_point = sample["entry_point"]
         prompt = sample["prompt"]
         test = sample["test"] # code to test the function
+        print("\n======================================")
+        print(i, task_id)
 
         # manual fix for error in humaneval prompt...
         if bench_name=="openai_humaneval" and i == 47 : prompt = prompt.replace("15.0", "8.0")
 
-        if check_single_task is not None:
-            task_id = task_id.replace(str(i), str(check_single_task))
-            i=check_single_task
-
-        print("\n======================================")
-        print(i, task_id)
 
         # ----------------------------------------------------------------------------------------------
         if baseline: # create the baseline

@@ -13,7 +13,6 @@ __TOOLS = []
 
 ##################################################################################################################
 # tool decorator
-
 def tool(metadata: dict):
     """Costum decorator for setting the metadata of the tool."""
 
@@ -129,12 +128,16 @@ metadata = {
         "examples": ["find the file where I defined this function"],
 }
 @tool(metadata)
-def search_database(query: str, n_retriv: int):
+def search_database(query: str, n_retriv: int, topic: Literal['codebase', 'radioastronomy']):
     """
-        Retrieve relevant information from the codebase of the project, for example:
+        Retrieve relevant information from the database, based on a topic.
+        In the "codebase" topic you can find info about:
         - the programming languages used;
         - functions writen in the code;
         - what the code does and how.
+        In the "radioastronomy" topic you can find info about:
+        - LOFAR beamformer pipeline
+        - LOFAR imaging pipeline
     """
     if verbose>0 : print(">> using tool: search_database")
     if n_retriv < 1: return "No document has been retrieved"
@@ -145,7 +148,7 @@ def search_database(query: str, n_retriv: int):
         start = datetime.now()
         # this will automatically check if the database exists and if it needs to be updated
         # then either load or create the database
-        db = Database(emb_model, docs_dir, db_dir, update_db).load()
+        db = Database(emb_model, docs_dir, db_dir, topic, update_db).load()
         end = datetime.now()
         if verbose>0: print(">> Time to Database =", end - start)
 
@@ -173,7 +176,7 @@ metadata = {
         "examples": ["check the code for errors", "check if the code follows the best practices"],
 }
 flavors = ['all', 'c_cpp', 'ci_light', 'cupcake', 'documentation', 'dotnet', 'dotnetweb', 'formatters', 'go', 'java', 'javascript', 'php', 'python', 'ruby', 'rust', 'salesforce', 'security', 'swift', 'terraform']
-@tool(metadata)
+#@tool(metadata)
 def run_megalinter(flavor: Literal['all', 'c_cpp', 'ci_light', 'cupcake', 'documentation', 'dotnet', 'dotnetweb', 'formatters', 'go', 'java', 'javascript', 'php', 'python', 'ruby', 'rust', 'salesforce', 'security', 'swift', 'terraform']):
     """Use a static analysis tool to find errors and warnings in the codebase.
     
@@ -230,7 +233,7 @@ metadata = {
         "tags": ["dynamic analysis", "performance", "bottleneck"],
         "examples": ""
 }
-@tool(metadata)
+#@tool(metadata)
 def run_perf(main_file: str):
     """Use a dynamic analysis tool to find bottlenecks in the codebase."""
     if verbose>0 : print(">> using tool: run_perf")
@@ -278,14 +281,14 @@ def docker_container(command: Literal['activate', 'deactivate', 'delete']):
     workspace_path = os.path.join(os.getcwd(), docker_args["workspace"])
     #print("workspace =", workspace_path)
 
-    if verbose>0: print(f"\n>> about to {command} docker container '{container_name}'")
+    if verbose>1: print(f">> about to {command} docker container '{container_name}'")
     # for debugging
-    if verbose>2:
-        print("----------------------------------------------------------------------------------------------\n", subprocess.run(
-            # 'docker ps' returns info of all (-a) containers filtered (-f) by name
-            ["docker", "ps", "-a", "-f", f"name={container_name}"],
-            capture_output=True, text=True, check=True
-        ).stdout.strip(), "\n", sep="")
+    # if verbose>2:
+    #     print("----------------------------------------------------------------------------------------------\n", subprocess.run(
+    #         # 'docker ps' returns info of all (-a) containers filtered (-f) by name
+    #         ["docker", "ps", "-a", "-f", f"name={container_name}"],
+    #         capture_output=True, text=True, check=True
+    #     ).stdout.strip(), "\n", sep="")
 
     # --------------------------------------------------------------------------------------
     def execute_docker_command(command: Literal['build', 'create', 'activate', 'deactivate', 'delete']):
@@ -372,7 +375,6 @@ def docker_container(command: Literal['activate', 'deactivate', 'delete']):
             ["docker", "ps", "-a", "-f", f"name={container_name}"],
             capture_output=True, text=True, check=True
         ).stdout.strip(), "\n----------------------------------------------------------------------------------------------\n", sep="")
-
 # ----------------------------------------------------------------------------------------------
 metadata = {
         #"name": sandboxed_compiler.__name__,
@@ -384,7 +386,7 @@ metadata = {
 @tool(metadata)
 def sandboxed_compiler(code, language, unit_test=None, entry_point=None):
     """Run the code in a sandboxed Docker environment."""
-    if verbose>0 : print(">> using tool: sandbox_compiler")
+    if verbose>0 : print(">> using tool: sandboxed_compiler")
     container_name = docker_args["container_name"]
     # IMPORTANT: the docker image can see ONLY files inside "results/"
     # and all paths in the container should be relative to "results/"!
@@ -393,6 +395,7 @@ def sandboxed_compiler(code, language, unit_test=None, entry_point=None):
 
     # ------------------------------------------------------------------------------------
     def run_code_command(language):
+        #if verbose>0 : print(">> define command based on the language and saving the code")
         # ----------------------------
         if language == "python":
             ext=".py" # file extension
@@ -421,8 +424,9 @@ def sandboxed_compiler(code, language, unit_test=None, entry_point=None):
 
         # --------------------------------------------------------------------------------
         # save the code in docker workspace
-        with open(gen_code_file+ext, "w") as f:
-            if verbose>1: print(">> saving the code at", gen_code_file+ext)
+        gen_code_file_path = os.path.join(os.getcwd(), docker_args["workspace"], gen_code_file+ext)
+        with open(gen_code_file_path, "w") as f:
+            if verbose>1: print(">> saving the code at", gen_code_file_path)
             f.write(code)
             f.close()
 

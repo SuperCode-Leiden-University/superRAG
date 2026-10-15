@@ -5,6 +5,7 @@ from supercode.src.model_loader.base_backend import BaseLLM
 from supercode.src.model_loader.transformers_backend import Transformers_Import_Model
 from supercode.src.model_loader.llama_cpp_backend import LlamaCpp_Import_Model
 # from supercode.src.model_loader.vllm_backend import vLLM_Import_Model
+from supercode.src.tools.code_processing import *
 
 
 
@@ -60,7 +61,7 @@ class Model():
     def add_message(self, role, content):
         """Add a message to the conversation history."""
         # NOTE: some models accept only "assistant/user/assistant/..." sequences
-        if verbose>1: print(">> saving message, role =", role)
+        #if verbose>2: print(">> saving message, role =", role)
 
         if role == "assistant":
             self.messages.append({
@@ -102,12 +103,15 @@ class Model():
     def call(self, tool_schemas=None):
         """Call the model with the current message history."""
         # Generate response using the backend
-        response = self.model.generate(
+        responses = self.model.generate(
             self.messages,
             tools=tool_schemas,
             # **self.gen_args
         )
-        #print(response)
+        #print(responses)
+
+        # this is actually a list of responses, now we select one:
+        response = select_response(responses) # def in code_processing
 
         self.add_message(role="assistant", content=response)
 

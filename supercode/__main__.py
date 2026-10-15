@@ -35,8 +35,8 @@ try:
 
         if currentArg in ("-b", "--benchmark"):
             # override the default in config
-            benchmark_path = currentVal # example: "openai/openai_humaneval"
-            print(f"\nEvaluating benchmark: {currentVal}\n")
+            benchmark_args["name"] = currentVal # example: "openai/openai_humaneval"
+            print(f"\nEvaluating benchmark: {benchmark_args}\n")
 except getopt.error as err:
     print(str(err))
 
@@ -58,12 +58,8 @@ def main():
     tot_start = datetime.now()
     agent = Agent(coder_model_id)
 
-    if benchmark_path != "none": # evaluating benchmark-results, given from terminal or default in config
-        run_benchmark(
-            agent, benchmark_path,
-            baseline=True, # check the baseline model, then use feedback from tools
-            check_single_task=102, # check a specific task
-        )
+    if benchmark_args["name"] is not None: # evaluating benchmark-results, given from terminal or default in config
+        run_benchmark(agent, benchmark_args)
 
     else:
         ##### CHAT WITH THE MODEL

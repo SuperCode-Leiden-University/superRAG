@@ -2,8 +2,8 @@ import functools
 import inspect
 import importlib
 import pprint
-import json
-from typing import get_type_hints
+import json, re, typing
+from typing import get_type_hints, get_origin, get_args
 
 from supercode.src.configs.parse_config import *
 from supercode.src.tools.tools import get_TOOLS
@@ -29,7 +29,7 @@ def get_tools():
 def build_tool_schema(func):
     #if verbose>0 : print(">> building tool schema for:", func.__name__)
     hints = get_type_hints(func)
-    props = {name: {"type": python_to_json_type(tp)} for name, tp in hints.items()}
+    props = {name: python_to_json_type(tp) for name, tp in hints.items()}
 
     scheme = {
         "type": "function",
@@ -50,11 +50,41 @@ def build_tool_schema(func):
 # ----------------------------------------------------------------------------------------------
 # convert python type to json type (needed for build_tool_schema)
 def python_to_json_type(tp):
-    if tp == int: return "integer"
-    if tp == float: return "number"
-    if tp == str: return "string"
-    if tp == bool: return "boolean"
-    return "string"
+    """
+    Convert a Python type hint to a JSON Schema fragment.
+    Handles Literal types by adding a 'values' property with the list of allowed values.
+    """
+    # handle NoneType explicitly
+    if tp == type(None): return {"type": "null"}
+
+    origin = get_origin(tp)
+    default = {"type": "string"}
+
+    # handle standard types
+    type_map = {
+        str: {"type": "string"},
+        int: {"type": "integer"},
+        float: {"type": "number"},
+        bool: {"type": "boolean"},
+        list: {"type": "array"},
+        dict: {"type": "object"},
+    }
+    # if it's a generic type, get its first argument (e.g., List[str] -> str)
+    if origin in (list, dict): return type_map.get(origin, default)
+
+    # handle Literal types (e.g., Literal['value1', 'value2'])
+    if origin is typing.Literal:
+        # get_args returns the literal values ['value1', 'value2']
+        literal_values = get_args(tp)
+        return {
+            "type": "string",  # Literal values in Python are often strings
+            "values": list(literal_values)
+        }
+
+    # default if unknown
+    print(f"WARNING: python_to_json_type encountered an unsupported type: {origin}, defaulting to string")
+    return type_map.get(tp, default)
+
 
 # ----------------------------------------------------------------------------------------------
 # actually call the tool
@@ -71,9 +101,9 @@ def parse_tools(response, tools, schemas, tool_results, revise=False):
         # or the JSON list is repeated multiple times, but the JSON obj is always written as:
         # { "name": "tool_name", "arguments": { "arg_name": "value"} }
 
+        tool_request_list = []
         tool_end = 0
         end = response.rfind("}")+1 # find last occurrence (the +1 is just bc I use it in tool_end to include '}' in the string)
-        tool_request_list = []
 
         while tool_end < end:
             # find where the tool begins
