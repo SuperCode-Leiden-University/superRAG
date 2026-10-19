@@ -384,7 +384,7 @@ metadata = {
         "examples": "run the code to check if the output is correct"
 }
 @tool(metadata)
-def sandboxed_compiler(code, language, unit_test=None, entry_point=None):
+def sandboxed_compiler(code: object, language: object, unit_test: object = None, entry_point: object = None) -> tuple[int, str]:
     """Run the code in a sandboxed Docker environment."""
     if verbose>0 : print(">> using tool: sandboxed_compiler")
     container_name = docker_args["container_name"]
@@ -396,29 +396,27 @@ def sandboxed_compiler(code, language, unit_test=None, entry_point=None):
     # ------------------------------------------------------------------------------------
     def run_code_command(language):
         #if verbose>0 : print(">> define command based on the language and saving the code")
+
+        docker_cmd = f"docker exec -t {container_name}"
+        time_cmd = "time"
+        # time: to measure real (clocktime), user (processes) and system (kernels) times
+        # note: CPU percentage = (user + sys)/real * 100
+        # -i, --interactive, keep STDIN open even if not attached
+
+        # NOTE: when using cmd list, use "sh", "-c", f"g++ for c/cpp
+        # needed because I'm running 2 commands in one step (compile && run exe)
         # ----------------------------
         if language == "python":
             ext=".py" # file extension
-            cmd = [ # execute code in a running docker from terminal
-                "docker", "exec", "-i", container_name, # -i, --interactive, keep STDIN open even if not attached
-                "python3", gen_code_file+ext
-            ]
+            cmd = f"python3 {gen_code_file+ext}"
         # ----------------------------
         elif language == "c":
             ext=".c" # file extension
-            cmd = [ # execute code in a running docker from terminal
-                "docker", "exec", "-i", container_name, # -i, --interactive, keep STDIN open even if not attached
-                # "sh"=shell, needed because I'm running 2 commands in one step (compile code && run exe)
-                "sh", "-c", f"gcc {gen_code_file+ext} -o {gen_code_file+'.out'} && ./{gen_code_file+'.out'}"
-            ]
+            cmd = f"gcc -c {gen_code_file+ext} -o {gen_code_file}.out && ./{gen_code_file}.out"
         # ----------------------------
         elif language == "cpp":
             ext=".cpp" # file extension
-            cmd = [ # execute code in a running docker from terminal
-                "docker", "exec", "-i", container_name, # -i, --interactive, keep STDIN open even if not attached
-                # "sh"=shell, needed because I'm running 2 commands in one step (compile code && run exe)
-                "sh", "-c", f"g++ {gen_code_file+ext} -o {gen_code_file+'.out'} && ./{gen_code_file+'.out'}"
-            ]
+            cmd = f"g++ -c {gen_code_file+ext} -o {gen_code_file}.out && ./{gen_code_file}.out"
         # ----------------------------
         else: raise f"Error: Unsupported language '{language}'"
 
@@ -430,11 +428,13 @@ def sandboxed_compiler(code, language, unit_test=None, entry_point=None):
             f.write(code)
             f.close()
 
-        return cmd # command for running the code
+        # 'bash -c' to force bas like interface
+        return docker_cmd+" bash -c '"+time_cmd+" "+cmd+"'" # command for running the code
     # ------------------------------------------------------------------------------------
     try:
         docker_container('activate') # to make sure the container is running
         if verbose>2:
+            # debugging
             print("----------------------------------------------------------------------------------------------\n",
                   subprocess.run(
                       # 'docker ps' returns info of all (-a) containers filtered (-f) by name
@@ -445,11 +445,13 @@ def sandboxed_compiler(code, language, unit_test=None, entry_point=None):
             run_code_command(language),
             #["docker", "run", "-m", "0.5g", "--mount", "type=bind,src="+abs_docker_path+",dst=/workspace", "--rm", "sandbox_code", "python3", docker_code_path],
             # -m is memory, must be between 6m and 1g (adding "--memory-swap", "512m" will forbit memory swaps)
+            shell=True,
             capture_output=True,
             text=True,
             timeout=docker_args['timeout'] # seconds
         )
         if verbose>2:
+            # debugging
             print("\n", subprocess.run(
                 # 'docker ps' returns info of all (-a) containers filtered (-f) by name
                 ["docker", "ps", "-a", "-f", f"name={container_name}"],

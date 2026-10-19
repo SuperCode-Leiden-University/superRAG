@@ -111,8 +111,8 @@ class Model():
         #print(responses)
 
         # this is actually a list of responses, now we select one:
-        response = select_response(responses) # def in code_processing
+        # response = select_response(responses) # def in code_processing
+        #
+        # self.add_message(role="assistant", content=response)
 
-        self.add_message(role="assistant", content=response)
-
-        return response
+        return responses

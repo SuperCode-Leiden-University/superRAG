@@ -60,7 +60,7 @@ coder_model:
 
     # arguments for multi-sampling or stream single response (show the tokens as they are generated)
     multi_sampl_args:
-        num_return_sequences: 1 # n of samples per input (batching), when n=1 it will automatically stream the response
+        num_return_sequences: 2 # n of samples per input (batching), when n=1 it will automatically stream the response
         do_sample: True # enable sampling for diversity, default is false to use greedy decoder
         # IMPORTANT: beam search and do_sample are mutually exclusive logics, sampling is stochastic but ensures more diversity
         #num_beams: 5 # explore multiple sequences in parallel (then select the top ones), must be larger or equal to num_return_sequences

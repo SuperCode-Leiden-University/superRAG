@@ -96,6 +96,7 @@ class LlamaCpp_Import_Model(BaseLLM):
                     break
                 print(token, end="", flush=True)
                 response += token
+            print("")
             thread.join()
             response = [response]
 
@@ -111,7 +112,6 @@ class LlamaCpp_Import_Model(BaseLLM):
                 )
                 response.append(completion["choices"][0]["message"]["content"])
             #pprint.pprint(completion)
-            if verbose>0: print(response)
 
         """
         completion = {

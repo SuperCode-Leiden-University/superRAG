@@ -79,6 +79,31 @@ class Agent():
             3) the model reads the results and generate an answer
         if baseline is True, then the model doesn't use any external info
         """
+        def get_response(role, iter):
+            if role=="assistant" or verbose>1:
+                print(f"\n-------------------------------------- \n## {role} (i={iter}, baseline={baseline}): ")
+
+            # call the model and get a list of responses
+            if role == "assistant":
+                samples = self.assistant.call()
+            elif role == "tool_manager":
+                samples = self.tool_manager.call(tool_schemas=self.schemas)
+            else: raise f"ERROR: get_response() got an invalid role: {role}"
+
+            # for i, sample in enumerate(samples):
+            #     print(f"\ni={i}-----------------------------------\n{sample}")
+            # print("--------------------------------------\n")
+
+            # select the best response
+            sample = select_response(samples)
+            self.assistant.add_message(role="assistant", content=sample)
+
+            print(sample) # selected sample
+            if role=="assistant" or verbose>1:
+                print("--------------------------------------")
+
+            return sample
+
         # ----------------------------------------------------------------------------------------------
         # always reset tool results and tool_manager
         self.tool_results = []
@@ -105,10 +130,7 @@ class Agent():
             if baseline:
                 print(">> testing the baseline")
                 # apply chat templates and return an answer
-                print("\n-------------------------------------- \n"
-                      "## assistant (i="+str(i)+", baseline="+str(baseline)+"): ")
-                response = self.assistant.call()
-                print("--------------------------------------")
+                response = get_response("assistant", i)
                 break # there is no need to iterate multiple times
 
             # ----------------------------------------------------------------------------------------------
@@ -126,9 +148,7 @@ class Agent():
                         tool_index = len(self.tool_results) # to avoid duplications
 
                         # choose the tools
-                        if verbose > 1: print(f"-------------------------------------- \n## tool manager (r={r+1}): ")
-                        response = self.tool_manager.call(tool_schemas=self.schemas)
-                        if verbose > 1: print("--------------------------------------")
+                        response = get_response("tool_manager", i)
 
                         # shortcut: skip the rest if there are no tools to be called
                         if "```json\n[]\n```" in response: print(">> NO NEW TOOLS INCLUDED") ; break
@@ -176,16 +196,17 @@ class Agent():
                         #if compiler_result[0] != 0: m.add_message(role="user", content=compiler_prompt)
 
                     if compiler_result[0] == 0: # check if the code compiled correctly
-                        response = "There is nothing to improve."+"\nPrevious code:\n```\n"+baseline_code+"\n```"
-                        print("\n-------------------------------------- \n## assistant (i=" + str(i) + ", baseline=" + str(baseline) + "): ")
-                        print(response, "\n--------------------------------------")
+                        response = f"There is nothing to improve.\nPrevious code:\n```\n{baseline_code}\n```"
+                        print(
+                            "\n-------------------------------------- \n"
+                            f"## assistant (i={i}, baseline={baseline}): \n{response}"
+                            "\n--------------------------------------"
+                        )
                         break
 
                 # ----------------------------------------------------------------------------------------------
                 # ask the coder assistant to improve the code
-                print("\n-------------------------------------- \n## assistant (i="+str(i)+", baseline="+str(baseline)+"): ")
-                response = self.assistant.call()
-                print("--------------------------------------")
+                response = get_response("assistant", i)
 
                 # failsafe in case the model doesn't return any code
                 # if extract_code(response)==(None, ""): # language, code

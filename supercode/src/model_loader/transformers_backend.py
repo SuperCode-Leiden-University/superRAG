@@ -186,6 +186,5 @@ class Transformers_Import_Model(BaseLLM):
                 skip_prompt=True,
                 skip_special_tokens=True
             )
-            if verbose>0: print(response)
 
         return response

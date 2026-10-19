@@ -172,7 +172,7 @@ def extract_code(completion_text):
     """
     # Regex to match fenced code blocks: ```language\ncode\n```
     pattern = r'```(\w*)\s(.*?)(\s```|.$)' # .$ takes into account the case where the models doesn't finish
-    match = re.search(pattern, completion_text, re.DOTALL) # finds the only fist occurrence
+    match = re.search(pattern, completion_text, re.DOTALL)
     if match:
         language = match.group(1).strip()
         code = match.group(2).strip()
@@ -180,6 +180,29 @@ def extract_code(completion_text):
     else:
         print("WARNING: no code was found!")
         return None, ""
+
+def extract_runtime(code_output):
+    pattern = r'real\s(\d+)m(\d+\.\d+)s\suser\s(\d+)m(\d+\.\d+)s\ssys\s(\d+)m(\d+\.\d+)s\s'
+    # time <command> output:
+    # <command output>
+    # real	0m0.004s
+    # user	0m0.001s
+    # sys	0m0.004s
+
+    match = re.search(pattern, code_output) # there should be only one match
+    real_t = float(match.group(1))*60 + float(match.group(2))
+    user_t = float(match.group(3))*60 + float(match.group(4))
+    sys_t  = float(match.group(5))*60 + float(match.group(6))
+
+    runtime = {
+        "real": real_t, # clock time (including I/O and time slices used by other processes)
+        "user": user_t, # process time for the current job only
+        "sys":  sys_t,  # kernel time for the current job only (this doesn't include library code --> user)
+        "cpu":  user_t+sys_t, # cpu time, is <=real with single-thread and can be >real with multi-thread
+        "util": (user_t+sys_t)/real_t # cpu utilization, note this can be >1 with multi-threading
+    }
+    if verbose>0: print("runtime:", runtime)
+    return runtime
 
 def save_completion(task_id, response, filepath):
     print("\n>> extracting code from response")
@@ -203,7 +226,37 @@ def save_completion(task_id, response, filepath):
 
 
 def select_response(responses):
-    if len(responses)==1: # single
-        return responses[0]
-    else: # multi-sampling
-        return responses[0]
+    # if single answer
+    if len(responses)==1: return responses[0]
+
+    # if multi-sampling
+    else:
+        if verbose>0: print(">> selecting the best out of", len(responses), "responses")
+
+        # filter for correctness (unit tests from prompt only)
+        correct_samples = []
+        runtimes = []
+        for i, response in enumerate(responses):
+            language, code = extract_code(response)
+            result = sandboxed_compiler(code, language) # = (returncode, "output: ..., errors: ...")
+            if result[0] == 0 : # if the code is correct
+                correct_samples.append(i)
+                runtimes.append( extract_runtime(result[1]) ) # code output and errors
+
+        # if none are correct, select the first one
+        if not correct_samples:
+            if verbose>0: print(">> no correct response was found, returning the first answer")
+            return responses[0]
+        # if only one answer is correct
+        elif len(correct_samples)==1:
+            if verbose>0: print(f">> only one correct response was found: i={correct_samples[0]}")
+            return responses[correct_samples[0]]
+        # if more then one answer is correct, select the fastest
+        else:
+            # runtime = {"real", "user", "sys", "cpu", "util"}, they are all in seconds except "util" which is cpu/real
+            metric = "util"
+            print(f"using {metric} as runtime metric")
+            metric_times = [ runtime[metric] for runtime in runtimes ] # extract runtime for the selected metric
+            i = metric_times.index(min(metric_times)) # find the code with the lowest runtime
+            if verbose>0: print(f">> {correct_samples[i]} was the fastest out of {len(correct_samples)} correct responses")
+            return responses[correct_samples[i]]

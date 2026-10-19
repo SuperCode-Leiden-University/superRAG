@@ -26,7 +26,8 @@ You must explain your reasoning step-by-step for choosing each tool and comply t
 1. Determine the final goal of the user request. If multiple goals are required or the final goal is complex, then break down the user request into simpler sub-tasks.
 2. For each task, use the schemas as reference to determine relevant tools that can provide useful information that match the user's query.
 3. For each relevant tool, use the schemas as reference to determine if the tool has requirements that can be provided by other tools. 
-4. Built a list of JSON objects (this must be formatted as: ```json [...] ```) with the tools and their arguments (reference the schemas to check the required argument for each tool), you can include multiple tools if needed, or return an empty list if none of the tools fits.
+4. Built a list of JSON objects (this must be formatted as: ```json [...] ```) with the tools and their arguments (reference the schemas to check the required argument for each tool), \
+you can include multiple tools if needed, or return an empty list if none of the tools fits.
 
 Additional instructions:
 - Comments are NOT allowed inside JSON objects, you may add comments before or after the json markers (```json [...] ```).
@@ -35,10 +36,12 @@ Additional instructions:
 
 Tool-specific patterns and instructions:
 - When calling 'run_megalinter' the flavor should align with the programming language unless the user specify a specific flavor. You must NEVER try to guess the flavor and must NEVER assume the programming language.
-- When calling 'search_database' you must first determine the level of complexity of the query (multi-step, broad or generic questions are considered complex, single-step or straightforward queries are considered easy) and determine the number of retrieved documents 'n_retriev' based on that (refer to the schema).
+- When calling 'search_database' you must first determine the level of complexity of the query \
+(multi-step, broad or generic questions are considered complex, single-step or straightforward queries are considered easy) and determine the number of retrieved documents 'n_retriev' based on that (refer to the schema).
 - If you see the following pattern: 'var_name'=(math expression), than you need to call the calculator to solve (math expression) than replace 'var_name' with (result of the math expression) before continuing.
 
-Example: if the static analysis tool is relevant, check if the user provided a programming language or a flavor, if not than you need to first search the database to find out the programming language, than choose the flavor that matches the programming language.
+Example: if the static analysis tool is relevant, check if the user provided a programming language or a flavor, \
+if not than you need to first search the database to find out the programming language, than choose the flavor that matches the programming language.
 In this case the json object will include the 'search_database' tool before the 'run_megalinter' tool. """
 
 # prompt to add before the user_prompt
@@ -60,40 +63,37 @@ debugger_revise = "Use the following reasoning steps to improve your previous an
 ########################################################################################################################
 ########################################################################################################################
 ########################################################################################################################
-baseline_prompt = """
-Write a function based on the following description. 
-For the examples included in the description of the function, check that the function returns the expected results with a statement using the following template: 
+general_prompt = """
+First explain your reasoning, then write library imports, function definition and all assert statements in one single block of code. 
+
+For the examples included in the description of the function, check that the function returns the expected results with an assert statement using the following template: 
 `assert function_name(example_i) == result_i , f'the correct result is { result_i }, but the function returned { function_name(example_i) } instead'`.
-If result_i is only a number (with no parenthesis, no letters and no special characters), then consider using `assert abs(function_name(example_i) - result_i) < 1e-6` instead of `assert function_name(example_i)==result_i` to avoid errors due to numerical fluctuations.
-The assert statements should be outside the function. Finally print('end of the code') at the end. 
-First explain your reasoning, then write the function definition and all assert statements in one single block of code. 
-Do not write the function and the assert statements in separate blocks, follow the following structure: 
+Note that in the case in which result_i is just a number (with no parenthesis, no letters and no special characters), \
+you should `assert abs(function_name(example_i) - result_i) < 1e-6` instead of `assert function_name(example_i)==result_i` \
+to avoid errors due to numerical fluctuations (do not do this if the result is a bool, a string, a list or anything other than a pure number).
+The assert statements must be placed only outside the function. Finally print('end of the code') at the end. 
+
+You must always write the function and the assert statements as a single block of code, following this structure: 
 ```language
 # import libraries
 # function definition
-# assert statements
-# print 'end of the code' at the end of the code
+# assert statements for the examples in the description of the function
+# finally print 'end of the code'
 ```
+
 Remember that in python the assert function is already included, but in c/cpp you have to explicitly import it as <cassert> (for cpp) or assert.h (for c).
-Do not include extra examples besides those given in the description of the function.
+You must not include extra examples besides those given in the description of the function.
+In the exceptional case in which no examples are provided, you may include up to 3 examples.
 """
 # , f'the correct result is {result_i}, but the function returned {function_name(example_i)} instead'
+
+
 
 """
 Write a function based on the following description. 
 When reasoning you can consider additional test cases but no more then 5, however additional test cases should not appear in the final code.
 In the final code you must never include extra examples besides those given in the description (this instruction has priority, ignore the FIX if it says otherwise).
 """
-benchmark_prompt = """
-Improve this function based on the following description. 
-For the examples included in the description of the function, check that the function returns the expected results with a statement using the following template: 
-`assert function_name(example_i) == result_i , f'the correct result is { result_i }, but the function returned { function_name(example_i) } instead'`.
-If result_i is only a number (with no parenthesis, no letters and no special characters), then consider using `assert abs(function_name(example_i) - result_i) < 1e-6` instead of `assert function_name(example_i)==result_i` to avoid errors due to numerical fluctuations.
-The assert statements should be outside the function. Finally print('end of the code') at the end. 
-Always include the final code in your answer. 
-Write the function definition and all assert statements in one single block of code.
-Do not include extra examples besides those given in the description of the function.
-"""
 
 
 """
@@ -102,6 +102,11 @@ Always include the final code in your answer.
 When reasoning you can consider additional test cases but no more then 5, however additional test cases should not appear in the final code.
 In the final code you must never include extra examples besides those given in the description (this instruction has priority, ignore the FIX if it says otherwise).
 """
+
+baseline_prompt = "Write a function based on the following description. "+general_prompt
+benchmark_prompt = "Improve this function based on the following description. "+general_prompt
+
+
 
 # For the given examples, check that the function returns the expected results with a statement like:
 # `assert function_name(example_i)==result_i, f'the correct result is result_i, but the function returned {function_name(example_i)} instead'`,
