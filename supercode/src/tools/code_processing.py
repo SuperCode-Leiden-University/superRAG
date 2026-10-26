@@ -1,8 +1,12 @@
 import re
 import json
-import pprint
+from pprint import pp as pprint
 
+# importing my functions from other files
 from supercode.src.tools.tools import *
+
+# importing variables from the config file
+from supercode.src.configs.parse_config import *
 
 
 """ sample structure for HumanEval:
@@ -34,57 +38,14 @@ from supercode.src.tools.tools import *
          '    assert candidate([1.1, 2.2, 3.1, 4.1, 5.1], 0.5) == False'
 """
 
-# extract the code from the model's answer
-# def extract_code(response, entry_point=None):
-#     """
-#     if entry_point == None: code_def = response.rfind("def ") # if entry_point is unknown
-#     else: code_def = response.rfind("def "+entry_point) # robust signature for finding the function
-#
-#     if code_def==-1:
-#         print("WARNING: function not found")
-#         return ""
-#     code_start = response.rfind("```", 0, code_def)+3
-#     if response.rfind("python", code_start, code_def)>-1:
-#         code_start += 6 # remove "python" as well if present
-#     code_end = response.find("```", code_start)  # code blocks start and end with ``` (exclude ```)
-#     """
-#     # sanity check
-#     if entry_point is not None:
-#         entry_index = response.find(entry_point)
-#         if entry_index == -1:
-#             print("WARNING: entry_point not found")
-#             return ""
-#
-#     # LLMs format their answer using markdown
-#     # code is delimited by ```python ... ```
-#     offset = len("```")
-#     code_end = response.rfind("```")
-#     code_start = response.rfind("```", 0, code_end) + offset
-#
-#     #code = response[code_start:code_end]
-#
-#     pl_offset = len("python")
-#     #print(response.rfind("python", code_start, code_end),"\n")
-#     if response.rfind("python", code_start, code_end) != -1 :
-#         #print("py check")
-#         code_start+=pl_offset ; offset+=pl_offset
-#
-#     if code_start==-1+offset or code_end==-1:
-#         print("WARNING: code not found")
-#         return ""
-#     #print(">> code extracted successfully")
-#     code = response[code_start:code_end].strip()
-#     return code
-
 
 def extract_test_code(prompt, code):
+    if verbose>0: print(">> extracting test code")
+
     test_code = ""
     failsafe_assertion = ""
-
     start = 0
     failsafe = 0
-    verbose = 1
-
     keyword_start = "assert"    ; len_start = len(keyword_start)
     keyword_end_line = "\n"     #; len_end = len(keyword_end_line)
 
@@ -92,26 +53,26 @@ def extract_test_code(prompt, code):
     func_code = code[:test_start]
     test = code[test_start:]
 
-    func_name_start = code.find("def ") + 4
+    func_name_start = code.find("def ")+4
     func_name_end = code.find("(", func_name_start)
     entry_point = code[func_name_start:func_name_end]
-    keyword_func = entry_point+"(" ; len_func = len(keyword_func)
+    keyword_func = f"{entry_point}(" ; len_func = len(keyword_func)
 
     next_start = test.find(keyword_start, start+len_start)
 
 
-    while next_start > -1:
-        if verbose > 1: print("\n--------\n>> looping", failsafe)
+    while next_start>-1:
+        if verbose>1: print("\n--------\n>> looping", failsafe)
 
         func = test.find(keyword_func, next_start) #+ len_func
         start = test.rfind(keyword_start, next_start, func) #+ len_start
         end_line = test.find(keyword_end_line, start)
         next_start = test.find(keyword_start, start+len_start)
 
-        if verbose > 1: print(">> start =", start, "; func =", func, "; end_line =", end_line, "; next_start =", next_start)
+        if verbose>1: print(f">> start = {start}; func = {func}; end_line = {end_line}; next_start = {next_start}")
 
         assert_line = test[start:end_line]
-        if verbose > 0: print(">> assert_line:", assert_line)
+        if verbose>0: print(f">> assert_line:{assert_line}")
 
         end_assert = max(
             assert_line.rfind("= ")+2,
@@ -123,47 +84,39 @@ def extract_test_code(prompt, code):
             assert_line.find(keyword_func)+len_func :
             assert_line.rfind(")", 0, end_assert)
         ]
-        if verbose > 1: print(">> test_case:", test_case)
+        if verbose>1: print(f">> test_case: {test_case}")
 
         test_sol = assert_line[end_assert:]
-        if verbose > 1: print(">> test_sol:", test_sol)
+        if verbose>1: print(f">> test_sol: {test_sol}")
 
         assert_line = assert_line.replace(keyword_func, entry_point+"(")
 
-        assertion = f"\n" + assert_line + ", f'the correct result is {" + test_sol + "} but the function output is {" + entry_point + "(" + test_case + ")}' "
-        if verbose > 2: print("assertion:", assertion)
+        assertion = f"\n"+assert_line+", f'the correct result is {"+test_sol+"} but the function output is {"+entry_point+"("+test_case+")}' "
+        if verbose>2: print(f">> assertion: {assertion}")
         if failsafe == 1 : failsafe_assertion = assertion
         # I'm using the second test case bc the first is often the null example
 
-        if entry_point+"("+test_case+")" in prompt:
-            if verbose > 0: print("\n>> FOUND test case, i =", failsafe,"\n")
+        if f"{entry_point}({test_case})" in prompt:
+            if verbose>0: print(f"\n>> FOUND test case, i = {failsafe}\n")
             test_code += assertion
         #else: print(">> no test case, i =", failsafe)
 
         if failsafe >= 50:
-            print("\nWARNING: exit loop failsafe activated!")
+            print("\n>> WARNING: exit loop failsafe activated!")
             break
         failsafe += 1
 
     # in some cases the examples in the prompt are not in the test
     # to avoid an empty test, I'll add the first assertion
     if test_code == "":
-        print("\nWARNING: failsafe due to empty test_code")
+        print("\n>> WARNING: failsafe due to empty test_code")
         test_code = failsafe_assertion
 
     test_code += '\nprint("end of the code")'
-    print("\n--------\n--------\n>>test_code:", test_code)
+    print(f"\n--------\n--------\n>> test_code:\n{test_code}")
 
-    return func_code+"\n"+test_code
+    return f"{func_code}\n{test_code}"
 
-# def convert_to_json(task_id, response, code, **kwargs):
-#     json_sample = {
-#         "task_id": task_id,
-#         "completion": response, # backup the model's answer
-#         "code": code,
-#         **kwargs
-#     }
-#     return json_sample
 
 def extract_code(completion_text):
     """
@@ -178,85 +131,82 @@ def extract_code(completion_text):
         code = match.group(2).strip()
         return language, code
     else:
-        print("WARNING: no code was found!")
-        return None, ""
+        print(">> WARNING: no code was found!")
+        return None, None
 
-def extract_runtime(code_output):
-    pattern = r'real\s(\d+)m(\d+\.\d+)s\suser\s(\d+)m(\d+\.\d+)s\ssys\s(\d+)m(\d+\.\d+)s\s'
-    # time <command> output:
-    # <command output>
-    # real	0m0.004s
-    # user	0m0.001s
-    # sys	0m0.004s
 
-    match = re.search(pattern, code_output) # there should be only one match
-    real_t = float(match.group(1))*60 + float(match.group(2))
-    user_t = float(match.group(3))*60 + float(match.group(4))
-    sys_t  = float(match.group(5))*60 + float(match.group(6))
-
-    runtime = {
-        "real": real_t, # clock time (including I/O and time slices used by other processes)
-        "user": user_t, # process time for the current job only
-        "sys":  sys_t,  # kernel time for the current job only (this doesn't include library code --> user)
-        "cpu":  user_t+sys_t, # cpu time, is <=real with single-thread and can be >real with multi-thread
-        "util": (user_t+sys_t)/real_t # cpu utilization, note this can be >1 with multi-threading
-    }
-    if verbose>0: print("runtime:", runtime)
-    return runtime
-
-def save_completion(task_id, response, filepath):
-    print("\n>> extracting code from response")
-    language, code = extract_code(response)
-    print("\n>> checking compiler output for response")
-    compiler_output = sandboxed_compiler(code, language)
+def save_completion(task_id, completion, language, code, compiler_output, filepath):
+    # "language": language, "code": code, "compiler_output": result
+    if verbose>0: print(">> saving response from model")
 
     # extract language and code from 'completion'
     completion_task = {
         "task_id": task_id,
-        "completion": response,
+        "completion": completion,
         "language": language,
         "code": code,
         "compiler_output": compiler_output
     }
-    if verbose>2: print("\n>> completion_task:") ; pprint.pprint(completion_task)
+    if verbose>2: print("\n>> completion:") ; pprint(completion_task)
     # save to JSONL (one JSON object per line)
     with open(filepath, 'a', encoding='utf-8') as f:
-        f.write(json.dumps(completion_task, ensure_ascii=False) + '\n')
+        f.write(json.dumps(completion_task, ensure_ascii=False)+'\n')
         f.close()
 
 
 def select_response(responses):
-    # if single answer
-    if len(responses)==1: return responses[0]
+    # # if single answer
+    # if len(responses)==1:
+    #     language, code = extract_code(responses[0])
+    #     result = sandboxed_compiler(code, language)
+    #     return responses[0]
+    # 
+    # # if multi-sampling
+    # else:
+    if verbose>0: print(">> selecting the best out of", len(responses), "responses")
 
-    # if multi-sampling
+    # filter for correctness (unit tests from prompt only)
+    default_idx = 0 # aka the first sample
+    correct_idx = []
+    correct_runtimes = []
+    code_results = []
+    
+    for i, response in enumerate(responses):
+        language, code = extract_code(response)
+        if code==None and i==default_idx: default_idx+=1 # in case the code is empty
+        result = sandboxed_compiler(code, language, k_times=k_runtimes)
+        # returns (returncode, "output: ...", runtimes_dict)
+        # where runtimes_dict = {"real": (mean, std), "user": ..., "sys": ..., "cpu": ..., "util": ...}
+
+        # collect code and compiler output for later
+        code_results.append({"language": language, "code": code, "compiler_output": result})
+
+        if result[0] == 0 : # if the code is correct
+            correct_idx.append(i)
+            correct_runtimes.append(result[2]) # code output and errors
+
+    if default_idx>=len(responses): default_idx=0 # failsafe in the case where all codes are empty
+
+    # if none are correct, select the first non-empty code
+    if not correct_idx:
+        if verbose>0: print(">> no correct response was found, returning the first not empty code\n")
+        return default_idx, code_results
+    
+    # if only one answer is correct
+    elif len(correct_idx)==1:
+        if verbose>0: print(f">> only one correct response was found: i={correct_idx[0]}\n")
+        return correct_idx[0], code_results
+    
+    # if more then one answer is correct, select the fastest
     else:
-        if verbose>0: print(">> selecting the best out of", len(responses), "responses")
+        # runtime = {"real", "user", "sys", "cpu", "util"}, they are all in seconds except "util" which is cpu/real
+        if verbose>0: print(f">> using {optim_metric} as runtime metric\n")
+        metric_times = [ runtime[optim_metric][0] for runtime in correct_runtimes ] # extract runtime (mean, std) for the selected metric
 
-        # filter for correctness (unit tests from prompt only)
-        correct_samples = []
-        runtimes = []
-        for i, response in enumerate(responses):
-            language, code = extract_code(response)
-            result = sandboxed_compiler(code, language) # = (returncode, "output: ..., errors: ...")
-            if result[0] == 0 : # if the code is correct
-                correct_samples.append(i)
-                runtimes.append( extract_runtime(result[1]) ) # code output and errors
+        if optim_metric == "util": # max cpu utilization
+            i = metric_times.index(max(metric_times)) # find the code with the min runtime or max utilization
+        else: # min runtime
+            i = metric_times.index(min(metric_times)) # find the code with the min runtime or max utilization
 
-        # if none are correct, select the first one
-        if not correct_samples:
-            if verbose>0: print(">> no correct response was found, returning the first answer")
-            return responses[0]
-        # if only one answer is correct
-        elif len(correct_samples)==1:
-            if verbose>0: print(f">> only one correct response was found: i={correct_samples[0]}")
-            return responses[correct_samples[0]]
-        # if more then one answer is correct, select the fastest
-        else:
-            # runtime = {"real", "user", "sys", "cpu", "util"}, they are all in seconds except "util" which is cpu/real
-            metric = "util"
-            print(f"using {metric} as runtime metric")
-            metric_times = [ runtime[metric] for runtime in runtimes ] # extract runtime for the selected metric
-            i = metric_times.index(min(metric_times)) # find the code with the lowest runtime
-            if verbose>0: print(f">> {correct_samples[i]} was the fastest out of {len(correct_samples)} correct responses")
-            return responses[correct_samples[i]]
+        if verbose>0: print(f">> i={correct_idx[i]} was the fastest out of {len(correct_idx)} correct responses\n")
+        return correct_idx[i], code_results

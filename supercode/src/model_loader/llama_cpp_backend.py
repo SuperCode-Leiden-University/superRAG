@@ -1,11 +1,14 @@
-import os, threading, queue, pprint
+import os, threading, queue
+from pprint import pp as pprint
 from typing import Optional, List, Dict, Any, Literal
 from llama_cpp import Llama
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # importing my functions from other files
-from supercode.src.configs.parse_config import *  # model's name and parameters
 from supercode.src.model_loader.base_backend import BaseLLM
+
+# importing variables from the config file
+from supercode.src.configs.parse_config import *  # model's name and parameters
 
 class LlamaCpp_Import_Model(BaseLLM):
     # ----------------------------------------------------------------------------------------------
@@ -21,7 +24,7 @@ class LlamaCpp_Import_Model(BaseLLM):
                  # chat_format: str = "llama-2",  # e.g., "llama-2", "chatml", "zephyr"
                  **kwargs,
                  ):
-        print(">> loading with llama.cpp")
+        if verbose>0: print(">> loading with llama.cpp")
         ##### model's name and parameters are saved in the config
         self.model_id = model_id  # name of the model from Hugging Face
         self.gen_args = gen_args  # general settings, such as temperature and max tokens (default vals in config)
@@ -111,7 +114,7 @@ class LlamaCpp_Import_Model(BaseLLM):
                     stream=False,  # disable stream for batch processing
                 )
                 response.append(completion["choices"][0]["message"]["content"])
-            #pprint.pprint(completion)
+            #pprint(completion)
 
         """
         completion = {

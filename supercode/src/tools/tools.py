@@ -5,8 +5,11 @@ from datetime import datetime
 from typing import Optional, List, Dict, Any, Literal
 from langchain_huggingface import HuggingFaceEmbeddings
 
-from supercode.src.configs.parse_config import *
+# importing my functions from other files
 from supercode.src.database.database import Database
+
+# importing variables from the config file
+from supercode.src.configs.parse_config import *
 
 
 __TOOLS = []
@@ -108,7 +111,7 @@ def draw_graph(expr: str, x_range: List[float]):
         # scp -o ProxyJump=user1@server_1 user2@server_2:/path/to/file /local/path
         # scp src-temp:/home/<USER_NAME_REMOTE>/superRAG/src/tools/tools-outputs/graph.png /home/<USER_NAME_LOCAL>/Downloads/
 
-        return "the graph was saved as graph.png in the directory `"+tools_dir+"/`"
+        return f"the graph was saved as graph.png in the directory `{tools_dir}/`"
     except Exception as e:
         print(f"\nAn error occurred in the draw_graph tool:\n{e}\n")
         return f"I couldn't draw the graph. An error occurred:\n{e}"
@@ -211,11 +214,11 @@ def run_megalinter(flavor: Literal['all', 'c_cpp', 'ci_light', 'cupcake', 'docum
             if flavor in ["ci", "docker", "jenkins", "json", "yaml", "xml"] : flavor="ci_light"
 
         # TEMPORARY PATCH
-        command = "cd "+tools_dir+" && npx mega-linter-runner --flavor "+flavor # save megalinter report in 'tools_dir'
+        command = f"cd {tools_dir} && npx mega-linter-runner --flavor {flavor}" # save megalinter report in 'tools_dir'
         # run shell command with: subprocess.run([command, "arg1", "arg2"], cwd="path/to/folder/", shell=True)
         subprocess.run([command], shell=True) # run shell command
         f = open(path+"megalinter.log")
-        logs = "Logs saved in "+path+"\n\nContents of the logs:\n\n"+f.read()
+        logs = f"Logs saved in {path}\n\nContents of the logs:\n\n{f.read()}"
         f.close()
 
     except Exception as e:
@@ -243,16 +246,16 @@ def run_perf(main_file: str):
     try:
         if ".cpp" in main_file: # compile (for C++)
             subprocess.run(
-                ["g++ -O2 -g "+main_file+" -o "+exe_name],
+                [f"g++ -O2 -g {main_file} -o {exe_name}"],
                 cwd=docs_dir, shell=True, check=True
             )
             subprocess.run( # record perf data
-                ["perf record -g -e cycles -F 9999 -o ../"+path+"/perf.data ./"+exe_name],
+                [f"perf record -g -e cycles -F 9999 -o ../{path}/perf.data ./{exe_name}"],
                 cwd=docs_dir, shell=True, check=True
             )
         elif ".py" in main_file:  # compile (for C++)
             subprocess.run( # record perf data
-                ["perf record -g -e cycles -F 9999 -o ../"+path+"/perf.data python ./"+main_file],
+                [f"perf record -g -e cycles -F 9999 -o ../{path}/perf.data python ./{main_file}"],
                 cwd=docs_dir, shell=True, check=True
             )
         else:
@@ -262,8 +265,8 @@ def run_perf(main_file: str):
             cwd=path, shell=True, check=True,
         )
 
-        f = open(path+"/annotate.txt")
-        logs = "Logs saved in "+path+"\n\nContents of the logs:\n\n"+f.read()
+        f = open(f"{path}/annotate.txt")
+        logs = f"Logs saved in {path}\n\nContents of the logs:\n\n{f.read()}"
         f.close()
 
     except Exception as e:
@@ -376,6 +379,30 @@ def docker_container(command: Literal['activate', 'deactivate', 'delete']):
             capture_output=True, text=True, check=True
         ).stdout.strip(), "\n----------------------------------------------------------------------------------------------\n", sep="")
 # ----------------------------------------------------------------------------------------------
+def extract_runtime(code_output):
+    pattern = r'real\s(\d+)m(\d+\.\d+)s\suser\s(\d+)m(\d+\.\d+)s\ssys\s(\d+)m(\d+\.\d+)s\s'
+    match = re.search(pattern, code_output) # there should be only one match
+    # time <command> output:
+    # <command output>
+    # real	0m0.004s
+    # user	0m0.001s
+    # sys	0m0.004s
+
+    real_t = float(match.group(1))*60+float(match.group(2))
+    user_t = float(match.group(3))*60+float(match.group(4))
+    sys_t  = float(match.group(5))*60+float(match.group(6))
+
+    runtime = {
+        "real": real_t, # clock time (including I/O and time slices used by other processes)
+        "user": user_t, # process time for the current job only
+        "sys":  sys_t,  # kernel time for the current job only (this doesn't include library code --> user)
+        "cpu":  user_t+sys_t, # cpu time, is <=real with single-thread and can be >real with multi-thread
+        "util": (user_t+sys_t)/real_t # cpu utilization, note this can be >1 with multi-threading
+    }
+    if verbose>1: print(">> code runtime:", runtime)
+    return runtime, match.group(0)
+
+# ----------------------------------------------------------------------------------------------
 metadata = {
         #"name": sandboxed_compiler.__name__,
         "provides": "runs the code and returns the compiler output",
@@ -384,14 +411,14 @@ metadata = {
         "examples": "run the code to check if the output is correct"
 }
 @tool(metadata)
-def sandboxed_compiler(code: object, language: object, unit_test: object = None, entry_point: object = None) -> tuple[int, str]:
+def sandboxed_compiler(code: object, language: object, unit_test: object=None, entry_point: object=None, k_times: int=1):
     """Run the code in a sandboxed Docker environment."""
     if verbose>0 : print(">> using tool: sandboxed_compiler")
     container_name = docker_args["container_name"]
     # IMPORTANT: the docker image can see ONLY files inside "results/"
     # and all paths in the container should be relative to "results/"!
 
-    if unit_test is not None: code = code+"\n\n"+unit_test+"\n\ncheck("+entry_point+")" # issue: this would work only for HumanEval!
+    if unit_test is not None: code = f"{code}\n\n{unit_test}\n\ncheck({entry_point})" # issue: this would work only for HumanEval!
 
     # ------------------------------------------------------------------------------------
     def run_code_command(language):
@@ -418,7 +445,7 @@ def sandboxed_compiler(code: object, language: object, unit_test: object = None,
             ext=".cpp" # file extension
             cmd = f"g++ -c {gen_code_file+ext} -o {gen_code_file}.out && ./{gen_code_file}.out"
         # ----------------------------
-        else: raise f"Error: Unsupported language '{language}'"
+        else: raise ValueError(f"Error: Unsupported language '{language}'")
 
         # --------------------------------------------------------------------------------
         # save the code in docker workspace
@@ -429,10 +456,11 @@ def sandboxed_compiler(code: object, language: object, unit_test: object = None,
             f.close()
 
         # 'bash -c' to force bas like interface
-        return docker_cmd+" bash -c '"+time_cmd+" "+cmd+"'" # command for running the code
+        return f"{docker_cmd} bash -c '{time_cmd} {cmd}'" # command for running the code
     # ------------------------------------------------------------------------------------
     try:
         docker_container('activate') # to make sure the container is running
+        # check docker container status
         if verbose>2:
             # debugging
             print("----------------------------------------------------------------------------------------------\n",
@@ -441,15 +469,43 @@ def sandboxed_compiler(code: object, language: object, unit_test: object = None,
                       ["docker", "ps", "-a", "-f", f"name={container_name}"],
                       capture_output=True, text=True, check=True
                   ).stdout.strip(), "\n", sep="")
-        result = subprocess.run( # run a program from inside the container (and remove the container afterwards)
-            run_code_command(language),
-            #["docker", "run", "-m", "0.5g", "--mount", "type=bind,src="+abs_docker_path+",dst=/workspace", "--rm", "sandbox_code", "python3", docker_code_path],
-            # -m is memory, must be between 6m and 1g (adding "--memory-swap", "512m" will forbit memory swaps)
-            shell=True,
-            capture_output=True,
-            text=True,
-            timeout=docker_args['timeout'] # seconds
-        )
+
+        k_runtimes = {"real": [], "user": [], "sys": [], "cpu": [], "util": []}
+        ave_std_time_str = "" ; ave_std_time_dict = {}
+
+        # run the code multiple times to capture runtime variance
+        for k in range(k_times):
+            result = subprocess.run( # run a program from inside the container (and remove the container afterwards)
+                run_code_command(language),
+                #["docker", "run", "-m", "0.5g", "--mount", "type=bind,src="+abs_docker_path+",dst=/workspace", "--rm", "sandbox_code", "python3", docker_code_path],
+                # -m is memory, must be between 6m and 1g (adding "--memory-swap", "512m" will forbit memory swaps)
+                shell=True,
+                capture_output=True,
+                text=True,
+                timeout=docker_args['timeout'] # seconds
+            )
+
+            # remove escape characters
+            ansi_escape = re.compile(r'\x1b\[[0-9;]*m') # \x is for asci characters
+            output = ansi_escape.sub('', result.stdout)
+
+            runtime, time_string = extract_runtime(output)
+
+            for key in k_runtimes.keys(): k_runtimes[key].append(runtime[key])
+            if result.returncode==1 : k_times=k+1 ; break # run the code only once if there are errors
+
+        output = output.replace(time_string, "") # remove the time string from the output
+
+        for key in k_runtimes.keys():
+            mean = np.mean(k_runtimes[key])
+            std = np.std(k_runtimes[key])
+            if key=="util":
+                ave_std_time_str += f"cpu {key}:\t({mean*100:.2f} +/- {std*100:.2f})%\n"
+            else:
+                ave_std_time_str += f"{key} time:\t({mean*1000:.2f} +/- {std*1000:.2f}) ms\n"
+            ave_std_time_dict[key] = (mean, std)
+
+        # check docker container status
         if verbose>2:
             # debugging
             print("\n", subprocess.run(
@@ -459,9 +515,16 @@ def sandboxed_compiler(code: object, language: object, unit_test: object = None,
             ).stdout.strip(), "\n----------------------------------------------------------------------------------------------\n", sep="")
         #docker_container('deactivate')
 
-        if verbose>1 : print(">> command completed:\n", result, sep="")
-        return result.returncode, "printed_output=\'" + result.stdout + "\', \nerrors=\'" + result.stderr + "\'"
+        compiler_output = (
+            result.returncode,
+            f"printed_output=\'{output}{result.stderr}\'\n"
+            f"runtime statistics (mean +/- std) for {k_times} runs:\n{ave_std_time_str}",
+            ave_std_time_dict
+        )
+        if verbose>1 : print(f">> command completed:\n{compiler_output}")
+        return compiler_output
+
     except Exception as e:
-        print("Error in sandboxed_compiler tool:", e)
-        return 1, "Error in sandboxed_compiler tool:"+str(e)
+        print(f"Error in sandboxed_compiler tool: {e}")
+        return 1, f"Error in sandboxed_compiler tool: {e}"
 

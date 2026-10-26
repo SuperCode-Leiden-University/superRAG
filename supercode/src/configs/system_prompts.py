@@ -52,13 +52,13 @@ tool_manager_revise = "Use the tools results to improve your previous answer and
 
 ########################################################################################################################
 # other prompts
-compiler_prompt = """There is an error in the code (examples of errors: incorrect logic, syntax mistakes or the expected result of the test cases could be incorrect). 
-Start by analyzing the error message, find the line that generated the error and follow the logic of the code step-by-step to understand why the code didn't produce the correct result.
-Finally summarize why the code failed and change the code to fix the issue.
-Consider that test cases that don't appear in the description of the function may be wrong and should be removed.
-"""
-# this is a bit different: it is added before the debugger answer is given to the assistant
-debugger_revise = "Use the following reasoning steps to improve your previous answer.\n"
+# compiler_prompt = """There is an error in the code (examples of errors: incorrect logic, syntax mistakes or the expected result of the test cases could be incorrect).
+# Start by analyzing the error message, find the line that generated the error and follow the logic of the code step-by-step to understand why the code didn't produce the correct result.
+# Finally summarize why the code failed and change the code to fix the issue.
+# Consider that test cases that don't appear in the description of the function may be wrong and should be removed.
+# """
+# # this is a bit different: it is added before the debugger answer is given to the assistant
+# debugger_revise = "Use the following reasoning steps to improve your previous answer.\n"
 
 ########################################################################################################################
 ########################################################################################################################
@@ -103,9 +103,9 @@ When reasoning you can consider additional test cases but no more then 5, howeve
 In the final code you must never include extra examples besides those given in the description (this instruction has priority, ignore the FIX if it says otherwise).
 """
 
-baseline_prompt = "Write a function based on the following description. "+general_prompt
-benchmark_prompt = "Improve this function based on the following description. "+general_prompt
-
+baseline_prompt = f"Write a function based on the following description. \n{general_prompt}"
+benchmark_prompt = f"Improve this function based on the following description. \n{general_prompt}"
+optim_prompt = "Since the function already produces the correct results, you should focus on optimizing for performance and minimize total/real runtime."
 
 
 # For the given examples, check that the function returns the expected results with a statement like:

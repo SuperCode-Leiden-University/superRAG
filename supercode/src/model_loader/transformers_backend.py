@@ -1,21 +1,19 @@
 from typing import Optional, List, Dict, Any, Literal
-import torch, threading, pprint
+import torch, threading
 from transformers import AutoModel, AutoModelForCausalLM, AutoTokenizer, TextIteratorStreamer, BitsAndBytesConfig, SinqConfig
 from compressed_tensors.offload import dispatch_model
 from llmcompressor import oneshot
 from llmcompressor.modifiers.quantization import QuantizationModifier
-
 """
 - pipeline is for direct inference, with AutoModelForCausalLM, AutoTokenizer you load the raw model
 - BitsAndBytesConfig and awq are for quantization
 - TextIteratorStreamer and threading are for printing the answer as it is being generated
 """
-
 # importing my functions from other files
-from supercode.src.configs.parse_config import *  # model's name and parameters
-# from supercode.src.configs.system_prompts import *  # prompts
-# from supercode.src.tools.code_processing import *  # tools
 from supercode.src.model_loader.base_backend import BaseLLM
+
+# importing variables from the config file
+from supercode.src.configs.parse_config import *
 
 
 class Transformers_Import_Model(BaseLLM):
@@ -28,7 +26,7 @@ class Transformers_Import_Model(BaseLLM):
                  gen_args: Dict[str, Any], # other settings, such as temperature and max tokens (default vals in config)
                  multi_sampl_args: Optional[Dict[str, Any]] = None, # optional for multi-sampling
                  ):
-        print(">> loading with transformers")
+        if verbose>0: print(">> loading with transformers")
         ##### model's name and parameters are saved in the config
         self.model_id = model_id  # name of the model from Hugging Face
         self.gen_args = gen_args  # general settings, such as temperature and max tokens (default vals in config)
@@ -40,7 +38,7 @@ class Transformers_Import_Model(BaseLLM):
 
         # load full precision models
         if quant_type == "pretrained":
-            if verbose > 1: print(">> loading full precision model")
+            if verbose>1: print(">> loading full precision model")
             self.model = AutoModelForCausalLM.from_pretrained(
                 self.model_id,
                 device_map="auto", # automatically places layers on GPU(s) if possible
@@ -48,7 +46,7 @@ class Transformers_Import_Model(BaseLLM):
             )
         # quantizing a model with BitsAndBytes (aka BnB)
         elif quant_type == "bits":  # for 4-8 bits quantization
-            if verbose > 1: print(">> quantizing model with BitsAndBytes")
+            if verbose>1: print(">> quantizing model with BitsAndBytes")
             quant_config = BitsAndBytesConfig(
                 load_in_4bit=True,  # or load_in_8bit=True
                 bnb_4bit_compute_dtype="float16",
@@ -64,7 +62,7 @@ class Transformers_Import_Model(BaseLLM):
         # NOTE: some methods may require finetuning, this is not implemented yet!
         # NOTE: AutoAWQ is deprecated and no longer maintained, it has been adopted by: https://github.com/vllm-project/llm-compressor
         elif quant_type == "compressor":  # apply vllm-project/llm-compressor
-            if verbose > 1: print(">> quantizing model with llm-compressor")
+            if verbose>1: print(">> quantizing model with llm-compressor")
             self.model = AutoModelForCausalLM.from_pretrained(
                 self.model_id,
                 device_map="auto",
@@ -81,7 +79,7 @@ class Transformers_Import_Model(BaseLLM):
             dispatch_model(self.model)
         # quantizing a model with sinq (no finetuning)
         # if quant_type == "sinq": # DOESN'T WORK!!!
-        #     if verbose > 1: print(">> quantizing model with SINQ")
+        #     if verbose>1: print(">> quantizing model with SINQ")
         #     quant_config = SinqConfig(
         #         nbits=4,
         #         group_size=64,
@@ -99,7 +97,7 @@ class Transformers_Import_Model(BaseLLM):
 
         elif quant_type == "gguf":
             raise ValueError("GGUF format is not compatible with transformers, it should be used with Llama.cpp for loading on CPU")
-        #     if verbose > 1: print(">> loading GGUF model")
+        #     if verbose>1: print(">> loading GGUF model")
         #     self.model = AutoModel.from_pretrained(
         #         self.model_id,
         #         device_map="auto",

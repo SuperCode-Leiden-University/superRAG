@@ -4,7 +4,7 @@ from langchain_community.vectorstores import FAISS
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from typing import Optional, List, Dict, Any, Literal
 
-
+# importing variables from the config file
 from supercode.src.configs.parse_config import *
 
 
@@ -16,8 +16,8 @@ class Database():
                  update_db=False
                  ):
         self.emb_model = emb_model
-        self.docs_dir = docs_dir+"/"+topic
-        self.db_dir = db_dir+"/"+topic
+        self.docs_dir = f"{docs_dir}/{topic}"
+        self.db_dir = f"{db_dir}/{topic}"
         self.update_db = update_db
 
     def load(self):
@@ -26,7 +26,7 @@ class Database():
             # ---------------------------------------------------------------------------------------------- #
             # load the docs
             loader = DirectoryLoader(
-                "./" + self.docs_dir, +"/",
+                f"./{self.docs_dir}/",
                 loader_cls=TextLoader,
                 glob="**/*.*",
                 show_progress=True,
@@ -34,7 +34,7 @@ class Database():
             )
             # IMPORTANT: PDFs need a specific loader or they generate errors!
             docs = loader.load()
-            if verbose>1 : print(">> n_docs =", len(docs))  # just to check that all docs have been loaded correctly
+            if verbose>1 : print(f">> n_docs = {len(docs)}")  # just to check that all docs have been loaded correctly
 
             # ---------------------------------------------------------------------------------------------- #
             # split the docs into chunks
@@ -59,7 +59,7 @@ class Database():
             db.save_local(self.db_dir)  # create a dir with 2 files: index.faiss, index.pkl
 
         else:
-            if verbose>0 : print("loading the vector database from '" + str(self.db_dir) + "'")
+            if verbose>0 : print(f"loading the vector database from '{self.db_dir}'")
             # load saved db
             db = FAISS.load_local(self.db_dir, embeddings=self.emb_model, allow_dangerous_deserialization=True)
 

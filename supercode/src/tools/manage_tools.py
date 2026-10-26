@@ -1,13 +1,16 @@
 import functools
 import inspect
 import importlib
-import pprint
+from pprint import pp as pprint
 import json, re, typing
 from typing import get_type_hints, get_origin, get_args
 
-from supercode.src.configs.parse_config import *
+# importing my functions from other files
 from supercode.src.tools.tools import get_TOOLS
 import supercode.src.tools.tools  # do NOT remove this because the decorators have to run!
+
+# importing variables from the config file
+from supercode.src.configs.parse_config import *
 
 ##################################################################################################################
 # functions for handling the tools
@@ -15,13 +18,12 @@ import supercode.src.tools.tools  # do NOT remove this because the decorators ha
 # ----------------------------------------------------------------------------------------------
 # return all the tools as a list of functions
 def get_tools():
-    if verbose>0 : print(">> fetching available tools")
     __TOOLS = get_TOOLS()
     tools = {
         f.__name__ : f # is the tool function
         for f in __TOOLS if getattr(f, "__is_tool__", False)
     }
-    if verbose>0 : print(">> tools available: ", tools.keys())
+    if verbose>0 : print(f"\n>> available tools: {tools.keys()}")
     return tools
 
 # ----------------------------------------------------------------------------------------------
@@ -44,7 +46,7 @@ def build_tool_schema(func):
             "x_metadata" : func._tool_metadata,
         }
     }
-    if verbose>2 : pprint.pprint(scheme) ; print("")
+    if verbose>2 : pprint(scheme) ; print("")
     return scheme
 
 # ----------------------------------------------------------------------------------------------

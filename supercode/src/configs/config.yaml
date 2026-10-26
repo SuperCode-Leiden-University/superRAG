@@ -1,17 +1,36 @@
 ---
 # general
-verbose: 1 # how much info is printed: 0=none, 1=little, 2=lots, 3=all
-backend: llama_cpp # valid values: ["transformers", "llama_cpp", #"vLLM"]
+verbose: 1 # how much info is printed:
+# -1 = none; 0 = minimal info(incl model output); 1 = steps in the workflow; 2 = only short outputs; 3 = all outputs
+backend: transformers # valid values: ["transformers", "llama_cpp", #"vLLM"]
 
 model_iter: 1 # n of times the model loops over the same issue (1 = run only once), recommended setting is 1
 tools_iter: 0 # n steps for choosing tools (0 = no tools, 1 = all tools in one go), recommended setting is 2-3
 
+k_runtimes: 20 # n of times the code is run to capture runtime variance
+optim_metric: real # one of the following: ["real", "user", "sys", "cpu", "util"]
+
 benchmark:
     name: bigcode/humanevalpack # openai/openai_humaneval # bigcode/crosscodeeval #
     # null for chat mode (null is the equivalent of None in python)
-    subset: python # optional: null or subset name (for humanevalpack is python/cpp/...)
+    subset: cpp # optional: null or list of subset names (for humanevalpack is python/cpp/...)
     baseline: true # evaluate the baseline first, then the agent
-    check_single_task: 3 # number of the task, or null for no single task
+    model_list:
+        # different sizes --------------------------------------------
+        - Qwen/Qwen2.5-Coder-3B-Instruct
+        - Qwen/Qwen2.5-Coder-7B-Instruct
+        - Qwen/Qwen2.5-Coder-14B-Instruct
+        - Qwen/Qwen2.5-Coder-32B-Instruct
+        # general ----------------------------------------------------
+        - Qwen/Qwen3-4B
+        # Mixture of Experts: ----------------------------------------
+        - Qwen/Qwen3-Coder-30B-A3B-Instruct
+        - Qwen/Qwen3-Coder-Next # 80B total and 3B active, performances near saturation for python
+        # other families ---------------------------------------------
+        - google/codegemma-7b-it
+        - codellama/CodeLlama-7b-Instruct-hf
+    check_single_task:  null #3 # number of the task, or null for no single task
+    check_single_model: null #Qwen/Qwen2.5-Coder-3B-Instruct-GGUF # model id, or null for using a list of models
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -39,10 +58,10 @@ coder_model:
         #google/codegemma-7b-it
 
         # --------------------------------------------------------------------------------------------
-        #Qwen/Qwen2.5-Coder-1.5B-Instruct
-        Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF # ONLY LLAMA.CPP
-        #Qwen/Qwen2.5-Coder-1.5B-Instruct-GPTQ-Int4
-        #Qwen/Qwen2.5-Coder-1.5B-Instruct-AWQ
+        #Qwen/Qwen2.5-Coder-3B-Instruct
+        Qwen/Qwen2.5-Coder-3B-Instruct-GGUF # ONLY LLAMA.CPP
+        #Qwen/Qwen2.5-Coder-3B-Instruct-GPTQ-Int4
+        #Qwen/Qwen2.5-Coder-3B-Instruct-AWQ
 
         #mradermacher/hpc-coder-v2-6.7b-GGUF # HPC-coder, fine-tuned version of Deepseek Coder 6.7b
 
@@ -60,7 +79,7 @@ coder_model:
 
     # arguments for multi-sampling or stream single response (show the tokens as they are generated)
     multi_sampl_args:
-        num_return_sequences: 2 # n of samples per input (batching), when n=1 it will automatically stream the response
+        num_return_sequences: 5 # n of samples per input (batching), when n=1 it will automatically stream the response
         do_sample: True # enable sampling for diversity, default is false to use greedy decoder
         # IMPORTANT: beam search and do_sample are mutually exclusive logics, sampling is stochastic but ensures more diversity
         #num_beams: 5 # explore multiple sequences in parallel (then select the top ones), must be larger or equal to num_return_sequences

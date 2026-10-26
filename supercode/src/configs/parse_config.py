@@ -18,6 +18,9 @@ backend = vars["backend"] # which backend is used: ["transformers", "llama-cpp",
 model_iter = vars["model_iter"]
 tools_iter = vars["tools_iter"]
 
+k_runtimes = vars["k_runtimes"]
+optim_metric = vars["optim_metric"]
+
 benchmark_args = vars["benchmark"] # run benchmark-results
 
 

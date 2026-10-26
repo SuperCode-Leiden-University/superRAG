@@ -2,7 +2,7 @@
 #import ast
 import getopt, sys # handle flags and pass args from terminal
 
-# my packages
+# importing my functions from other files
 from supercode.benchmark import *
 
 # importing variables from the config file
@@ -47,7 +47,7 @@ except getopt.error as err:
 def main():
     # ---------------------------------------------------------------------------------------------- #
     # check if I have an Nvidia GPU on the machine
-    # if verbose>1 :
+    # if verbose>1:
     # print("Is cuda available?", torch.cuda.is_available())
     # print(torch.cuda.device_count(), torch.cuda.get_device_name(0), sep="\n")
 
@@ -56,13 +56,22 @@ def main():
     # ---------------------------------------------------------------------------------------------- #
     ##### IMPORTING THE MODEL
     tot_start = datetime.now()
-    agent = Agent(coder_model_id)
+    print("\n")
 
     if benchmark_args["name"] is not None: # evaluating benchmark-results, given from terminal or default in config
-        run_benchmark(agent, benchmark_args)
+        check_single_model = benchmark_args["check_single_model"]
+        if check_single_model is not None:
+            agent = Agent(check_single_model)
+            run_benchmark(agent, check_single_model, benchmark_args)
+        else:
+            for model_id in benchmark_args["model_list"]:
+                agent = Agent(model_id)
+                run_benchmark(agent, model_id, benchmark_args)
 
     else:
         ##### CHAT WITH THE MODEL
+        agent = Agent(coder_model_id)
+
         while True:
             # ask the user to write a query
             user_start = datetime.now()
@@ -84,10 +93,10 @@ def main():
 
             # call the agent to answer the query
             start = datetime.now()
-            if verbose>-1 : print(">> processing the query")
+            if verbose>-1: print(">> processing the query")
             agent.call(user_prompt)
             end = datetime.now()
-            if verbose>-1 : print(">> Time to Answer =", end-start)
+            if verbose>-1: print(">> Time to Answer =", end-start)
 
         tot_start += (user_end-user_start) # avoid counting the time the user takes to write the message
 
