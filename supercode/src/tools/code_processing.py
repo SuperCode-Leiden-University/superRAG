@@ -174,6 +174,7 @@ def select_response(responses):
     for i, response in enumerate(responses):
         language, code = extract_code(response)
         if code==None and i==default_idx: default_idx+=1 # in case the code is empty
+        if verbose>1: print(f"i = {i}")
         result = sandboxed_compiler(code, language, k_times=k_runtimes)
         # returns (returncode, "output: ...", runtimes_dict)
         # where runtimes_dict = {"real": (mean, std), "user": ..., "sys": ..., "cpu": ..., "util": ...}

@@ -41,7 +41,8 @@ def run_benchmark(agent, model_id, benchmark_args):
 
     # ----------------------------------------------------------------------------------------------
     # files names
-    file_info = f"{bench_dir}/{bench_name}_{model_id[model_id.find("/")+1:]}_{num_samples}{x_iter}"
+    model_name = model_id[model_id.find("/")+1:]
+    file_info = f"{bench_dir}/{bench_name}_{model_name}_{num_samples}{x_iter}"
 
     baseline_file  = f"{file_info}_baseline.jsonl"
     benchmark_file = f"{file_info}_benchmark.jsonl"
@@ -111,7 +112,7 @@ def run_benchmark(agent, model_id, benchmark_args):
         prompt = sample["prompt"]
         test = sample["test"] # code to test the function
         print("\n======================================")
-        print(i, task_id)
+        print(i, task_id, model_name)
 
         # manual fix for error in humaneval prompt...
         if bench_name=="openai_humaneval" and i == 47 : prompt = prompt.replace("15.0", "8.0")

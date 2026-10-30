@@ -1,0 +1,8 @@
+python-casacore
+astropy
+scipy
+numba
+numpy
+psutil
+scikit-learn
+numexpr

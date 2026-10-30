@@ -1,6 +1,7 @@
 import re, os, subprocess, tempfile
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy import stats
 from datetime import datetime
 from typing import Optional, List, Dict, Any, Literal
 from langchain_huggingface import HuggingFaceEmbeddings
@@ -497,13 +498,21 @@ def sandboxed_compiler(code: object, language: object, unit_test: object=None, e
         output = output.replace(time_string, "") # remove the time string from the output
 
         for key in k_runtimes.keys():
-            mean = np.mean(k_runtimes[key])
-            std = np.std(k_runtimes[key])
+            median = np.median(k_runtimes[key]) # more robust to outliners
+            median_std = stats.median_abs_deviation(k_runtimes[key]) # more robust to outliners
+            average = np.mean(k_runtimes[key])
+            average_std = np.std(k_runtimes[key])
+            if verbose>1: # print runtime metric for each sample
+                print(f"  >> {key}:"
+                      f"\tmedian=({median*100:.2f} +/- {median_std*100:.2f})"
+                      f"\tmean=({average*100:.2f} +/- {average_std*100:.2f});"
+                      )
+
             if key=="util":
-                ave_std_time_str += f"cpu {key}:\t({mean*100:.2f} +/- {std*100:.2f})%\n"
+                ave_std_time_str += f"cpu {key}:\t({median*100:.2f} +/- {median_std*100:.2f})%\n"
             else:
-                ave_std_time_str += f"{key} time:\t({mean*1000:.2f} +/- {std*1000:.2f}) ms\n"
-            ave_std_time_dict[key] = (mean, std)
+                ave_std_time_str += f"{key} time:\t({median*1000:.2f} +/- {median_std*1000:.2f}) ms\n"
+            ave_std_time_dict[key] = (median, median_std)
 
         # check docker container status
         if verbose>2:

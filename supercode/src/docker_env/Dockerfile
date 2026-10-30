@@ -6,8 +6,8 @@ RUN apt-get update
 # install basic packages
 
 # order: sudo/utilities, pip, C/C++ compilers, Python
-RUN apt-get install -y time libffi-dev libssl-dev build-essential \
-                       python3 python3-pip python3-dev python3.13-venv
+
+RUN apt-get install -y time libffi-dev libssl-dev build-essential python3 python3-pip python3-dev python3.13-venv
 #RUN apt-get install -y nodejs npm # Node.js
 #RUN apt-get install -y openjdk-17-jdk # Java
 #RUN apt-get install -y curl && curl https://sh.rustup.rs -sSf | sh -s -- -y # Rust
