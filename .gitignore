@@ -27,7 +27,7 @@ old*/
 old*.*
 
 #tools-outputs/
-gen_code_temp.py
+gen_code_temp.*
 megalinter-reports/
 perf-reports/
 perf.dat*
