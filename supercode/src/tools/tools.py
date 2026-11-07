@@ -524,16 +524,15 @@ def sandboxed_compiler(code: object, language: object, unit_test: object=None, e
             ).stdout.strip(), "\n----------------------------------------------------------------------------------------------\n", sep="")
         #docker_container('deactivate')
 
-        compiler_output = (
-            result.returncode,
-            f"printed_output=\'{output}{result.stderr}\'\n"
-            f"runtime statistics (mean +/- std) for {k_times} runs:\n{ave_std_time_str}",
-            ave_std_time_dict
-        )
+        compiler_output = {
+            "returncode": result.returncode,
+            "compiler_output": f"{output}{result.stderr}\nruntime stats (mean +/- std) for {k_times} runs:\n{ave_std_time_str}",
+            "runtime": ave_std_time_dict
+        }
         if verbose>1 : print(f">> command completed:\n{compiler_output}")
         return compiler_output
 
     except Exception as e:
         print(f"Error in sandboxed_compiler tool: {e}")
-        return 1, f"Error in sandboxed_compiler tool: {e}"
+        return {"returncode": 1, "printed_output": f"Error in sandboxed_compiler tool: {e}", "runtime": None}
 

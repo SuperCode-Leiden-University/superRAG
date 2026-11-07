@@ -11,10 +11,30 @@ k_runtimes: 20 # n of times the code is run to capture runtime variance
 optim_metric: real # one of the following: ["real", "user", "sys", "cpu", "util"]
 
 benchmark:
-    name: bigcode/humanevalpack # openai/openai_humaneval # bigcode/crosscodeeval #
+    name: bigcode/humanevalpack # EffiBench/effibench-x # openai/openai_humaneval # bigcode/crosscodeeval #
     # null for chat mode (null is the equivalent of None in python)
     subset: cpp # optional: null or list of subset names (for humanevalpack is python/cpp/...)
+    split: test # test or eval, depending on the benchmark
+    id_key: task_id # task_id for humanevalpack, id for effibench-x
+    prompt_key: prompt # prompt for humanevalpack, description for effibench-x
+    # dataset looks like this:
+    #    HumanEval/HumanEvalPack: DatasetDict({
+    #        test: Dataset({
+    #            features: ['task_id', 'prompt', 'canonical_solution', 'test', 'entry_point'],
+    #            num_rows: 164
+    #        })
+    #    })
+    #
+    #    EffiBench-x: DatasetDict({
+    #        test: Dataset({
+    #            features: ['id', 'title', 'title_slug', 'description', 'description_md', 'difficulty', 'tags', 'source', 'url', 'type', 'release_timestamp', 'release_date', 'time_limit_nanos', 'memory_limit_bytes', 'starter_code', 'solutions', 'test_case_generator', 'evaluator', 'generated_tests', 'test_runners'],
+    #            num_rows: 623
+    #        })
+    #    })
+
     baseline: true # evaluate the baseline first, then the agent
+    use_baseline_best: false # if true use the best of n samples, otherwise use the first sample
+
     model_list:
         # different sizes --------------------------------------------
         - Qwen/Qwen2.5-Coder-3B-Instruct
@@ -28,8 +48,8 @@ benchmark:
         - Qwen/Qwen3-Coder-Next # 80B total and 3B active, performances near saturation for python
         # other families ---------------------------------------------
         # CodeLlama-7b had poor performances
-        - codellama/CodeLlama-32b-Instruct-hf # same size as the biggest Qwen2.5
-        - codellama/CodeLlama-70b-Instruct-hf
+        # - codellama/CodeLlama-32b-Instruct-hf # same size as the biggest Qwen2.5
+        # - codellama/CodeLlama-70b-Instruct-hf
     check_single_task:  null #3 # number of the task, or null for no single task
     check_single_model: null #Qwen/Qwen2.5-Coder-3B-Instruct-GGUF # model id, or null for using a list of models
 
@@ -80,7 +100,7 @@ coder_model:
 
     # arguments for multi-sampling or stream single response (show the tokens as they are generated)
     multi_sampl_args:
-        num_return_sequences: 5 # n of samples per input (batching), when n=1 it will automatically stream the response
+        num_return_sequences: 3 # n of samples per input (batching), when n=1 it will automatically stream the response
         do_sample: True # enable sampling for diversity, default is false to use greedy decoder
         # IMPORTANT: beam search and do_sample are mutually exclusive logics, sampling is stochastic but ensures more diversity
         #num_beams: 5 # explore multiple sequences in parallel (then select the top ones), must be larger or equal to num_return_sequences

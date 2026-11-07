@@ -124,7 +124,7 @@ class Agent():
         # optional: forget previous answers and keep only the system prompts, useful for benchmarks
         if reset_memory: self.reset_memory()
 
-        if not baseline and baseline_output[0]==0: # add optimization instructions if the code is correct
+        if not baseline and baseline_output["returncode"]==0: # add optimization instructions if the code is correct
             print(">> baseline code is correct, attempting optimization")
             user_prompt = f"{user_prompt}\n{optim_prompt}"
 

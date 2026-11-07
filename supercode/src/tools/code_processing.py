@@ -2,6 +2,11 @@ import re
 import json
 from pprint import pp as pprint
 
+# resource tracking libraries
+import psutil
+from codecarbon import EmissionsTracker, OfflineEmissionsTracker # carbon emissions for hardware you control
+from ecologits import EcoLogits # energy and carbon for API calls to LLMs
+
 # importing my functions from other files
 from supercode.src.tools.tools import *
 
@@ -37,6 +42,50 @@ from supercode.src.configs.parse_config import *
          '    assert candidate([1.1, 2.2, 3.1, 4.1, 5.1], 1.0) == True'
          '    assert candidate([1.1, 2.2, 3.1, 4.1, 5.1], 0.5) == False'
 """
+
+
+def resource_tracking(func, **args):
+    """
+    returns the function results along with resources tracked by CodeCarbon and tracemalloc.
+
+    CodeCarbon reads/estimates the direct electricity consumption of compute components (CPU, GPU and RAM)
+    and multiplies the resulting energy by the carbon intensity of the local electricity grid.
+    Excluded: disk I/O, network transfers, displays, cooling and other peripherals,
+    power supply and datacenter overhead and life-cycle (embodied) emissions of the hardware.
+    """
+
+    def process_memory():
+        process = psutil.Process(os.getpid())
+        mem_info = process.memory_info()
+        return mem_info.rss
+
+    # track energy and carbon emissions, tracker options:
+    # - country_iso_code="NLD" --> must be the 3 letters iso code
+    # - rapl_include_dram=True (default is false)
+    # - measure_power_secs=15 (default is 15)
+    tracker = EmissionsTracker() # OfflineEmissionsTracker(country_iso_code="NLD")
+    tracker.start()
+
+    # track memory allocation
+    mem_start = process_memory()
+
+    func_results = func(**args)
+
+    psutil_memory = (process_memory()-mem_start)/1048576 # conversion from bytes to MiB
+    emissions = tracker.stop()*1000 # g CO2eq (--> energy * PUE)
+    energy = tracker._total_energy # kWh
+
+    if verbose>1: print(f">> resource tracking for {func.__name__}:"
+        f"\n  - energy = {energy} kWh"
+        f"\n  - emissions = {emissions} g CO2eq (= energy*PUE)"
+        f"\n  - psutil_memory = {psutil_memory} MiB"
+        )
+    resources = {
+        "energy": float(energy),
+        "emissions": float(emissions),
+        "psutil_memory": float(psutil_memory)
+    }
+    return func_results, resources
 
 
 def extract_test_code(prompt, code):
@@ -135,17 +184,22 @@ def extract_code(completion_text):
         return None, None
 
 
-def save_completion(task_id, completion, language, code, compiler_output, filepath):
+def save_completion(task_id,
+                    agent_resources, completions_results,
+                    #completion, language, code, compiler_output,
+                    filepath):
     # "language": language, "code": code, "compiler_output": result
     if verbose>0: print(">> saving response from model")
 
     # extract language and code from 'completion'
     completion_task = {
         "task_id": task_id,
-        "completion": completion,
-        "language": language,
-        "code": code,
-        "compiler_output": compiler_output
+        **agent_resources,
+        "samples": completions_results,
+        # "completion": completion,
+        # "language": language,
+        # "code": code,
+        # "compiler_output": compiler_output
     }
     if verbose>2: print("\n>> completion:") ; pprint(completion_task)
     # save to JSONL (one JSON object per line)
@@ -175,16 +229,23 @@ def select_response(responses):
         language, code = extract_code(response)
         if code==None and i==default_idx: default_idx+=1 # in case the code is empty
         if verbose>1: print(f"i = {i}")
-        result = sandboxed_compiler(code, language, k_times=k_runtimes)
+
+        compiler_args = {"code": code, "language": language, "k_times": k_runtimes}
+        compiler_output, resources = resource_tracking(sandboxed_compiler, **compiler_args)
+        # result = sandboxed_compiler(code, language, k_times=k_runtimes)
         # returns (returncode, "output: ...", runtimes_dict)
         # where runtimes_dict = {"real": (mean, std), "user": ..., "sys": ..., "cpu": ..., "util": ...}
 
         # collect code and compiler output for later
-        code_results.append({"language": language, "code": code, "compiler_output": result})
+        code_results.append({
+            # Note: completion is added later in the pipeline
+            "language": language, "code": code,
+            "code_output": {**compiler_output, **resources}
+        })
 
-        if result[0] == 0 : # if the code is correct
+        if compiler_output["returncode"] == 0 : # if the code is correct
             correct_idx.append(i)
-            correct_runtimes.append(result[2]) # code output and errors
+            correct_runtimes.append(compiler_output["runtime"]) # code output and errors
 
     if default_idx>=len(responses): default_idx=0 # failsafe in the case where all codes are empty
 

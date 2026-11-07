@@ -55,21 +55,10 @@ def run_benchmark(agent, model_id, benchmark_args):
     else: dataset = load_dataset(benchmark_path, bench_subset)
     # add the second argument when the dataset has multiple subsets
 
-    problems = dataset["test"] ; n_tasks = len(problems)
-    #print("Dataset structure:\n", dataset, sep="")
-    """ dataset looks like this:
-        DatasetDict({
-            test: Dataset({
-                features: ['task_id', 'prompt', 'canonical_solution', 'test', 'entry_point'],
-                num_rows: 164
-            })
-        })
+    problems = dataset[benchmark_args["split"]] ; n_tasks = len(problems)
+    id_key = benchmark_args["id_key"] ; prompt_key = benchmark_args["prompt_key"]
+    #print("\nDataset structure:\n", dataset, sep="")
 
-    # IMPORTANT: some tasks (47, 163) in humaneval contain mismatches or errors!
-    # /47: has an error in the prompt, it should be: median([-10, 4, 6, 1000, 10, 20]) = 8.0 (instead of 15.0)
-    # /163: unclear prompt, should specify to return only digits that are between min(0,a,b) and max(a,b,9)
-
-    """
 
     # ---------------------------------------------------------------------------------------------- #
     # ---------------------------------------------------------------------------------------------- #
@@ -96,9 +85,9 @@ def run_benchmark(agent, model_id, benchmark_args):
     # create an empty file (or overwrite if the file exists)
     if baseline:
         with open(baseline_file, "w") as f: f.close()
-        with open(baseline_all_file, "w") as f: f.close()
+        # with open(baseline_all_file, "w") as f: f.close()
     with open(benchmark_file, "w") as f: f.close()
-    with open(benchmark_all_file, "w") as f: f.close()
+    # with open(benchmark_all_file, "w") as f: f.close()
 
     # ----------------------------------------------------------------------------------------------
     for i, sample in enumerate(problems):
@@ -107,53 +96,68 @@ def run_benchmark(agent, model_id, benchmark_args):
             sample = problems[i]
 
         # extract task
-        task_id = sample["task_id"]
-        entry_point = sample["entry_point"]
-        prompt = sample["prompt"]
-        test = sample["test"] # code to test the function
+        #entry_point = sample["entry_point"]
+        #test = sample["test"] # code to test the function
+        task_id = sample[id_key]
+        prompt = sample[prompt_key]
         print("\n======================================")
         print(i, task_id, model_name)
+        print(prompt)
 
         # manual fix for error in humaneval prompt...
         if bench_name=="openai_humaneval" and i == 47 : prompt = prompt.replace("15.0", "8.0")
-
+        # IMPORTANT: task/47: has an error in the prompt, it should be:
+        # median([-10, 4, 6, 1000, 10, 20]) = 8.0 (instead of 15.0)
 
         # ----------------------------------------------------------------------------------------------
         if baseline: # create the baseline
-            if verbose>0: print(".....................................\n>> calling the agent in baseline mode")
-            index, completions_results = agent.call(
-                f"{baseline_prompt}\n\n{prompt}",
-                reset_memory=True, baseline=True
-            )
+            if verbose>0: print("......................................")
+            call_args = {
+                "user_prompt": f"{baseline_prompt}\n\n{prompt}",
+                "reset_memory": True,
+                "baseline": True
+            }
+
+            """ index, completions_results = agent.call(**call_args) """
+            func_results, agent_resources = resource_tracking(agent.call, **call_args)
+            index, completions_results = func_results # index of the best result
+            save_completion(task_id, agent_resources, completions_results, filepath=baseline_file)
+            """
             # saving all the results (the best one is saved in a separate file)
             for i, result in enumerate(completions_results):
                 save_completion(task_id, **result, filepath=baseline_all_file)
                 if i == index: save_completion(task_id, **result, filepath=baseline_file)
-
-            # use the best result as baseline
+            """
+            if not benchmark_args["use_baseline_best"]: index = 0 # use the first result
             baseline_code = completions_results[index]["code"]
             language = completions_results[index]["language"]
-            compiler_output = completions_results[index]["compiler_output"]
+            compiler_output = completions_results[index]["code_output"]
 
         else:
             if verbose>0: print(">> loading baseline code from files")
             # retrieve the baseline function (best result from baseline)
             baseline_code = baseline_samples[i]["code"]
             language = baseline_samples[i]["language"]
-            compiler_output = baseline_samples[i]["compiler_output"]
+            compiler_output = baseline_samples[i]["code_output"]
 
         # ---------------------------------------------------------------
         # then ask the model to improve the baseline
-        if verbose>0: print("\n.....................................\n>> calling the agent")
-        index, completions_results = agent.call(
-            f"{benchmark_prompt}\n\n{prompt}",
-            baseline_code=baseline_code, code_language=language, baseline_output=compiler_output,
-            reset_memory=True, baseline=False
-        )
+        if verbose>0: print("\n......................................")
+        call_args ={
+            "user_prompt" : f"{benchmark_prompt}\n\n{prompt}",
+            "baseline_code" : baseline_code, "code_language" : language, "baseline_output" : compiler_output,
+            "reset_memory" : True, "baseline" : False
+        }
+        """ index, completions_results = agent.call(**call_args) """
+        func_results, agent_resources = resource_tracking(agent.call, **call_args)
+        index, completions_results = func_results
+        save_completion(task_id, agent_resources, completions_results, filepath=benchmark_file)
+        """
         # saving all the results (the best one is saved in a separate file)
         for i, result in enumerate(completions_results):
             save_completion(task_id, **result, filepath=benchmark_all_file)
             if i == index: save_completion(task_id, **result, filepath=benchmark_file)  # best result
+        """
         # ---------------------------------------------------------------
 
         if check_single_task is not None: break # stop before saving a single datapoint
