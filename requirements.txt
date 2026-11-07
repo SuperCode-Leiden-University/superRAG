@@ -3,7 +3,9 @@
 accelerate
 #autoawq # for the AWQ models --> no longer mainteined, adopted by llm-compressor
 bitsandbytes # for quantizing the model
+codecarbon
 datasets # hugging face datasets
+ecologits
 faiss-cpu # database for RAG
 #faiss-gpu
 gemlite
@@ -19,10 +21,12 @@ llama-cpp-python
 llmcompressor # for quantizing the model
 lm-eval # for evaluating multiple benchmarks
 matplotlib
+memory-profiler
 numpy
 optimum # for gptq models
 pip
 pyyaml # for the config file
+scipy
 sentence-transformers
 sentencepiece
 sinq # for quantizing the model
