@@ -38,14 +38,14 @@ benchmark:
     model_list:
         # different sizes --------------------------------------------
         - Qwen/Qwen2.5-Coder-3B-Instruct
-        - Qwen/Qwen2.5-Coder-7B-Instruct
-        - Qwen/Qwen2.5-Coder-14B-Instruct
-        - Qwen/Qwen2.5-Coder-32B-Instruct
+#        - Qwen/Qwen2.5-Coder-7B-Instruct
+#        - Qwen/Qwen2.5-Coder-14B-Instruct
+#        - Qwen/Qwen2.5-Coder-32B-Instruct
         # general ----------------------------------------------------
-        - Qwen/Qwen3-4B
+#        - Qwen/Qwen3-4B
         # Mixture of Experts: ----------------------------------------
-        - Qwen/Qwen3-Coder-30B-A3B-Instruct
-        - Qwen/Qwen3-Coder-Next # 80B total and 3B active, performances near saturation for python
+#        - Qwen/Qwen3-Coder-30B-A3B-Instruct
+#        - Qwen/Qwen3-Coder-Next # 80B total and 3B active, performances near saturation for python
         # other families ---------------------------------------------
         # CodeLlama-7b had poor performances
         # - codellama/CodeLlama-32b-Instruct-hf # same size as the biggest Qwen2.5
@@ -100,7 +100,7 @@ coder_model:
 
     # arguments for multi-sampling or stream single response (show the tokens as they are generated)
     multi_sampl_args:
-        num_return_sequences: 100 # n of samples per input (batching), when n=1 it will automatically stream the response
+        num_return_sequences: 5 # n of samples per input (batching), when n=1 it will automatically stream the response
         do_sample: True # enable sampling for diversity, default is false to use greedy decoder
         # IMPORTANT: beam search and do_sample are mutually exclusive logics, sampling is stochastic but ensures more diversity
         #num_beams: 5 # explore multiple sequences in parallel (then select the top ones), must be larger or equal to num_return_sequences
