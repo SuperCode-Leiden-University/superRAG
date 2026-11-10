@@ -32,22 +32,23 @@ benchmark:
     #        })
     #    })
 
-    baseline: true # evaluate the baseline first, then the agent
+    baseline: false # evaluate the baseline first, then the agent
     use_baseline_best: false # if true use the best of n samples, otherwise use the first sample
 
     model_list:
-        # different sizes --------------------------------------------
+        ### different sizes --------------------------------------------
         - Qwen/Qwen2.5-Coder-3B-Instruct
-#        - Qwen/Qwen2.5-Coder-7B-Instruct
-#        - Qwen/Qwen2.5-Coder-14B-Instruct
-#        - Qwen/Qwen2.5-Coder-32B-Instruct
-        # general ----------------------------------------------------
-#        - Qwen/Qwen3-4B
-        # Mixture of Experts: ----------------------------------------
-#        - Qwen/Qwen3-Coder-30B-A3B-Instruct
-#        - Qwen/Qwen3-Coder-Next # 80B total and 3B active, performances near saturation for python
-        # other families ---------------------------------------------
-        # CodeLlama-7b had poor performances
+        # - Qwen/Qwen2.5-Coder-7B-Instruct
+        # - Qwen/Qwen2.5-Coder-14B-Instruct
+        # - Qwen/Qwen2.5-Coder-32B-Instruct
+        ### general ----------------------------------------------------
+        # - Qwen/Qwen3-4B
+        ### Mixture of Experts: ----------------------------------------
+        # - Qwen/Qwen3-Coder-30B-A3B-Instruct
+        # - Qwen/Qwen3-Coder-Next # 80B total and 3B active, performances near saturation for python
+        ### other families ---------------------------------------------
+        # - hpcgroup/hpc-coder-v2-16b
+        ### CodeLlama-7b had poor performances
         # - codellama/CodeLlama-32b-Instruct-hf # same size as the biggest Qwen2.5
         # - codellama/CodeLlama-70b-Instruct-hf
     check_single_task:  null #3 # number of the task, or null for no single task

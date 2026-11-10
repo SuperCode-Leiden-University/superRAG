@@ -476,6 +476,12 @@ def sandboxed_compiler(code: object, language: object, unit_test: object=None, e
 
         # run the code multiple times to capture runtime variance
         for k in range(k_times):
+            # disable ANSI escape characters, because they confuse the LLM
+            env = os.environ.copy()
+            env['TERM'] = 'dumb'
+            env['NO_COLOR'] = '1'
+            env['GCC_COLORS'] = '' # if using GCC
+
             result = subprocess.run( # run a program from inside the container (and remove the container afterwards)
                 run_code_command(language),
                 #["docker", "run", "-m", "0.5g", "--mount", "type=bind,src="+abs_docker_path+",dst=/workspace", "--rm", "sandbox_code", "python3", docker_code_path],

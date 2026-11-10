@@ -46,8 +46,8 @@ def run_benchmark(agent, model_id, benchmark_args):
 
     baseline_file  = f"{file_info}_baseline.jsonl"
     benchmark_file = f"{file_info}_benchmark.jsonl"
-    baseline_all_file  = f"{file_info}_baseline_all.jsonl"
-    benchmark_all_file = f"{file_info}_benchmark_all.jsonl"
+    # baseline_all_file  = f"{file_info}_baseline_all.jsonl"
+    # benchmark_all_file = f"{file_info}_benchmark_all.jsonl"
 
     # ----------------------------------------------------------------------------------------------
     # importing the benchmark-results from hugging face,
