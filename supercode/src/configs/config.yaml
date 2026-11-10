@@ -1,6 +1,6 @@
 ---
 # general
-verbose: 10 # how much info is printed:
+verbose: 1 # how much info is printed:
 # -1 = none; 0 = minimal info(incl model output); 1 = steps in the workflow; 2 = only short outputs; 3 = all outputs
 backend: transformers # valid values: ["transformers", "llama_cpp", #"vLLM"]
 
