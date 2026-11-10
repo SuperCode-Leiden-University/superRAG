@@ -37,14 +37,17 @@ num_samples = coder_multi_sampl_args["num_return_sequences"]  # this is for para
 # model_name = "Qwen2.5-Coder-3B-Instruct" # "Qwen3-4B" # "codegemma-7b-it" # "CodeLlama-7b-Instruct-hf" # "Qwen3-Coder-Next" # "Qwen2.5-Coder-3B-Instruct+Qwen3-4B" #
 
 # file names
-x_iter = f"_x{model_iter}" if model_iter>0 else ""
+# x_iter = f"_x{model_iter}" if model_iter>0 else ""
 file_list = []
-for model_name in model_list:
-    file_info = f"{bench_dir}/{bench_name}_{model_name[model_name.find("/") + 1:]}_{num_samples}{x_iter}"
-
-    for file_type in ["baseline", "baseline_all", "benchmark", "benchmark_all"]:
-        filename = f"{file_info}_{file_type}.jsonl"
-        file_list.append(filename)
+for model_id in model_list:
+    model_name = model_id[model_id.find("/")+1:]
+    model_files = filenames(model_name, bench_name, bench_subset, num_samples)
+    file_list.append(f for f in model_files)
+#     file_info = f"{bench_dir}/{bench_name}_{model_name[model_name.find("/") + 1:]}_{num_samples}{x_iter}"
+#
+#     for file_type in ["baseline", "baseline_all", "benchmark", "benchmark_all"]:
+#         filename = f"{file_info}_{file_type}.jsonl"
+#         file_list.append(filename)
 
 # ----------------------------------------------------------------------------------------------
 # importing the benchmark-results from hugging face

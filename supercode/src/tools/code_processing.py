@@ -1,4 +1,4 @@
-import re
+import re, ast
 import json
 from pprint import pp as pprint
 
@@ -206,6 +206,27 @@ def save_completion(task_id,
     with open(filepath, 'a', encoding='utf-8') as f:
         f.write(json.dumps(completion_task, ensure_ascii=False)+'\n')
         f.close()
+
+def get_samples(file, index=0):
+    samples = []
+    if verbose>0: print(f"\n>> reading jsonl for {file}...")
+    try:
+        with open(file) as f:
+            print(f">> opened baseline file:\n{file}")
+            # each line is a json object
+            for i, line in enumerate(f, start=1): # read the file line-by-line
+                try:
+                    # IMPORTANT NOTE:
+                    # load() expects a file-like object (something with a .read() method, like an open file)
+                    # loads() expects a string, they're not interchangeable!!!
+                    task = json.loads(line)
+                    sample = task.get("samples")[index]
+                    samples.append(sample)
+                except ValueError as e:
+                    raise ValueError(f"\n>> ERROR in the baseline file at line {i}:\n{e}")
+    except Exception as e:
+        print(f">> ERROR with opening baseline file: {e}\n")
+    return samples
 
 
 def select_response(responses):

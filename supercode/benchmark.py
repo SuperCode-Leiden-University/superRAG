@@ -26,6 +26,7 @@ def run_benchmark(agent, model_id, benchmark_args):
     bench_subset = benchmark_args["subset"] # optional argument, some benchmarks are divided in subsets
     check_single_task = benchmark_args["check_single_task"]
     num_samples = coder_multi_sampl_args["num_return_sequences"] # this is for parallel sampling
+    model_name = model_id[model_id.find("/")+1:]
 
     # print info
     if baseline:
@@ -34,20 +35,20 @@ def run_benchmark(agent, model_id, benchmark_args):
         if verbose>-1: print(f">> benchmark-results agent for {bench_name}; num_samples = {num_samples}")
     if check_single_task is not None: print(f"\n>> WARNING: mode check_single_task, i_task = {check_single_task}\n")
 
-    if model_iter>1 : x_iter=f"_x{model_iter}"
-    else: x_iter="" # model iterations
-
-    if bench_subset is not None : bench_name = f"{bench_name}_{bench_subset}"
-
     # ----------------------------------------------------------------------------------------------
     # files names
-    model_name = model_id[model_id.find("/")+1:]
-    file_info = f"{bench_dir}/{bench_name}_{model_name}_{num_samples}{x_iter}"
-
-    baseline_file  = f"{file_info}_baseline.jsonl"
-    benchmark_file = f"{file_info}_benchmark.jsonl"
+    # if model_iter>1 : x_iter=f"_x{model_iter}"
+    # else: x_iter="" # model iterations
+    # if bench_subset is not None : bench_name = f"{bench_name}_{bench_subset}"
+    # model_name = model_id[model_id.find("/")+1:]
+    # file_info = f"{bench_dir}/{bench_name}_{model_name}_{num_samples}{x_iter}"
+    #
+    # baseline_file  = f"{file_info}_baseline.jsonl"
+    # benchmark_file = f"{file_info}_benchmark.jsonl"
     # baseline_all_file  = f"{file_info}_baseline_all.jsonl"
     # benchmark_all_file = f"{file_info}_benchmark_all.jsonl"
+
+    baseline_file, benchmark_file = filenames(model_name, bench_name, bench_subset, num_samples)
 
     # ----------------------------------------------------------------------------------------------
     # importing the benchmark-results from hugging face,
@@ -65,20 +66,22 @@ def run_benchmark(agent, model_id, benchmark_args):
     # ---------------------------------------------------------------------------------------------- #
     # first check if the results for the baseline are available, then load them for later
     if not baseline:  # load the baseline functions
-        baseline_samples = []
-        if verbose>0: print(f">> reading jsonl for {baseline_file}...")
-        try:
-            with open(baseline_file) as f:
-                for i, line in enumerate(f, start=1):
-                    try: # read the file line-by-line
-                        baseline_samples.append(ast.literal_eval(line))
-                    except Exception as e:
-                        raise Exception(f">> Error in the baseline file at line {i}\nLine content{repr(line)}\n{e}")
-        except Exception as e:
-            print(">> Error with opening baseline file:", e)
+        baseline_samples = get_samples(baseline_file)
+        # baseline_samples = []
+        # if verbose>0: print(f">> reading jsonl for {baseline_file}...")
+        # try:
+        #     with open(baseline_file) as f:
+        #         for i, line in enumerate(f, start=1):
+        #             try: # read the file line-by-line
+        #                 baseline_samples.append(ast.literal_eval(line))
+        #             except Exception as e:
+        #                 raise Exception(f">> ERROR in the baseline file at line {i}:\n{e}")
+        # except Exception as e:
+        #     print(">> ERROR with opening baseline file:", e)
         if len(baseline_samples) != n_tasks:
             print(f">> WARNING: baseline file does not match the expected number of samples: n_baseline={len(baseline_samples)} while n_samples={n_tasks}")
             print(">> Evaluating baseline first")
+            raise ValueError("ERROR in baseline!!!!!")
             baseline=True
 
     # ----------------------------------------------------------------------------------------------
@@ -139,6 +142,8 @@ def run_benchmark(agent, model_id, benchmark_args):
             baseline_code = baseline_samples[i]["code"]
             language = baseline_samples[i]["language"]
             compiler_output = baseline_samples[i]["code_output"]
+
+            #print(f"baseline_code: \n```{language}\n{baseline_code}\n```\n{compiler_output}")
 
         # ---------------------------------------------------------------
         # then ask the model to improve the baseline
