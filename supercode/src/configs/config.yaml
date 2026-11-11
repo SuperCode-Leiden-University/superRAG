@@ -32,8 +32,8 @@ benchmark:
     #        })
     #    })
 
-    baseline: false # evaluate the baseline first, then the agent
-    use_baseline_best: true # if true use the best of n samples, otherwise use the first sample
+    baseline: true # evaluate the baseline first, then the agent
+    use_baseline_best: false # if true use the best of n samples, otherwise use the first sample
 
     model_list:
         ### different sizes --------------------------------------------
