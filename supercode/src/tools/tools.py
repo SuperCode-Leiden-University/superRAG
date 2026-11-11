@@ -477,10 +477,10 @@ def sandboxed_compiler(code: object, language: object, unit_test: object=None, e
         # run the code multiple times to capture runtime variance
         for k in range(k_times):
             # disable ANSI escape characters, because they confuse the LLM
-            env = os.environ.copy()
-            env['TERM'] = 'dumb'
-            env['NO_COLOR'] = '1'
-            env['GCC_COLORS'] = '' # if using GCC
+            # env = os.environ.copy()
+            # env['TERM'] = 'dumb'
+            # env['NO_COLOR'] = '1'
+            # env['GCC_COLORS'] = '' # if using GCC
 
             result = subprocess.run( # run a program from inside the container (and remove the container afterwards)
                 run_code_command(language),
@@ -495,6 +495,8 @@ def sandboxed_compiler(code: object, language: object, unit_test: object=None, e
             # remove escape characters
             ansi_escape = re.compile(r'\x1b\[[0-9;]*m') # \x is for asci characters
             output = ansi_escape.sub('', result.stdout)
+            ansi_escape = re.compile(r'\\u001b\[K') # for some reason this wasn't removed by the first one
+            output = ansi_escape.sub('', output)
 
             runtime, time_string = extract_runtime(output)
 

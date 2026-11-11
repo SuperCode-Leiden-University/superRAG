@@ -144,6 +144,7 @@ def run_benchmark(agent, model_id, benchmark_args):
             compiler_output = baseline_samples[i]["code_output"]
 
             #print(f"baseline_code: \n```{language}\n{baseline_code}\n```\n{compiler_output}")
+            print(f"baseline compiler_output:\n{compiler_output}")
 
         # ---------------------------------------------------------------
         # then ask the model to improve the baseline

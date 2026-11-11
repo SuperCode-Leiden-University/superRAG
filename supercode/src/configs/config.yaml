@@ -33,14 +33,14 @@ benchmark:
     #    })
 
     baseline: false # evaluate the baseline first, then the agent
-    use_baseline_best: false # if true use the best of n samples, otherwise use the first sample
+    use_baseline_best: true # if true use the best of n samples, otherwise use the first sample
 
     model_list:
         ### different sizes --------------------------------------------
-        - Qwen/Qwen2.5-Coder-3B-Instruct
-        # - Qwen/Qwen2.5-Coder-7B-Instruct
-        # - Qwen/Qwen2.5-Coder-14B-Instruct
-        # - Qwen/Qwen2.5-Coder-32B-Instruct
+        # - Qwen/Qwen2.5-Coder-3B-Instruct
+        - Qwen/Qwen2.5-Coder-7B-Instruct
+        - Qwen/Qwen2.5-Coder-14B-Instruct
+        - Qwen/Qwen2.5-Coder-32B-Instruct
         ### general ----------------------------------------------------
         # - Qwen/Qwen3-4B
         ### Mixture of Experts: ----------------------------------------
