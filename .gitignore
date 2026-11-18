@@ -27,6 +27,7 @@ old*/
 old*.*
 
 #tools-outputs/
+emissions.csv
 gen_code_temp.*
 gen_code_temp.**
 gen_code_temp.***
