@@ -1,8 +1,10 @@
-#include<stdio.h>
-#include<vector>
+// import libraries
+#include <cassert>
+#include <vector>
 using namespace std;
 
-bool below_zero(vector<int> operations){
+// function definition
+bool below_zero(vector<int> operations) {
     int balance = 0;
     for (int op : operations) {
         balance += op;
@@ -19,4 +21,3 @@ assert(below_zero({1, 2, -4, 5}) == true, "the correct result is true, but the f
 assert(below_zero({-1, -2, -3}) == true, "the correct result is true, but the function returned false instead");
 
 // finally print 'end of the code'
-printf("end of the code");

@@ -107,7 +107,6 @@ baseline_prompt = f"Write a function based on the following description. \n{gene
 benchmark_prompt = f"Improve this function based on the following description. \n{general_prompt}"
 optim_prompt = "Since the function already produces the correct results, you should focus on optimizing for performance and minimize total/real runtime."
 
-
 # For the given examples, check that the function returns the expected results with a statement like:
 # `assert function_name(example_i)==result_i, f'the correct result is result_i, but the function returned {function_name(example_i)} instead'`,
 # finally print("end of the code") at the end.

@@ -14,38 +14,20 @@ benchmark:
     name: bigcode/humanevalpack # EffiBench/effibench-x # openai/openai_humaneval # bigcode/crosscodeeval #
     # null for chat mode (null is the equivalent of None in python)
     subset: cpp # optional: null or list of subset names (for humanevalpack is python/cpp/...)
-    split: test # test or eval, depending on the benchmark
-    id_key: task_id # task_id for humanevalpack, id for effibench-x
-    prompt_key: prompt # prompt for humanevalpack, description for effibench-x
-    # dataset looks like this:
-    #    HumanEval/HumanEvalPack: DatasetDict({
-    #        test: Dataset({
-    #            features: ['task_id', 'prompt', 'canonical_solution', 'test', 'entry_point'],
-    #            num_rows: 164
-    #        })
-    #    })
-    #
-    #    EffiBench-x: DatasetDict({
-    #        test: Dataset({
-    #            features: ['id', 'title', 'title_slug', 'description', 'description_md', 'difficulty', 'tags', 'source', 'url', 'type', 'release_timestamp', 'release_date', 'time_limit_nanos', 'memory_limit_bytes', 'starter_code', 'solutions', 'test_case_generator', 'evaluator', 'generated_tests', 'test_runners'],
-    #            num_rows: 623
-    #        })
-    #    })
-
-    baseline: true # evaluate the baseline first, then the agent
+    baseline: true # if true evaluate the baseline first, then the agent
     use_baseline_best: false # if true use the best of n samples, otherwise use the first sample
 
     model_list:
         ### different sizes --------------------------------------------
         # - Qwen/Qwen2.5-Coder-3B-Instruct
-        - Qwen/Qwen2.5-Coder-7B-Instruct
-        - Qwen/Qwen2.5-Coder-14B-Instruct
-        - Qwen/Qwen2.5-Coder-32B-Instruct
+        # - Qwen/Qwen2.5-Coder-7B-Instruct
+        # - Qwen/Qwen2.5-Coder-14B-Instruct
+        # - Qwen/Qwen2.5-Coder-32B-Instruct
         ### general ----------------------------------------------------
         # - Qwen/Qwen3-4B
         ### Mixture of Experts: ----------------------------------------
         # - Qwen/Qwen3-Coder-30B-A3B-Instruct
-        # - Qwen/Qwen3-Coder-Next # 80B total and 3B active, performances near saturation for python
+        - Qwen/Qwen3-Coder-Next # 80B total and 3B active, performances near saturation for python
         ### other families ---------------------------------------------
         # - hpcgroup/hpc-coder-v2-16b
         ### CodeLlama-7b had poor performances

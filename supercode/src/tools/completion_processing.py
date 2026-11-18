@@ -2,13 +2,9 @@ import re, ast
 import json
 from pprint import pp as pprint
 
-# resource tracking libraries
-import psutil
-from codecarbon import EmissionsTracker, OfflineEmissionsTracker # carbon emissions for hardware you control
-from ecologits import EcoLogits # energy and carbon for API calls to LLMs
-
 # importing my functions from other files
 from supercode.src.tools.tools import *
+from supercode.src.tools.code_sandbox import *
 
 # importing variables from the config file
 from supercode.src.configs.parse_config import *
@@ -42,50 +38,6 @@ from supercode.src.configs.parse_config import *
          '    assert candidate([1.1, 2.2, 3.1, 4.1, 5.1], 1.0) == True'
          '    assert candidate([1.1, 2.2, 3.1, 4.1, 5.1], 0.5) == False'
 """
-
-
-def resource_tracking(func, **args):
-    """
-    returns the function results along with resources tracked by CodeCarbon and tracemalloc.
-
-    CodeCarbon reads/estimates the direct electricity consumption of compute components (CPU, GPU and RAM)
-    and multiplies the resulting energy by the carbon intensity of the local electricity grid.
-    Excluded: disk I/O, network transfers, displays, cooling and other peripherals,
-    power supply and datacenter overhead and life-cycle (embodied) emissions of the hardware.
-    """
-
-    def process_memory():
-        process = psutil.Process(os.getpid())
-        mem_info = process.memory_info()
-        return mem_info.rss
-
-    # track energy and carbon emissions, tracker options:
-    # - country_iso_code="NLD" --> must be the 3 letters iso code
-    # - rapl_include_dram=True (default is false)
-    # - measure_power_secs=15 (default is 15)
-    tracker = EmissionsTracker() # OfflineEmissionsTracker(country_iso_code="NLD")
-    tracker.start()
-
-    # track memory allocation
-    mem_start = process_memory()
-
-    func_results = func(**args)
-
-    psutil_memory = (process_memory()-mem_start)/1048576 # conversion from bytes to MiB
-    emissions = tracker.stop()*1000 # g CO2eq (--> energy * PUE)
-    energy = tracker._total_energy # kWh
-
-    if verbose>1: print(f">> resource tracking for {func.__name__}:"
-        f"\n  - energy = {energy} kWh"
-        f"\n  - emissions = {emissions} g CO2eq (= energy*PUE)"
-        f"\n  - psutil_memory = {psutil_memory} MiB"
-        )
-    resources = {
-        "energy": float(energy),
-        "emissions": float(emissions),
-        "psutil_memory": float(psutil_memory)
-    }
-    return func_results, resources
 
 
 def extract_test_code(prompt, code):
@@ -184,22 +136,22 @@ def extract_code(completion_text):
         return None, None
 
 
-def save_completion(task_id,
-                    agent_resources, completions_results,
-                    #completion, language, code, compiler_output,
-                    filepath):
+def save_completion(task_id, agent_resources, completions_results, index, filepath):
     # "language": language, "code": code, "compiler_output": result
     if verbose>0: print(">> saving response from model")
 
     # extract language and code from 'completion'
     completion_task = {
         "task_id": task_id,
-        **agent_resources,
+        "index": index,
+        **agent_resources, # "energy", "emissions", "psutil_memory"
         "samples": completions_results,
-        # "completion": completion,
-        # "language": language,
-        # "code": code,
-        # "compiler_output": compiler_output
+        # samples is a list, where each sample is a dictionary with:
+        #  - "code_output": {"returncode", "compiler_output", "runtime", "energy", "emissions", "psutil_memory"}
+        #  - "language",
+        #  - "code",
+        #  - "completion",
+
     }
     if verbose>2: print("\n>> completion:") ; pprint(completion_task)
     # save to JSONL (one JSON object per line)
@@ -207,7 +159,7 @@ def save_completion(task_id,
         f.write(json.dumps(completion_task, ensure_ascii=False)+'\n')
         f.close()
 
-def get_samples(file, index=0):
+def get_baseline_samples(file, index=0):
     samples = []
     if verbose>0: print(f"\n>> reading jsonl for {file}...")
     try:
@@ -253,15 +205,18 @@ def select_response(responses):
 
         compiler_args = {"code": code, "language": language, "k_times": k_runtimes}
         compiler_output, resources = resource_tracking(sandboxed_compiler, **compiler_args)
-        # result = sandboxed_compiler(code, language, k_times=k_runtimes)
+
+        # compiler_output = sandboxed_compiler(code, language, k_times=k_runtimes)
         # returns (returncode, "output: ...", runtimes_dict)
         # where runtimes_dict = {"real": (mean, std), "user": ..., "sys": ..., "cpu": ..., "util": ...}
+        # compiler_output, resources = sandboxed_compiler(code, language, k_times=k_runtimes)
 
         # collect code and compiler output for later
         code_results.append({
             # Note: completion is added later in the pipeline
-            "language": language, "code": code,
-            "code_output": {**compiler_output, **resources}
+            "code_output": {**compiler_output, **resources},
+            "language": language,
+            "code": code,
         })
 
         if compiler_output["returncode"] == 0 : # if the code is correct

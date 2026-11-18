@@ -1,4 +1,4 @@
-import re, os, subprocess, tempfile
+import re, os, subprocess
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy import stats
@@ -8,6 +8,7 @@ from langchain_huggingface import HuggingFaceEmbeddings
 
 # importing my functions from other files
 from supercode.src.database.database import Database
+from supercode.src.tools.code_sandbox import *
 
 # importing variables from the config file
 from supercode.src.configs.parse_config import *
@@ -278,132 +279,6 @@ def run_perf(main_file: str):
 
 
 # ----------------------------------------------------------------------------------------------
-def docker_container(command: Literal['activate', 'deactivate', 'delete']):
-    """Activate or deactivate the sandbox docker container for running code."""
-    image = docker_args["image"]
-    container_name = docker_args["container_name"]
-    workspace_path = os.path.join(os.getcwd(), docker_args["workspace"])
-    #print("workspace =", workspace_path)
-
-    if verbose>1: print(f">> about to {command} docker container '{container_name}'")
-    # for debugging
-    # if verbose>2:
-    #     print("----------------------------------------------------------------------------------------------\n", subprocess.run(
-    #         # 'docker ps' returns info of all (-a) containers filtered (-f) by name
-    #         ["docker", "ps", "-a", "-f", f"name={container_name}"],
-    #         capture_output=True, text=True, check=True
-    #     ).stdout.strip(), "\n", sep="")
-
-    # --------------------------------------------------------------------------------------
-    def execute_docker_command(command: Literal['build', 'create', 'activate', 'deactivate', 'delete']):
-        if command=="build":
-            # build the image for the container (docker build) based on the Dockerfile
-            if verbose>1: print(">> building image")
-            subprocess.run([
-                "docker", "build", "-t", image, docker_args["docker_dir"]
-            ], check=True)
-
-        elif command=="create":
-            # create a new container (docker run)
-            if verbose>1: print(">> creating container")
-            subprocess.run([
-                "docker", "run", "-d", "-it", # -d for detached mode (run in background and print container ID), -it for Interactive TTY session
-                "-m", docker_args["mem_limit"],  # memory limit, defined in config
-                "--name", container_name,  # fixed name for the container, defined in config
-                "--mount", f"type=bind,src={workspace_path},dst=/workspace",  # mount disk to save/access files
-                image  # select image for the docker container
-            ], check=True)
-            # other options:
-            # --rm for auto-cleanup on stop (very slow if done often)
-            # -v for binding the workspace directory as volume
-
-        elif command == "activate":
-            # activate the container (docker start)
-            if verbose>1: print(">> starting container")
-            subprocess.run(["docker", "start", container_name], check=True)
-
-        elif command=="deactivate":
-            # deactivate the container if it is running (docker stop)
-            if verbose>1: print(">> stopping container")
-            subprocess.run(["docker", "stop", container_name], check=True)
-
-        elif command=="delete":
-            # delete the container (docker rm)
-            if verbose>1: print(">> removing container")
-            subprocess.run(["docker", "rm", container_name], check=True)
-
-        else:
-            print(f"WARNING: unknown command {command} will be ignored")
-    # --------------------------------------------------------------------------------------
-    try:
-        # check if the container exists (active or not)
-        exist_docker_id = subprocess.run(
-            # 'docker ps' returns the IDs (-q) of all (-a) containers filtered (-f) by name
-            ["docker", "ps", "-a", "-q", "-f", f"name={container_name}"],
-            capture_output=True, text=True, check=True
-        ).stdout.strip()
-
-        # check if the container is active (this is a subset of the previous)
-        active_docker_id = subprocess.run(
-            # 'docker ps' returns the IDs (-q) of active containers filtered (-f) by name
-            ["docker", "ps", "-q", "-f", f"name={container_name}"],
-            capture_output=True, text=True, check=True
-        ).stdout.strip()
-
-        image_in_mem = image in subprocess.run(["docker", "images"], capture_output=True, text=True, check=True).stdout.strip()
-
-        # decision tree based on the command and whether the container exists/is running
-        if exist_docker_id: # check if the container exists
-            if active_docker_id: # check if is it active
-                if command == 'deactivate' or command == 'delete':
-                    execute_docker_command('deactivate')
-                    if command == 'delete': execute_docker_command(command)
-                # pass if command is activate
-            else: # if the container exists, but it is not active
-                if command == 'activate' or 'delete': execute_docker_command(command)
-                # pass if command is deactivate
-        else: # if the container doesn't exist
-            if command == 'activate':
-                if not image_in_mem: execute_docker_command('build') # build the image from the Dockerfile
-                execute_docker_command('create') # then create the container from the image
-                execute_docker_command('activate') # the created container automatically stops if no commands are given
-            # pass if deactivate/delete
-
-    except subprocess.CalledProcessError as e:
-        print(f"ERROR: docker_container tried to {command} {container_name} but failed:\n{e}")
-
-    # for debugging
-    if verbose>2:
-        print("\n", subprocess.run(
-            # 'docker ps' returns info of all (-a) containers filtered (-f) by name
-            ["docker", "ps", "-a", "-f", f"name={container_name}"],
-            capture_output=True, text=True, check=True
-        ).stdout.strip(), "\n----------------------------------------------------------------------------------------------\n", sep="")
-# ----------------------------------------------------------------------------------------------
-def extract_runtime(code_output):
-    pattern = r'real\s(\d+)m(\d+\.\d+)s\suser\s(\d+)m(\d+\.\d+)s\ssys\s(\d+)m(\d+\.\d+)s\s'
-    match = re.search(pattern, code_output) # there should be only one match
-    # time <command> output:
-    # <command output>
-    # real	0m0.004s
-    # user	0m0.001s
-    # sys	0m0.004s
-
-    real_t = float(match.group(1))*60+float(match.group(2))
-    user_t = float(match.group(3))*60+float(match.group(4))
-    sys_t  = float(match.group(5))*60+float(match.group(6))
-
-    runtime = {
-        "real": real_t, # clock time (including I/O and time slices used by other processes)
-        "user": user_t, # process time for the current job only
-        "sys":  sys_t,  # kernel time for the current job only (this doesn't include library code --> user)
-        "cpu":  user_t+sys_t, # cpu time, is <=real with single-thread and can be >real with multi-thread
-        "util": (user_t+sys_t)/real_t # cpu utilization, note this can be >1 with multi-threading
-    }
-    if verbose>1: print(">> code runtime:", runtime)
-    return runtime, match.group(0)
-
-# ----------------------------------------------------------------------------------------------
 metadata = {
         #"name": sandboxed_compiler.__name__,
         "provides": "runs the code and returns the compiler output",
@@ -471,8 +346,13 @@ def sandboxed_compiler(code: object, language: object, unit_test: object=None, e
                       capture_output=True, text=True, check=True
                   ).stdout.strip(), "\n", sep="")
 
-        k_runtimes = {"real": [], "user": [], "sys": [], "cpu": [], "util": []}
-        ave_std_time_str = "" ; ave_std_time_dict = {}
+        runtime_xk = {}
+        ave_std_runtime_dict = {}
+        ave_std_runtime_str = ""
+
+        stats_xk = {}
+        ave_std_stats_dict = {}
+
 
         # run the code multiple times to capture runtime variance
         for k in range(k_times):
@@ -482,6 +362,7 @@ def sandboxed_compiler(code: object, language: object, unit_test: object=None, e
             # env['NO_COLOR'] = '1'
             # env['GCC_COLORS'] = '' # if using GCC
 
+            stats_0 = get_docker_raw_stats()
             result = subprocess.run( # run a program from inside the container (and remove the container afterwards)
                 run_code_command(language),
                 #["docker", "run", "-m", "0.5g", "--mount", "type=bind,src="+abs_docker_path+",dst=/workspace", "--rm", "sandbox_code", "python3", docker_code_path],
@@ -491,6 +372,17 @@ def sandboxed_compiler(code: object, language: object, unit_test: object=None, e
                 text=True,
                 timeout=docker_args['timeout'] # seconds
             )
+            stats_f = get_docker_raw_stats()
+            d_stats = get_docker_delta_stats(stats_0, stats_f)
+
+            # call_args = {
+            #     "args": run_code_command(language),
+            #     "shell": True,
+            #     "capture_output": True,
+            #     "text": True,
+            #     "timeout": docker_args['timeout'],  # seconds
+            # }
+            # result, code_resources = resource_tracking(subprocess.run, **call_args)
 
             # remove escape characters
             ansi_escape = re.compile(r'\x1b\[[0-9;]*m') # \x is for asci characters
@@ -500,27 +392,35 @@ def sandboxed_compiler(code: object, language: object, unit_test: object=None, e
 
             runtime, time_string = extract_runtime(output)
 
-            for key in k_runtimes.keys(): k_runtimes[key].append(runtime[key])
+            # save stats as a dict of lists
+            for key in d_stats.keys():
+                if key == "name": continue # no list
+                if k==0: stats_xk[key] = []
+                stats_xk[key].append(d_stats[key])
+            
+            # save runtimes as a dict of lists
+            for key in runtime.keys():
+                if k==0: runtime_xk[key] = []
+                runtime_xk[key].append(runtime[key])
+
             if result.returncode==1 : k_times=k+1 ; break # run the code only once if there are errors
 
         output = output.replace(time_string, "") # remove the time string from the output
 
-        for key in k_runtimes.keys():
-            median = np.median(k_runtimes[key]) # more robust to outliners
-            median_std = stats.median_abs_deviation(k_runtimes[key]) # more robust to outliners
-            average = np.mean(k_runtimes[key])
-            average_std = np.std(k_runtimes[key])
-            if verbose>1: # print runtime metric for each sample
-                print(f"  >> {key}:"
-                      f"\tmedian=({median*100:.2f} +/- {median_std*100:.2f})"
-                      f"\tmean=({average*100:.2f} +/- {average_std*100:.2f});"
-                      )
+        # average the runtime over the k runs
+        for key in runtime_xk.keys():
+            median = np.median(runtime_xk[key]) # more robust to outliners
+            median_std = stats.median_abs_deviation(runtime_xk[key]) # more robust to outliners
+            if key=="util": # percentage of utilization
+                ave_std_runtime_str += f"cpu {key}:\t({median*100:.2f} +/- {median_std*100:.2f})%\n"
+            else: # time in ms
+                ave_std_runtime_str += f"{key} time:\t({median*1000:.2f} +/- {median_std*1000:.2f}) ms\n"
+            ave_std_runtime_dict[key] = (median, median_std)
 
-            if key=="util":
-                ave_std_time_str += f"cpu {key}:\t({median*100:.2f} +/- {median_std*100:.2f})%\n"
-            else:
-                ave_std_time_str += f"{key} time:\t({median*1000:.2f} +/- {median_std*1000:.2f}) ms\n"
-            ave_std_time_dict[key] = (median, median_std)
+        for key in stats_xk.keys():
+            median = np.median(stats_xk[key]) # more robust to outliners
+            median_std = stats.median_abs_deviation(stats_xk[key]) # more robust to outliners
+            ave_std_stats_dict[key] = (median, median_std)
 
         # check docker container status
         if verbose>2:
@@ -534,13 +434,17 @@ def sandboxed_compiler(code: object, language: object, unit_test: object=None, e
 
         compiler_output = {
             "returncode": result.returncode,
-            "compiler_output": f"{output}{result.stderr}\nruntime stats (mean +/- std) for {k_times} runs:\n{ave_std_time_str}",
-            "runtime": ave_std_time_dict
+            "compiler_output": f"{output}{result.stderr}\nruntime stats (mean +/- std) for {k_times} runs:\n{ave_std_runtime_str}",
+            "runtime": ave_std_runtime_dict,
+            "docker_stats": ave_std_stats_dict,
         }
         if verbose>1 : print(f">> command completed:\n{compiler_output}")
         return compiler_output
 
     except Exception as e:
-        print(f"Error in sandboxed_compiler tool: {e}")
-        return {"returncode": 1, "printed_output": f"Error in sandboxed_compiler tool: {e}", "runtime": None}
+        return {
+            "returncode" : 1,
+            "compiler_output" : f"Error in sandboxed_compiler tool: {e}",
+            "runtime" : None,
+        }
 

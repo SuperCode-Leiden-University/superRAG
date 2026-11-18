@@ -5,7 +5,7 @@ import ast
 import tempfile
 
 # importing my functions from other files
-from supercode.src.tools.code_processing import *
+from supercode.src.tools.completion_processing import *
 from supercode.src.tools.tools import *
 
 # importing variables from the config file
@@ -65,35 +65,62 @@ for file_name in file_list:
     comp_fail = [ 0 for i in range(num_samples) ]
     test_pass = [ 0 for i in range(num_samples) ]
     test_fail = [ 0 for i in range(num_samples) ]
-    samples = []
+    tasks = []
 
     print("\n-----------------------------------------------------------------\nEvaluating: "+file_name)
     with open(file_name) as f:
-        for i, line in enumerate(f, start=1):
+        print(f">> opened baseline file:\n{file_name}")
+        # each line is a json object
+        for i, line in enumerate(f, start=1):  # read the file line-by-line
             try:
-                samples.append(ast.literal_eval(line))
-            except Exception as e:
-                raise Exception("Error on line", i, "Line content:", repr(line))
+                # IMPORTANT NOTE:
+                # load() expects a file-like object (something with a .read() method, like an open file)
+                # loads() expects a string, they're not interchangeable!!!
+                tasks.append(json.loads(line))
+            except ValueError as e:
+                raise ValueError(f"\n>> ERROR in the baseline file at line {i}:\n{e}")
 
-    for i, sample in enumerate(samples):
-        task_id = sample["task_id"]
-        completion = sample["completion"]
-        code = sample["code"]
-        compiler_output = sample["compiler_output"]
+    # with open(file_name) as f:
+    #     for i, line in enumerate(f, start=1):
+    #         try:
+    #             samples.append(ast.literal_eval(line))
+    #         except Exception as e:
+    #             raise Exception("Error on line", i, "Line content:", repr(line))
+
+    for i, task in enumerate(tasks):
+        task_id = task["task_id"]
+
+        energy = task["energy"] # in kWh, used by the model for generating code
+        emissions = task["emissions"] # in g CO2eq, this is energy*PUE
+        psutil_memory = task["psutil_memory"] # in MiB, used by the model for generating code
+
+        samples = task["samples"]
 
         if verbose>0 : print("\n------------------------------------------------------------\n### sample:", task_id)
-        #print(f"completion:\n{completion}\ncode:\n{code}\ncompiler_output:\n{compiler_output}\n------------------------------------------------------------\n")
+        for sample in samples:
+            #completion = sample["completion"]
+            language = sample["language"]
+            code = sample["code"]
 
-        #function = sample["code"] #; print("code: \n```\n", function, "\n```\n", sep='')
-        language, function = extract_code(completion)
-        if verbose>2: print(f"\nlanguage: {language}, code:\n{function}\n")
+            # results of running the code on the examples (test i/o are not included)
+            code_output = sample["code_output"] # validation on examples
+            returncode = code_output["returncode"] # 0 if the code is correct
+            compiler_output = code_output["compiler_output"] # terminal output
+
+            runtime = compiler_output["runtime"]
+            energy = compiler_output["energy"] # in kWh, used by the model for generating code
+            emissions = compiler_output["emissions"] # in g CO2eq, this is energy*PUE
+            psutil_memory = compiler_output["psutil_memory"] # in MiB, used by the model for generating code
+
+
+
+            if verbose>2: print(f"\nlanguage: {language}, code:\n{code}\n")
 
         entry_point = problems[task_id]["entry_point"] # name of the function
         test = problems[task_id]["test"]
         j = i % num_samples # for calculating the variance
 
         # check just the code
-        returncode, output, runtime = sandboxed_compiler(function, language)
         print(f"compiler: returncode = {returncode}\n{output}") # if verbose>2 :
         if returncode==0: comp_pass[j]+=1
         else: comp_fail[j]+=1

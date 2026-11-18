@@ -4,7 +4,7 @@ from pprint import pp as pprint
 from supercode.src.model_loader.model_loader import Model
 from supercode.src.tools.manage_tools import * # import all the tools
 from supercode.src.tools.tools import *
-from supercode.src.tools.code_processing import *
+from supercode.src.tools.completion_processing import *
 
 # importing variables from the config file
 from supercode.src.configs.parse_config import *
@@ -191,7 +191,8 @@ class Agent():
                     # perf_result = run_perf(gen_code_file)
 
                     # in case I have some baseline code with no compiler output
-                    if baseline_output==None: baseline_output = sandboxed_compiler(baseline_code, code_language)
+                    if baseline_output==None:
+                        baseline_output = sandboxed_compiler(baseline_code, code_language, k_times=k_runtimes)
 
                     for m in self.models_list:
                         # save the tool results in the message history of all models
