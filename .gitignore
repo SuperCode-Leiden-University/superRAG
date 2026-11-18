@@ -28,6 +28,8 @@ old*.*
 
 #tools-outputs/
 gen_code_temp.*
+gen_code_temp.**
+gen_code_temp.***
 megalinter-reports/
 perf-reports/
 perf.dat*
