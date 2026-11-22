@@ -67,7 +67,7 @@ class Model():
         def message_format(role, content):
             self.messages.append({
                 "role": role,
-                "content": content if coder_text_only else [ # for vision-language models
+                "content": content if text_only_model else [ # for vision-language models
                     {"type": "image", "url": img_url},
                     {"type": "text", "text": content}
                 ],

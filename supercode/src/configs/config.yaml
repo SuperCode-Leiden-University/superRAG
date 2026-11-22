@@ -10,6 +10,8 @@ tools_iter: 0 # n steps for choosing tools (0 = no tools, 1 = all tools in one g
 k_runtimes: 20 # n of times the code is run to capture runtime variance
 optim_metric: real # one of the following: ["real", "user", "sys", "cpu", "util"]
 
+text_only_model: true # true if all models used are text generation only, false if they're all text-image-to-text (apply for all models)
+
 benchmark:
     name: bigcode/humanevalpack # EffiBench/effibench-x # openai/openai_humaneval # bigcode/crosscodeeval #
     # null for chat mode (null is the equivalent of None in python)
@@ -69,7 +71,6 @@ coder_model:
 
         #mradermacher/hpc-coder-v2-6.7b-GGUF # HPC-coder, fine-tuned version of Deepseek Coder 6.7b
 
-    text_only: true # true if text generation only, false is text-image-to-text (apply for all models)
     quant_type: pretrained # valid values: ["pretrained", "gguf", "compressor", "bits", "sinq"] --> check file formats!!!
     # SINQ doesn't work!!! prequantized AWQ and GPTQ models can be loaded using pretrained
 

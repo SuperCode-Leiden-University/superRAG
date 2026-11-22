@@ -23,12 +23,13 @@ optim_metric = vars["optim_metric"]
 
 benchmark_args = vars["benchmark"] # run benchmark-results
 
+text_only_model = vars["text_only_model"] # model ID from HuggingFace
+
 
 # ----------------------------------------------------------------------------------------------
 # chat assistant model
 coder_model_args       = vars["coder_model"]
 coder_model_id         = vars["coder_model"]["model_id"] # model ID from HuggingFace
-coder_text_only        = vars["coder_model"]["text_only"] # model ID from HuggingFace
 coder_quant_type       = vars["coder_model"]["quant_type"] # valid values: ("full", "bits", "GPTQ") --> check file formats!!!
 coder_gen_args         = vars["coder_model"]["gen_args"]
 coder_multi_sampl_args = vars["coder_model"]["multi_sampl_args"]
