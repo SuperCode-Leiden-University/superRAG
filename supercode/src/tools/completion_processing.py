@@ -159,8 +159,9 @@ def get_baseline_samples(file, index=0):
     return samples
 
 # ----------------------------------------------------------------------------------------------
-def get_code_results(code, language):
-    compiler_args = {"code": code, "language": language, "k_times": k_runtimes}
+def get_code_results(code, language, k=None):
+    if k is None: k = k_runtimes
+    compiler_args = {"code": code, "language": language, "k_times": k}
     compiler_output, resources = resource_tracking(sandboxed_compiler, **compiler_args)
 
     # collect code and compiler output for later

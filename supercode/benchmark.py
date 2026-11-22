@@ -132,7 +132,7 @@ def run_benchmark(agent, model_id, benchmark_args):
                 language = sample["language"]
                 code = sample["code"]
                 test_code = test_task(language, code, entry_point, unit_tests)
-                compiler_output, test_result = get_code_results(test_code, language)
+                compiler_output, test_result = get_code_results(test_code, language, k=1) # I only need to run it once
                 test_results.append(test_result)
 
             save_completion(task_id, agent_resources, index, completions_results, test_results, filepath=filename)
