@@ -12,7 +12,7 @@ from supercode.src.tools.tools import *
 
 # importing variables from the config file
 from supercode.src.configs.parse_config import *
-from supercode.src.configs.system_prompts import baseline_prompt, benchmark_prompt
+from supercode.src.configs.system_prompts import *
 
 
 # ---------------------------------------------------------------------------------------------- #
@@ -52,6 +52,7 @@ def run_benchmark(agent, model_id, benchmark_args):
 
     problems = dataset[bench_keys["split"]] ; n_tasks = len(problems)
     id_key = bench_keys["id_key"] ; prompt_key = bench_keys["prompt_key"]
+    entry_point_key = bench_keys["entry_point_key"] ; test_key = bench_keys["test_key"]
     #print("\nDataset structure:\n", dataset, sep="")
 
 
@@ -80,10 +81,10 @@ def run_benchmark(agent, model_id, benchmark_args):
             sample = problems[i]
 
         # extract task
-        #entry_point = sample["entry_point"]
-        #test = sample["test"] # code to test the function
         task_id = sample[id_key]
         prompt = sample[prompt_key]
+        entry_point = sample[entry_point_key]
+        unit_tests = sample[test_key]
         print("\n======================================")
         print(i, task_id, model_name)
         print(prompt)
@@ -95,53 +96,48 @@ def run_benchmark(agent, model_id, benchmark_args):
         # median([-10, 4, 6, 1000, 10, 20]) = 8.0 (instead of 15.0)
 
         # ----------------------------------------------------------------------------------------------
-        if baseline: # create the baseline
-            if verbose>0: print("......................................")
+        for phase in ["baseline", "benchmark"]:
+            if phase=="baseline":
+                if not baseline: continue # skip generation and load from files
+                baseline_code=None; language=None; compiler_output=None
+                filename = baseline_file
+            else: # before running the benchmark get the baseline code
+                filename = benchmark_file
+                if baseline:
+                    if not benchmark_args["use_baseline_best"]: index = 0  # use the first result
+                    # use results genereted the previous round
+                    baseline_code = completions_results[index]["code"]
+                    language = completions_results[index]["language"]
+                    compiler_output = completions_results[index]["code_output"]
+                else:
+                    if verbose > 0: print(">> loading baseline code from files")
+                    # load results from previously saved file
+                    baseline_code = baseline_samples[i]["code"]
+                    language = baseline_samples[i]["language"]
+                    compiler_output = baseline_samples[i]["code_output"]
+            
+            if verbose > 0: print("\n......................................")
             call_args = {
-                "user_prompt": f"{baseline_prompt}\n\n{prompt}",
-                "reset_memory": True,
-                "baseline": True
+                "user_prompt": bench_prompt(prompt, language, baseline),
+                "baseline_code": baseline_code, "code_language": language, "baseline_output": compiler_output,
+                "reset_memory": True, "baseline": False
             }
-
+            """ index, completions_results = agent.call(**call_args) """
             func_results, agent_resources = resource_tracking(agent.call, **call_args)
-            index, completions_results = func_results # index of the best result
-            save_completion(task_id, agent_resources, completions_results, index, filepath=baseline_file)
+            index, completions_results = func_results
 
-            if not benchmark_args["use_baseline_best"]: index = 0 # use the first result
-            baseline_code = completions_results[index]["code"]
-            language = completions_results[index]["language"]
-            compiler_output = completions_results[index]["code_output"]
+            if verbose>0: print(">> evaluating test set")
+            test_results = []
+            for sample in completions_results:
+                language = sample["language"]
+                code = sample["code"]
+                test_code = test_task(language, code, entry_point, unit_tests)
+                compiler_output, test_result = get_code_results(test_code, language)
+                test_results.append(test_result)
 
-        else:
-            if verbose>0: print(">> loading baseline code from files")
-            # retrieve the baseline function (best result from baseline)
-            baseline_code = baseline_samples[i]["code"]
-            language = baseline_samples[i]["language"]
-            compiler_output = baseline_samples[i]["code_output"]
+            save_completion(task_id, agent_resources, index, completions_results, test_results, filepath=filename)
 
-            #print(f"baseline_code: \n```{language}\n{baseline_code}\n```\n{compiler_output}")
-
-        # ---------------------------------------------------------------
-        # then ask the model to improve the baseline
-        if verbose>0: print("\n......................................")
-        call_args ={
-            "user_prompt" : f"{benchmark_prompt}\n\n{prompt}",
-            "baseline_code" : baseline_code, "code_language" : language, "baseline_output" : compiler_output,
-            "reset_memory" : True, "baseline" : False
-        }
-        """ index, completions_results = agent.call(**call_args) """
-        func_results, agent_resources = resource_tracking(agent.call, **call_args)
-        index, completions_results = func_results
-        save_completion(task_id, agent_resources, completions_results, index, filepath=benchmark_file)
-        """
-        # saving all the results (the best one is saved in a separate file)
-        for i, result in enumerate(completions_results):
-            save_completion(task_id, **result, filepath=benchmark_all_file)
-            if i == index: save_completion(task_id, **result, filepath=benchmark_file)  # best result
-        """
-        # ---------------------------------------------------------------
-
-        if check_single_task is not None: break # stop before saving a single datapoint
+        if check_single_task is not None: break
 
 
 ##############################################################################
@@ -214,7 +210,19 @@ def benchmark_keys(bench_name):
     #        })
     #    })
 
-def verify_examples(sample, code):
-    # extract the examples from the generated code, then verify the output using the canonical solution
-    pattern = r'```(\w*)\s(.*?)(\s```|.$)'  # .$ takes into account the case where the models doesn't finish
-    match = re.search(pattern, completion_text, re.DOTALL)
+# ----------------------------------------------------------------------------------------------
+def test_task(language, code, entry_point, unit_tests):
+    if unit_tests is not None:
+        if language == "python":
+            code = f"{code}\n\n{unit_tests}\n\ncheck({entry_point})"
+        elif language == "cpp":
+            pattern = r'((.*\n)*)int main\(\)\{((\n.*)+)\}'
+            match = re.search(pattern, unit_tests)
+            if match:
+                idx = code.find("check_examples();") + len("check_examples();")
+                imports = match.group(1)
+                asserts = match.group(3)
+
+                code = imports+code[:idx]+asserts+code[idx:]
+
+        return code

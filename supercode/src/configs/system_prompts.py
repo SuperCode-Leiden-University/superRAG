@@ -1,19 +1,21 @@
 ########################################################################################################################
 # complete prompt for the chat assistant
-coder_prompt = """You are a helpful AI coding assistant with access to a database and external tools. 
+coder_prompt = """You are an expert programmer with access to external tools. 
 When tool results are provided, treat them as authoritative facts. 
-Your job is to:
-- Use the tool outputs as the primary source of truth.
-- Incorporate the tool results directly into your final answer.
-- Keep all names, numbers, and factual details exactly as returned.
-- Never describe the tool‑use process, reasoning steps, or how results were obtained.
-- Never invent alternative answers when tool results are available. 
-You may summarize the results from tools if they are very long, but you must not add unsupported details. 
 """
+# old_prompt = """
+# Your job is to:
+# - Use the tool outputs as the primary source of truth.
+# - Incorporate the tool results directly into your final answer.
+# - Keep all names, numbers, and factual details exactly as returned.
+# - Never describe the tool‑use process, reasoning steps, or how results were obtained.
+# - Never invent alternative answers when tool results are available.
+# You may summarize the results from tools if they are very long, but you must not add unsupported details.
+# """
 # During reasoning, try to keep your answer short and avoid repeating the same concepts many times.
 
 # prompt to add before the user_prompt
-coder_prequery = "Use the following information to answer the question in natural language.\n\n### Question:\n"
+coder_prequery = ""#"Use the following information to answer the question in natural language.\n\n### Question:\n"
 
 ########################################################################################################################
 # partial prompt for the tool manager
@@ -63,49 +65,91 @@ tool_manager_revise = "Use the tools results to improve your previous answer and
 ########################################################################################################################
 ########################################################################################################################
 ########################################################################################################################
-general_prompt = """
-First explain your reasoning, then write library imports, function definition and all assert statements in one single block of code. 
 
-For the examples included in the description of the function, check that the function returns the expected results with an assert statement using the following template: 
-`assert function_name(example_i) == result_i , f'the correct result is { result_i }, but the function returned { function_name(example_i) } instead'`.
-Note that in the case in which result_i is just a number (with no parenthesis, no letters and no special characters), \
-you should `assert abs(function_name(example_i) - result_i) < 1e-6` instead of `assert function_name(example_i)==result_i` \
-to avoid errors due to numerical fluctuations (do not do this if the result is a bool, a string, a list or anything other than a pure number).
-The assert statements must be placed only outside the function. Finally print('end of the code') at the end. 
+def bench_prompt(prompt, language, baseline):
+    if baseline: benchmark_prompt = f"Write a {language} function based on the following description:\n{prompt}\n"
+    else: benchmark_prompt = f"Improve this {language} function based the feedback from tools and the following description:\n{prompt}\n"
 
-You must always write the function and the assert statements as a single block of code, following this structure: 
-```language
-# import libraries
-# function definition
-# assert statements for the examples in the description of the function
-# finally print 'end of the code'
+    benchmark_prompt += """
+First think about how to solve the task and what are the logical steps to get to the solution, then write the code to implement it.
+Include relevant libraries, then write the function definition, outside of the function definition write another function called `check_examples` to verify that the function behaves as expected.
+You must use exactly the same function signature as written in the description. """
+
+    if language=="cpp": benchmark_prompt += """
+In particular, after importing the libraries you must include:
 ```
+#include<assert.h> 
+#undef NDEBUG 
+using namespace std;
+``` 
 
-Remember that in python the assert function is already included, but in c/cpp you have to explicitly import it as <cassert> (for cpp) or assert.h (for c).
-You must not include extra examples besides those given in the description of the function.
-In the exceptional case in which no examples are provided, you may include up to 3 examples.
+When declaring a variable you can only use the basic variable types such as: bool, int, float, double, char, string or auto. 
+\n"""
+    elif language=="c": benchmark_prompt += """
+In particular, you must include the <assert.h> library
+
+When declaring a variable you can only use the basic variable types such as: bool, int, float, double or char. 
+\n"""
+
+    benchmark_prompt += """
+In `check_examples` you should have a list/array of input/output pairs taken from the description of the function.
+For each pair, check if the expected output is equal to the result from the function, print a warning message with both values if the function doesn't return the expected output.
+Count how many examples return the incorrect output using `n_incorrect`: 
+if all examples return the expected result print "code passed all the tests", otherwise print `n_incorrect`.
+Finally, include one assert statement to check if `n_incorrect == 0`, this will signal when the code failed the unit tests.
+Note that I want both the print statements and the assert statement, and the assert statement should be the very last line of code in `check_examples`.
+
+In `check_examples`, you must use ONLY the examples present in the description, you must not try to invent extra examples. 
+The only exception to this rule is when no examples are provided: in this case you may include a few examples.
 """
-# , f'the correct result is {result_i}, but the function returned {function_name(example_i)} instead'
-
-
-
+    if not baseline: benchmark_prompt += """
+If the function already produces the correct results, you should focus on optimizing for performance and minimize total/real runtime.
+Make sure that the function is still correct after you change it.
 """
-Write a function based on the following description. 
-When reasoning you can consider additional test cases but no more then 5, however additional test cases should not appear in the final code.
-In the final code you must never include extra examples besides those given in the description (this instruction has priority, ignore the FIX if it says otherwise).
-"""
+    return benchmark_prompt
 
-
-"""
-Improve this function based on the following description. 
-Always include the final code in your answer. 
-When reasoning you can consider additional test cases but no more then 5, however additional test cases should not appear in the final code.
-In the final code you must never include extra examples besides those given in the description (this instruction has priority, ignore the FIX if it says otherwise).
-"""
-
-baseline_prompt = f"Write a function based on the following description. \n{general_prompt}"
-benchmark_prompt = f"Improve this function based on the following description. \n{general_prompt}"
-optim_prompt = "Since the function already produces the correct results, you should focus on optimizing for performance and minimize total/real runtime."
+########################################################################################################################
+# old_general_prompt = """
+# First explain your reasoning, then write library imports, function definition and all assert statements in one single block of code.
+#
+# For the examples included in the description of the function, check that the function returns the expected results with an assert statement using the following template:
+# `assert function_name(example_i) == result_i , f'the correct result is { result_i }, but the function returned { function_name(example_i) } instead'`.
+# Note that in the case in which result_i is just a number (with no parenthesis, no letters and no special characters), \
+# you should `assert abs(function_name(example_i) - result_i) < 1e-6` instead of `assert function_name(example_i)==result_i` \
+# to avoid errors due to numerical fluctuations (do not do this if the result is a bool, a string, a list or anything other than a pure number).
+# The assert statements must be placed only outside the function. Finally print('end of the code') at the end.
+#
+# You must always write the function and the assert statements as a single block of code, following this structure:
+# ```language
+# # import libraries
+# # function definition
+# # assert statements for the examples in the description of the function
+# # finally print 'end of the code'
+# ```
+#
+# Remember that in python the assert function is already included, but in c/cpp you have to explicitly import it as <cassert> (for cpp) or assert.h (for c).
+# You must not include extra examples besides those given in the description of the function.
+# In the exceptional case in which no examples are provided, you may include up to 3 examples.
+# """
+# # , f'the correct result is {result_i}, but the function returned {function_name(example_i)} instead'
+#
+#
+#
+# """
+# Write a function based on the following description.
+# When reasoning you can consider additional test cases but no more then 5, however additional test cases should not appear in the final code.
+# In the final code you must never include extra examples besides those given in the description (this instruction has priority, ignore the FIX if it says otherwise).
+# """
+#
+#
+# """
+# Improve this function based on the following description.
+# Always include the final code in your answer.
+# When reasoning you can consider additional test cases but no more then 5, however additional test cases should not appear in the final code.
+# In the final code you must never include extra examples besides those given in the description (this instruction has priority, ignore the FIX if it says otherwise).
+# """
+#
+# optim_prompt = "Since the function already produces the correct results, you should focus on optimizing for performance and minimize total/real runtime."
 
 # For the given examples, check that the function returns the expected results with a statement like:
 # `assert function_name(example_i)==result_i, f'the correct result is result_i, but the function returned {function_name(example_i)} instead'`,

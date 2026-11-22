@@ -5,6 +5,7 @@ accelerate
 bitsandbytes # for quantizing the model
 codecarbon
 datasets # hugging face datasets
+docker
 ecologits
 faiss-cpu # database for RAG
 #faiss-gpu
@@ -25,6 +26,7 @@ memory-profiler
 numpy
 optimum # for gptq models
 pip
+psutil
 pyyaml # for the config file
 scipy
 sentence-transformers

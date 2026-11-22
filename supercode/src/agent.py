@@ -95,9 +95,6 @@ class Agent():
             elif role == "tool_manager":
                 samples = self.tool_manager.call(tool_schemas=self.schemas)
             else: raise ValueError(f"ERROR: get_response() got an invalid role: {role}")
-            # for i, sample in enumerate(samples):
-            #     print(f"\ni={i}-----------------------------------\n{sample}")
-            # print("--------------------------------------\n")
 
             # select the best code
             index, code_results = select_response(samples)
@@ -124,10 +121,6 @@ class Agent():
         # optional: forget previous answers and keep only the system prompts, useful for benchmarks
         if reset_memory: self.reset_memory()
 
-        if not baseline and baseline_output["returncode"]==0: # add optimization instructions if the code is correct
-            print(">> baseline code is correct, attempting optimization")
-            user_prompt = f"{user_prompt}\n{optim_prompt}"
-
         # save the user_prompt in the message history of all active models
         for m in self.models_list:
             m.add_message(role="user", content=user_prompt)
@@ -144,7 +137,6 @@ class Agent():
             # use standalone model (no iteration and no tools allowed, baseline to measure effectiveness)
             if baseline:
                 # apply chat templates and return an answer
-                # response, responses
                 index, completions_results = get_response("assistant", i)
                 # note: code_results = list({"language", "code", "compiler_output", "completion"})
                 break # there is no need to iterate multiple times
@@ -187,8 +179,6 @@ class Agent():
                 # predetermined use of tools to analyze code (if given)
                 elif baseline_code is not None:
                     if verbose>0: print(">> using predetermined list of tools")
-                    # compiler_output = sandboxed_compiler(baseline_code, code_language)
-                    # perf_result = run_perf(gen_code_file)
 
                     # in case I have some baseline code with no compiler output
                     if baseline_output==None:
@@ -204,17 +194,6 @@ class Agent():
                                 "result": str(baseline_output)
                             }
                         )
-                        # m.add_message(
-                        #     role="tool",
-                        #     content= {
-                        #         "name": "run_perf",
-                        #         "input": gen_code_file,
-                        #         "result": str(perf_result)
-                        #     }
-                        # )
-
-                        # prompt to improve the code if the compiler returns an error
-                        #if compiler_output[0] != 0: m.add_message(role="user", content=compiler_prompt)
 
                     # if compiler_output[0] == 0: # check if the code compiled correctly
                     #     responses = []

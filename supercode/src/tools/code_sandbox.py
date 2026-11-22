@@ -15,6 +15,89 @@ from ecologits import EcoLogits # to estimate energy and carbon for API calls to
 from supercode.src.configs.parse_config import *
 
 
+# ------------------------------------------------------------------------------------
+def run_code_command(language):
+    # if verbose>0 : print(">> define command based on the language and saving the code")
+
+    # NOTE: when using cmd list, use "sh", "-c", f"g++ for c/cpp
+    # needed because I'm running 2 commands in one step (compile && run exe)
+    # ----------------------------
+    if language == "python":
+        ext = ".py"  # file extension
+        cmd = f"python3 {gen_code_file+ext}"
+    # ----------------------------
+    elif language == "c":
+        ext = ".c"  # file extension
+        gen_code_exe = gen_code_file+".out"
+        cmd = f"gcc {gen_code_file+ext} -o {gen_code_exe} && ./{gen_code_exe}"
+        # note: the "chmod u+x filename" command may be needed to allow execution (in case it says "permissions denied")
+    # ----------------------------
+    elif language == "cpp":
+        ext = ".cpp"  # file extension
+        gen_code_exe = gen_code_file
+        cmd = f"g++ {gen_code_file+ext} -o {gen_code_exe} && ./{gen_code_exe}"
+        # note: the "chmod u+x filename" command may be needed to allow execution (in case it says "permissions denied")
+    # ----------------------------
+    else:
+        raise ValueError(f"Error: Unsupported language '{language}'")
+
+    # 'bash -c' to force bas like interface
+    return cmd, ext  # command for running the code
+
+# ----------------------------------------------------------------------------------------------
+def print_canon_io(language, entry_point, canonical_solution, io_list):
+    # ----------------------------
+    if language == "python": return f"""
+{canonical_solution}
+
+canon_io_list = []
+for io in {io_list}:
+    output = {entry_point}(io[0])
+    canon_io_list.append([io[0], output])
+
+print(canon_io_list)
+"""
+    # ----------------------------
+    elif language == "c":
+        io_array = "{"
+        for io in io_list:
+            io_array += "{"+str(io[0])+","+str(io[1])+"}"
+        return """
+int main() {
+    canon_io_list = """+str(io_list)+""";
+    for (i=0; i < 3; i++) {
+        io = canon_io_list[i];
+        output = """+str(entry_point)+"""(io[0]);
+        canon_io_list[i] = {
+        
+    
+    printf(canon_io_list);
+    return 0;
+}
+"""+str(canonical_solution)+"""
+
+canon_io_list = []
+for io in  """+str(io_list)+ """:
+    output =  """+str(entry_point)+ """(io[0])
+    canon_io_list.append([io[0], output])
+
+print(canon_io_list)
+"""
+    # ----------------------------
+    elif language == "cpp":return f"""
+{canonical_solution}
+
+canon_io_list = []
+for io in {io_list}:
+    output = {entry_point}(io[0])
+    canon_io_list.append([io[0], output])
+
+print(canon_io_list)
+"""
+    # ----------------------------
+    else:
+        raise ValueError(f"Error: Unsupported language '{language}'")
+
 # ----------------------------------------------------------------------------------------------
 def resource_tracking(func, **args):
     """

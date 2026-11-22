@@ -287,64 +287,36 @@ metadata = {
         "examples": "run the code to check if the output is correct"
 }
 @tool(metadata)
-def sandboxed_compiler(code: object, language: object, unit_test: object=None, entry_point: object=None, k_times: int=1):
+def sandboxed_compiler(code: object, language: object, unit_tests: object=None, entry_point: object=None, k_times: int=1):
     """Run the code in a sandboxed Docker environment."""
     if verbose>0 : print(">> using tool: sandboxed_compiler")
+
+    # --------------------------------------------------------------------------------
     container_name = docker_args["container_name"]
     # IMPORTANT: the docker image can see ONLY files inside "results/"
     # and all paths in the container should be relative to "results/"!
 
-    if unit_test is not None: code = f"{code}\n\n{unit_test}\n\ncheck({entry_point})" # issue: this would work only for HumanEval!
+    docker_cmd = f"docker exec -t {container_name}"
+    time_cmd = "time" #"/usr/bin/time -v"  #
+    # time: to measure real (clocktime), user (processes) and system (kernels) times
+    # note: CPU percentage = (user + sys)/real * 100
+    # -i, --interactive, keep STDIN open even if not attached
 
     # ------------------------------------------------------------------------------------
-    def run_code_command(language):
-        #if verbose>0 : print(">> define command based on the language and saving the code")
-
-        docker_cmd = f"docker exec -t {container_name}"
-        time_cmd = "time"
-        # time: to measure real (clocktime), user (processes) and system (kernels) times
-        # note: CPU percentage = (user + sys)/real * 100
-        # -i, --interactive, keep STDIN open even if not attached
-
-        # NOTE: when using cmd list, use "sh", "-c", f"g++ for c/cpp
-        # needed because I'm running 2 commands in one step (compile && run exe)
-        # ----------------------------
-        if language == "python":
-            ext=".py" # file extension
-            cmd = f"python3 {gen_code_file+ext}"
-        # ----------------------------
-        elif language == "c":
-            ext=".c" # file extension
-            cmd = f"gcc -c {gen_code_file+ext} -o {gen_code_file}.out && ./{gen_code_file}.out"
-        # ----------------------------
-        elif language == "cpp":
-            ext=".cpp" # file extension
-            cmd = f"g++ -c {gen_code_file+ext} -o {gen_code_file}.out && ./{gen_code_file}.out"
-        # ----------------------------
-        else: raise ValueError(f"Error: Unsupported language '{language}'")
-
+    try:
+        code_cmd, ext = run_code_command(language) # get the command to compile and run the code from bash, and the code file extension
         # --------------------------------------------------------------------------------
         # save the code in docker workspace
-        gen_code_file_path = os.path.join(os.getcwd(), docker_args["workspace"], gen_code_file+ext)
+        gen_code_file_path = os.path.join(os.getcwd(), docker_args["workspace"], gen_code_file + ext)
         with open(gen_code_file_path, "w") as f:
-            if verbose>1: print(">> saving the code at", gen_code_file_path)
+            if verbose > 1: print(">> saving the code at", gen_code_file_path)
             f.write(code)
             f.close()
 
-        # 'bash -c' to force bas like interface
-        return f"{docker_cmd} bash -c '{time_cmd} {cmd}'" # command for running the code
-    # ------------------------------------------------------------------------------------
-    try:
         docker_container('activate') # to make sure the container is running
-        # check docker container status
-        if verbose>2:
-            # debugging
-            print("----------------------------------------------------------------------------------------------\n",
-                  subprocess.run(
-                      # 'docker ps' returns info of all (-a) containers filtered (-f) by name
-                      ["docker", "ps", "-a", "-f", f"name={container_name}"],
-                      capture_output=True, text=True, check=True
-                  ).stdout.strip(), "\n", sep="")
+        # check docker container status: 'docker ps' returns info of all (-a) containers filtered (-f) by name
+        if verbose>2: print("----------------------------------------------------------------------------------------------\n",
+            subprocess.run(["docker", "ps", "-a", "-f", f"name={container_name}"], capture_output=True, text=True, check=True).stdout.strip(), "\n", sep="")
 
         runtime_xk = {}
         ave_std_runtime_dict = {}
@@ -363,8 +335,8 @@ def sandboxed_compiler(code: object, language: object, unit_test: object=None, e
             # env['GCC_COLORS'] = '' # if using GCC
 
             stats_0 = get_docker_raw_stats()
-            result = subprocess.run( # run a program from inside the container (and remove the container afterwards)
-                run_code_command(language),
+            result = subprocess.run( # run a program from inside the container
+                f"{docker_cmd} bash -c '{time_cmd} {code_cmd}'",
                 #["docker", "run", "-m", "0.5g", "--mount", "type=bind,src="+abs_docker_path+",dst=/workspace", "--rm", "sandbox_code", "python3", docker_code_path],
                 # -m is memory, must be between 6m and 1g (adding "--memory-swap", "512m" will forbit memory swaps)
                 shell=True,
@@ -375,15 +347,6 @@ def sandboxed_compiler(code: object, language: object, unit_test: object=None, e
             stats_f = get_docker_raw_stats()
             d_stats = get_docker_delta_stats(stats_0, stats_f)
 
-            # call_args = {
-            #     "args": run_code_command(language),
-            #     "shell": True,
-            #     "capture_output": True,
-            #     "text": True,
-            #     "timeout": docker_args['timeout'],  # seconds
-            # }
-            # result, code_resources = resource_tracking(subprocess.run, **call_args)
-
             # remove escape characters
             ansi_escape = re.compile(r'\x1b\[[0-9;]*m') # \x is for asci characters
             output = ansi_escape.sub('', result.stdout)
@@ -392,7 +355,7 @@ def sandboxed_compiler(code: object, language: object, unit_test: object=None, e
 
             runtime, time_string = extract_runtime(output)
 
-            # save stats as a dict of lists
+            # save docker stats as a dict of lists
             for key in d_stats.keys():
                 if key == "name": continue # no list
                 if k==0: stats_xk[key] = []
@@ -422,14 +385,10 @@ def sandboxed_compiler(code: object, language: object, unit_test: object=None, e
             median_std = stats.median_abs_deviation(stats_xk[key]) # more robust to outliners
             ave_std_stats_dict[key] = (median, median_std)
 
-        # check docker container status
-        if verbose>2:
-            # debugging
-            print("\n", subprocess.run(
-                # 'docker ps' returns info of all (-a) containers filtered (-f) by name
-                ["docker", "ps", "-a", "-f", f"name={container_name}"],
-                capture_output=True, text=True, check=True
-            ).stdout.strip(), "\n----------------------------------------------------------------------------------------------\n", sep="")
+
+        # check docker container status: 'docker ps' returns info of all (-a) containers filtered (-f) by name
+        if verbose>2: print("----------------------------------------------------------------------------------------------\n",
+            subprocess.run(["docker", "ps", "-a", "-f", f"name={container_name}"], capture_output=True, text=True, check=True).stdout.strip(), "\n", sep="")
         #docker_container('deactivate')
 
         compiler_output = {

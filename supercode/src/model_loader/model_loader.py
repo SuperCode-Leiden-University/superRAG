@@ -59,7 +59,7 @@ class Model():
         }]
 
     # ----------------------------------------------------------------------------------------------
-    def add_message(self, role, content):
+    def add_message(self, role, content, img_url=None):
         """Add a message to the conversation history."""
         # NOTE: some models accept only "assistant/user/assistant/..." sequences
         #if verbose>0: print(">> saving message, role =", role)
@@ -67,11 +67,10 @@ class Model():
         def message_format(role, content):
             self.messages.append({
                 "role": role,
-                "content": content,
-                # "content": [ # for vision-language models
-                #     #{"type": "image", "url": "https://path/to/img.jpg"},
-                #     {"type": "text", "text": content}
-                # ],
+                "content": content if coder_text_only else [ # for vision-language models
+                    {"type": "image", "url": img_url},
+                    {"type": "text", "text": content}
+                ],
             })
 
         if role == "assistant":
@@ -106,11 +105,5 @@ class Model():
             tools=tool_schemas,
             # **self.gen_args
         )
-        #print(responses)
-
-        # this is actually a list of responses, now we select one:
-        # response = select_response(responses) # def in completion_processing
-        #
-        # self.add_message(role="assistant", content=response)
 
         return responses
