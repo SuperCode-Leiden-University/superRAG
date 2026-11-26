@@ -34,7 +34,7 @@ def run_benchmark(agent, model_id, benchmark_args):
     # split, id_key, prompt_key, entry_point_key, test_key, canon_key, examples {type, key}, problem_type
 
     # files names
-    baseline_file, benchmark_file = filenames(model_name, bench_name, bench_subset, num_samples)
+    baseline_file, benchmark_file = get_filenames(model_name, bench_name, bench_subset, num_samples)
 
     # ----------------------------------------------------------------------------------------------
     # print info
@@ -75,6 +75,7 @@ def run_benchmark(agent, model_id, benchmark_args):
     with open(benchmark_file, "w") as f: f.close()
 
     # ----------------------------------------------------------------------------------------------
+    start_time = datetime.now()
     for i, sample in enumerate(problems):
         if check_single_task is not None:
             i=int(check_single_task)
@@ -137,6 +138,7 @@ def run_benchmark(agent, model_id, benchmark_args):
 
             save_completion(task_id, agent_resources, index, completions_results, test_results, filepath=filename)
 
+        print(f"start time: {start_time}, elapsed since: {datetime.now()-start_time}")
         if check_single_task is not None: break
 
 

@@ -7,7 +7,7 @@ backend: transformers # valid values: ["transformers", "llama_cpp", #"vLLM"]
 model_iter: 1 # n of times the model loops over the same issue (1 = run only once), recommended setting is 1
 tools_iter: 0 # n steps for choosing tools (0 = no tools, 1 = all tools in one go), recommended setting is 2-3
 
-k_runtimes: 10 # n of times the code is run to capture runtime variance
+k_runtimes: 0 # n of times the code is run to capture runtime variance
 optim_metric: real # one of the following: ["real", "user", "sys", "cpu", "util"]
 
 text_only_model: true # true if all models used are text generation only, false if they're all text-image-to-text (apply for all models)
@@ -21,13 +21,13 @@ benchmark:
 
     model_list:
         ### different sizes --------------------------------------------
-         - Qwen/Qwen2.5-Coder-3B-Instruct
-         - Qwen/Qwen2.5-Coder-7B-Instruct
+#         - Qwen/Qwen2.5-Coder-3B-Instruct
+#         - Qwen/Qwen2.5-Coder-7B-Instruct
          - Qwen/Qwen2.5-Coder-14B-Instruct
-         - Qwen/Qwen2.5-Coder-32B-Instruct
+#         - Qwen/Qwen2.5-Coder-32B-Instruct
         ### general ----------------------------------------------------
         # - Qwen/Qwen3-4B
-         - Qwen/Qwen3.8-27B
+#         - Qwen/Qwen3.8-27B
         ### Mixture of Experts: ----------------------------------------
         #- Qwen/Qwen3-Coder-Next # 80B total and 3B active, performances near saturation for python
         ### other families ---------------------------------------------

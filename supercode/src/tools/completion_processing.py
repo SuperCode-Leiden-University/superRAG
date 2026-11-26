@@ -161,6 +161,7 @@ def get_baseline_samples(file, index=0):
 # ----------------------------------------------------------------------------------------------
 def get_code_results(code, language, k=None):
     if k is None: k = k_runtimes
+    if language=="c" or language=="cpp": code = "#include <assert.h>\n"+code # so if the llm forgets it doesn't bias the solution
     compiler_args = {"code": code, "language": language, "k_times": k}
     compiler_output, resources = resource_tracking(sandboxed_compiler, **compiler_args)
 

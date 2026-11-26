@@ -2,100 +2,209 @@ import matplotlib.pyplot as plt
 import matplotlib
 import numpy as np
 
-performance_values = [
-    # model, values: baseline (ex, test) + bench (ex, test), variance
-    [   #r'\textbf{
-    r"\begin{flushright} CodeLlama-7B-Instruct \end{flushright}",
-#}',
-        [21.95, 17.07, 37.8, 20.73], # the official score is 24.37% (source: https://llm-explorer.com/model/codellama%2FCodeLlama-7b-hf,9wLn4CFDFFUu7QIbKH6D1)
-        [0, 0, 0, 0] # 5 samples, it didn't let me change the temperature... Only allowed user/assistant/user/assistant
-    ], [   #r'\textbf{
-    r"\begin{flushright} CodeGemma-7B-it \end{flushright}",
-#}',
-        [44.51, 33.54, 65.24, 42.68], # the official score is 27.76% (source: https://llm-explorer.com/model/google%2Fcodegemma-7b-it,w0es5iCFh1MfSTareEucN)
-        [0, 0, 0, 0] # 5 samples, it didn't let me change the temperature... Only allowed user/assistant/user/assistant and no system prompts
-    ], [   #r'\textbf{
-    r"\begin{flushright} Qwen2.5-Coder-3B-Instruct \end{flushright}",
-#}',
-        [76.59, 73.78, 80.12, 76.46],
-        [1.34, 1.14, 1.26, 1.76]
-    ], [#r'\textbf{
-    r"\begin{flushright} Qwen3-4B (with thinking) \end{flushright}",
-#}',
-        [86.46, 83.66, 90.37, 87.07],
-        [2.12, 1.63, 0.26, 0.36]
-    ], [#r'\textbf{
-    r"\begin{flushright} Qwen3-Coder-Next-80B-A3B \end{flushright}",
-#}',
-        [93.66, 92.68, 98.41, 96.34],
-        [0.08, 0.15, 0.22, 0.24]
-    ],
-    # -------------------------------------------------------------------------------------------------
-    # hybrid mode
-    [#r'\textbf{
-    r"\begin{flushright} Qwen2.5-Coder-3B-Instruct\\+Qwen3-4B (1 iteration) \end{flushright}",
-#}',
-        [78.05, 75.00, 90.24, 84.15],
-        [0.91, 1.69, 0.95, 2.31]
-    ], [#r'\textbf{
-    r"\begin{flushright} Qwen2.5-Coder-3B-Instruct\\+Qwen3-4B (3 iterations) \end{flushright}",
-#}',
-        [78.90, 75.37, 90.73, 84.63],
-        [0.91, 1.69, 0.95, 2.31]
-    ],
-] # this format is good for checking the values, but it's inconvenient for the plot
+import pprint
+import numpy as np
 
-#########################################################################################################
-# reorganizing the data to make it easier to create and manipulate the plot
-model_names = []
-comp_pass_base  = [] ; comp_pass_base_std  = []
-test_pass_base  = [] ; test_pass_base_std  = []
-comp_pass_bench = [] ; comp_pass_bench_std = []
-test_pass_bench = [] ; test_pass_bench_std = []
+# ---------------------------------------------------------------------------------------- #
+# data in readable format
+benchmark_results = {
+    "Qwen2.5-Coder-3B": {
+        "baseline llm stats": {  # median values and std
+            "llm runtime (s)": (142.06, 20.46),
+            #"llm cputime (s)": (4159.48, 484.89),
+            "llm energy (Wh)": (5.92, 0.70),
+            #"llm emissions (g CO2eq)": (1.59, 0.19),
+        },
+        "benchmark llm stats": {  # median values and std
+            "llm runtime (s)": (295.09, 32.52),
+            #"llm cputime (s)": (5109.90, 1147.88),
+            "llm energy (Wh)": (10.28, 1.24),
+            #"llm emissions (g CO2eq)": (2.75, 0.33),
+        },
+        "baseline score": { # average values and std
+            "val pass@1 (%) ": (43.29, 4.68),
+            "test pass@1 (%)": (32.56, 2.33),
+        },
+        "benchmark score": {
+            "val pass@1 (%) ": (41.22, 1.66),
+            "test pass@1 (%)": (27.80, 0.83),
+        },
+    },
+    "Qwen2.5-Coder-7B": {
+        "baseline llm stats": {  # values and std
+            "llm runtime (s)": (170.70, 16.51),
+            #"llm cputime (s)": (6269.61, 622.32),
+            "llm energy (Wh)": (8.73, 1.18),
+            #"llm emissions (g CO2eq)": (2.34, 0.32),
+        },
+        "benchmark llm stats": {  # values and std
+            "llm runtime (s)": (345.82, 30.24),
+            #"llm cputime (s)": (7145.77, 1393.01),
+            "llm energy (Wh)": (13.89, 2.17),
+            #"llm emissions (g CO2eq)": (3.72, 0.58),
+        },
+        "baseline score": {
+            "val pass@1 (%) ": (41.46, 3.49),
+            "test pass@1 (%)": (26.10, 2.45),
+        },
+        "benchmark score": {
+            "val pass@1 (%) ": (61.71, 1.61),
+            "test pass@1 (%)": (41.95, 1.24),
+        },
+    },
+    "Qwen2.5-Coder-14B": {
+        "baseline llm stats": {  # values and std
+            "llm runtime (s)": (439.83, 39.49),
+            #"llm cputime (s)": (12510.36, 1123.37),
+            "llm energy (Wh)": (22.56, 2.09),
+            #"llm emissions (g CO2eq)": (6.04, 0.56),
+        },
+        "benchmark llm stats": {  # values and std
+            "llm runtime (s)": (519.34, 72.95),
+            #"llm cputime (s)": (16748.24, 2699.28),
+            "llm energy (Wh)": (27.80, 3.99),
+            #"llm emissions (g CO2eq)": (7.44, 1.07),
+        },
+        "baseline score": {
+            "val pass@1 (%) ": (68.41, 2.48),
+            "test pass@1 (%)": (48.54, 1.75),
+        },
+        "benchmark score": {
+            "val pass@1 (%) ": (56.34, 1.99),
+            "test pass@1 (%)": (37.20, 1.93),
+        },
+    },
+}
 
-for m, model in enumerate(performance_values):
-    model_names.append(model[0])
-    comp_pass_base.append( model[1][0]) ; comp_pass_base_std.append( model[2][0])
-    test_pass_base.append( model[1][1]) ; test_pass_base_std.append( model[2][1])
-    comp_pass_bench.append(model[1][2]) ; comp_pass_bench_std.append(model[2][2])
-    test_pass_bench.append(model[1][3]) ; test_pass_bench_std.append(model[2][3])
+# ---------------------------------------------------------------------------------------- #
+# convert data in a more convenient format
+plot_vals = {"model_names": [], }
+# {'model_names': [...],
+#  'llm_stats': {'llm_runtime (s)':     {'vals': [...], 'stds': [...]},
+#                'llm_cputime (s)':     {'vals': [...], 'stds': [...]},
+#                'llm_energy (Wh)':     {'vals': [...], 'stds': [...]},
+#                'llm_co2eq (g CO2eq)': {'vals': [...], 'stds': [...]} },
+#  'baseline':  {'comp_pass_1 (%)':     {'vals': [...], 'stds': [...]},
+#                'test_pass_1 (%)':     {'vals': [...], 'stds': [...]} },
+#  'benchmark': {'comp_pass_1 (%)':     {'vals': [...], 'stds': [...],
+#                'test_pass_1 (%)':     {'vals': [...], 'stds': [...]} },
+#  'gain':      {'comp_pass_1 (%)':     {'vals': [...], 'stds': [...]},
+#                'test_pass_1 (%)':     {'vals': [...], 'stds': [...]} }}
 
-comp_gain = np.subtract(comp_pass_bench,comp_pass_base)
-test_gain = np.subtract(test_pass_bench,test_pass_base)
+for m, model in enumerate(benchmark_results.keys()):
+    # print(f"m = {m}")
+    plot_vals["model_names"].append(
+        model
+        #r"\begin{flushright} " + model + r" \end{flushright}"
+    )
 
+    for (group_key, group) in benchmark_results[model].items():
+        if m == 0: plot_vals[group_key] = {}
+
+        for (key, val_std) in group.items():
+            if m == 0: plot_vals[group_key][key] = {"vals": [], "stds": []}
+            plot_vals[group_key][key]["vals"].append(val_std[0])
+            plot_vals[group_key][key]["stds"].append(val_std[1])
+
+    if m == 0: plot_vals["gain"] = {}
+    for k, key in enumerate(plot_vals["baseline score"].keys()):
+        # print(f"k = {k}, key = {key}")
+        plot_vals["gain"][key] = {"vals": [], "stds": []}
+        plot_vals["gain"][key]["vals"] = np.subtract(
+            plot_vals["benchmark score"][key]["vals"],
+            plot_vals["baseline score"][key]["vals"]
+        )
+# pprint.pp(plot_vals)
+
+# ---------------------------------------------------------------------------------------- #
+plt.rc('font', family='serif')
+matplotlib.rc('text')#, usetex=True)
+matplotlib.rc('legend')
+#matplotlib.rcParams['text.latex.preamble'] = r'\boldmath' # makes the numbers bold
+
+
+
+
+#############################################################################################
+n_metrics = 4
+model_names = plot_vals["model_names"]
+models_ax = np.arange(len(model_names))
+
+fig, axs = plt.subplots(nrows=n_metrics, ncols=1, sharex=True, figsize=(5, 7))
+
+row = 0
+for (group_key, group) in plot_vals.items():
+    if group_key == "model_names": continue
+    elif "benchmark" in group_key: row-=len(group)
+    elif group_key == "gain": break
+
+    for (metric_key, metric) in group.items():
+        print(f"k = {row},\tgroup = {group_key},\tmetric = {metric_key}")
+        axs[row].errorbar(models_ax, metric["vals"], yerr=metric["stds"], label=group_key, fmt='--o')
+        axs[row].set_title(metric_key)
+
+        axs[row].grid(alpha=0.5, axis='y')
+        row+=1
+
+#axs[n_metrics-1].spines.right.set_visible(False)
+#axs[n_metrics-1].tick_params(axis="x", length=0, labeltop=False)  # remove ticks and labels for the left plot
+#axs[n_metrics-1].set_xticks([]) # remove ticks from ax1 entirely
+axs[n_metrics-1].set_xticks(models_ax, model_names)
+axs[n_metrics-1].legend(
+    bbox_to_anchor=(0, -0.5),
+    loc='upper left'
+)
+
+
+fig.tight_layout() # tighten everything
+fig.subplots_adjust(wspace=0)  # adjust space between Axes
+
+#plt.show()
+plt.savefig("multi-metric_plot.png", dpi=500)
+
+#############################################################################################
+"""
+# plot the data
 labels = [
     #r'\textbf{
-    "agent, only unit tests",
+    "agent, val",
 #}',
     #r'\textbf{
-    "agent, unit tests and validation set",
+    "agent, test",
 #}',
     #r'\textbf{
-    "baseline, only unit tests",
+    "baseline, val",
 #}',
     #r'\textbf{
-    "baseline, unit tests and validation set"
+    "baseline, test"
 #}'
 ]
 #comp_label = r'\textbf{only unit tests}'
-comp_label = "only unit tests"
+comp_label = "v"
 #test_label = r'\textbf{unit tests and validation set}'
 test_label = "unit tests and validation set"
 
-data = [comp_pass_bench, test_pass_bench, comp_pass_base, test_pass_base]
-data_std = [comp_pass_bench_std, test_pass_bench_std, comp_pass_base_std, test_pass_base_std]
+model_names = plot_vals["model_names"]
+data = [
+    plot_vals["benchmark"]["comp_pass_1 (%)"]["vals"], # comp_pass_bench,
+    plot_vals["benchmark"]["test_pass_1 (%)"]["vals"], # test_pass_bench,
+    plot_vals["baseline" ]["comp_pass_1 (%)"]["vals"], # comp_pass_base,
+    plot_vals["baseline" ]["test_pass_1 (%)"]["vals"], # test_pass_base
+]
+data_std = [
+    plot_vals["benchmark"]["comp_pass_1 (%)"]["stds"], # comp_pass_bench_std,
+    plot_vals["benchmark"]["test_pass_1 (%)"]["stds"], # test_pass_bench_std,
+    plot_vals["baseline" ]["comp_pass_1 (%)"]["stds"], # comp_pass_base_std,
+    plot_vals["baseline" ]["test_pass_1 (%)"]["stds"], # test_pass_base_std
+]
+comp_gain = plot_vals["gain"]["comp_pass_1 (%)"]["vals"]
+test_gain = plot_vals["gain"]["test_pass_1 (%)"]["vals"]
 
 width = 0.22 # width of the bars in the plot
-x = np.arange(len(performance_values))
+x = np.arange(len(model_names))
 dx = [ width*i for i in [-0.65, 1.15, -1.15, 0.65]] # relative positions of the bars in the plot (for each model)
-xx = 0.5*(x[-2]+x[-3]) # position between pure and hybrid mode
+#xx = 0.5*(x[-2]+x[-3]) # position between pure and hybrid mode
 hatches = ['\\\\\\', '///', '\\', '/']
-
-plt.rc('font', family='serif')
-matplotlib.rc('text', usetex=True)
-#matplotlib.rc('legend')
-#matplotlib.rcParams['text.latex.preamble'] = r'\boldmath' # makes the numbers bold
-
 
 #########################################################################################################
 # plot the performance for all models
@@ -105,9 +214,9 @@ fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(4.5, 6.5), sharey=True, gridspec_k
 for ax in [ax1, ax2]:
     for j in range(4):
         ax.barh(x+dx[j], data[j], width, xerr=data_std[j], label=labels[j], edgecolor='#404040', hatch=hatches[j], capsize=4)
-        ax.plot([0, 100], [xx, xx], c="black", lw=0.7) # separation line between pure and hybrid mode
+        #ax.plot([0, 100], [xx, xx], c="black", lw=0.7) # separation line between pure and hybrid mode
 
-# zoom-in / limit the view to different portions of the data
+# zoom / limit the view to different portions of the data
 ax1.set_xlim(0, 2)
 ax2.set_xlim(15, 100)
 
@@ -142,27 +251,26 @@ fig.tight_layout() # tighten everything
 fig.subplots_adjust(wspace=0)  # adjust space between Axes
 
 #plt.show()
-plt.savefig("paper-plots/performance_plot.pdf", dpi=500)
-
+plt.savefig("performance_plot.pdf", dpi=500)
+#"""
 
 #########################################################################################################
 # show the delta between benchmark-results and baseline
-n_model = -2 # plot all models except the last 2 (bc they are hybrids
-
+"""
 fig2, ax3 = plt.subplots(1, 1, figsize=(4.5, 2.8))
-ax3.scatter(comp_gain[:n_model], x[:n_model], label=comp_label, marker="o")
-ax3.scatter(test_gain[:n_model], x[:n_model], label=test_label, marker="^")
+ax3.scatter(comp_gain, x, label=comp_label, marker="o")
+ax3.scatter(test_gain, x, label=test_label, marker="^")
 #ax3.plot([0, 100], [xx, xx], c="black", lw=0.7)  # separation line between pure and hybrid mode
 
-# zoom-in / limit the view to different portions of the data
-max_gain = np.ceil(max(max(comp_gain[:n_model]), max(test_gain[:n_model])))+1
-ax3.set_xlim(0, max_gain)
+# zoom / limit the view to different portions of the data
+max_gain = np.ceil(max(max(comp_gain), max(test_gain)))+1
+ax3.set_xlim(-5, max_gain)
 
 ax3.invert_yaxis()
 
 ax3.grid(axis='x', alpha=0.5)
 ax3.set_xticks(np.arange(0, max_gain, 2.0))
-ax3.set_yticks(x[:n_model], model_names[:n_model])
+ax3.set_yticks(x, model_names)
 ax3.set_ylabel(#r'\textbf{
     "Model"
 #}'
@@ -178,7 +286,7 @@ fig2.subplots_adjust(wspace=0)  # adjust space between Axes
 
 #plt.show()
 plt.savefig("gain_plot.pdf", dpi=500)
-
+#"""
 
 
 

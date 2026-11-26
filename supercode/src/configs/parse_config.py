@@ -64,11 +64,11 @@ gen_code_file = vars["gen_code_file"] # where I save the temp file for generatin
 docker_args   = vars["docker"]
 
 # ----------------------------------------------------------------------------------------------
-def filenames(model_name, bench_name, bench_subset, num_samples):
+def get_filenames(model_name, bench_name, bench_subset, n_samples):
     if model_iter>1 : x_iter=f"_x{model_iter}"
     else: x_iter="" # model iterations
     if bench_subset is not None : bench_name = f"{bench_name}_{bench_subset}"
-    file_info = f"{bench_dir}/{bench_name}_{model_name}_{num_samples}{x_iter}"
+    file_info = f"{bench_dir}/{bench_name}_{model_name}_{n_samples}{x_iter}"
 
     baseline_file  = f"{file_info}_baseline.jsonl"
     benchmark_file = f"{file_info}_benchmark.jsonl"
